@@ -34,7 +34,7 @@ class GeoDS:
 
 class ModelDS(GeoDS):
 
-    def __init__(self, start_year, end_year, verbose=False):
+    def __init__(self, verbose=False):
         """
         Parameters
         ----------
@@ -51,8 +51,8 @@ class ModelDS(GeoDS):
         self.lat_b = None
         self.z_b = None
         self.lsm = None
-        self.start_year = start_year
-        self.end_year = end_year
+        self.start_year = None
+        self.end_year = None
 
     @abc.abstractmethod
     def import_data(self, path, import_type):
