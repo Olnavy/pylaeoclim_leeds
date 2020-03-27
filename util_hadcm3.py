@@ -110,7 +110,7 @@ def generate_filepath(path):
         source_name (values) to experiment_name (keys) connections
     """
     result_dict = dict()
-    with open("../../Scripts/Processing/Experiment_to_filename") as f:
+    with open(path) as f:
         for line in f:
             (key, val, trash) = line.split(";")  # Certainement mieux à faire que trasher...
             result_dict[key] = val
@@ -118,5 +118,5 @@ def generate_filepath(path):
 
 
 # Generate
-path2exp = generate_filepath(pathlib.Path(__file__).parent.absolute() + "path2exp")
-path2lsm = generate_filepath(pathlib.Path(__file__).parent.absolute() + "path2lsm")
+path2exp = generate_filepath(str(pathlib.Path(__file__).parent.absolute()) + "/path2exp")
+path2lsm = generate_filepath(str(pathlib.Path(__file__).parent.absolute()) + "/path2lsm")

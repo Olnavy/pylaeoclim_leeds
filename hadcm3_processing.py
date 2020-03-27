@@ -9,9 +9,9 @@ import abc
 class HadCM3DS(proc.ModelDS):
     MONTHS = ['ja', 'fb', 'mr', 'ar', 'my', 'jn', 'jl', 'ag', 'sp', 'ot', 'nv', 'dc']
 
-    def __init__(self, experiment, start_year, end_year, import_type, verbose=False):
+    def __init__(self, experiment, start_year, end_year, verbose=False):
         super(HadCM3DS, self).__init__(verbose)
-        self.ds_path = []
+        self.paths = []
         self.lon = None
         self.lat = None
         self.z = None
@@ -24,68 +24,67 @@ class HadCM3DS(proc.ModelDS):
 
         try:
             path = util.path2exp[experiment]
-            self.import_data(path, import_type)
+            self.import_data(path, experiment)
         except KeyError as error:
             print("This experiment was not found in \"Experiment_to_filename\". Data importation aborted.")
             print(error)
 
     @abc.abstractmethod
-    def import_data(self, path, import_type):
+    def import_data(self, path, experiment):
         pass
 
 
 class OCNMDS(HadCM3DS):
 
     def __init__(self, experiment, start_year, end_year, months_list=None):
-        super(OCNMDS, self).__init__(experiment, start_year, end_year, import_type="monthly", verbose=False)
         if months_list is None:
             self.months = self.MONTHS
         else:
             self.months = months_list
-        self.value_stored_name = "None"
-        self.value_stored = None  # Allow to store the last value computed
 
-    def import_data(self, path, import_type):
+        super(OCNMDS, self).__init__(experiment, start_year, end_year, verbose=False)
+        self.buffer_name = "None"
+        self.buffer_array = None
 
-        file_path = ""
+    def import_data(self, path, experiment):
 
         try:
-            for year in np.arange(int(self.start_year), int(self.end_year) + 1):
-
-                # Formatting the year to be a 10 digit
-                fyear = f"{year:10d}"
-                year_path = f"{path}xosfbo#pf{fyear}"
-                year_data = []
-
-                for month in self.months:
-                    file_path = f"{year_path}{month}+.nc"
-                    year_data.append(file_path)
-
-                self.ds_path.append(year_data)
+            self.paths = [f"{path}pf/{experiment}o#pf{year:09d}{month}+.nc"
+                      for year in np.arange(int(self.start_year), int(self.end_year) + 1)
+                      for month in self.months]
 
         except FileNotFoundError as error:
-            print(f"The file {file_path} was not found. Data importation aborted.")
+            print("One of the file was not found. Data importation aborted.")
             print(error)
 
+    def import_coordinates(self):
+        self.lon = self.buffer_array.longitude.values
+        self.lon_b = util.coordinate_bounds(self.lon)
+        self.lat = self.buffer_array.latitude.values
+        self.lat_b = util.coordinate_bounds(self.lat)
+        self.z = None
+
     def sst(self, zone=zones.NoZone()):
-        data = np.zeros((len(self.ds_path), len(self.ds_path[0]), len(self.lat), len(self.lon)))
+    
+        if self.buffer_name=="sst":
+            return self.buffer_array
+        else :
+            data = xr.open_mfdataset(self.paths).temp_mm_uo.isel(unspecified=0)
+            # Store the value in the class buffer
+            self.buffer_name = "sst"
+            self.buffer_array = data
+            # import coordinates
+            self.import_coordinates()
+            return data
 
-        for year in range(len(self.ds_path)):
-            for month in range(len(self.ds_path[0])):
-                ds = xr.open_dataset(self.ds_path[year][month])
-                data[year, month] = zone.compact(ds.temp_mm_uo.isel(t=0).isel(unspecified=0).values.shape)
-
-        self.value_stored_name = "SST"
-        self.value_stored = data
-
-        return data
-
+    
     def sst_mean(self, zone=zones.NoZone()):
 
-        if self.value_stored_name == "SST":
-            return proc.ModelDS.mean(np.mean(self.value_stored, axis=1))
+        if self.buffer_name == "sst":
+            return proc.ModelDS.mean(self.buffer_array)
         else:
-            return proc.ModelDS.mean(np.mean(self.sst(zone), axis=1))
+            return proc.ModelDS.mean(self.sst(zone))
+          
 
     def sst_mean_lon(self, zone=zones.NoZone()):
 

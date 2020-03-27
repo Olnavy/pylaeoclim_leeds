@@ -55,7 +55,7 @@ class ModelDS(GeoDS):
         self.end_year = None
 
     @abc.abstractmethod
-    def import_data(self, path, import_type):
+    def import_data(self, path, experiment):
         pass
 
     def to_ncdf(self):
@@ -75,13 +75,13 @@ class ModelDS(GeoDS):
         pass
 
     @staticmethod
-    def get(tcube, zone=zones.NoZone()):
-        return zone.compact(tcube) if zone is not None else tcube
+    def get(cube, zone=zones.NoZone()):
+        return zone.compact(cube) if zone is not None else cube
 
     @staticmethod
-    def mean(tcube, zone=zones.NoZone()):
-        cube = np.mean(tcube, axis=0)
-        return zone.compact(cube) if zone is not None else cube
+    def mean(cube, zone=zones.NoZone()):
+        cube = cube.mean(dim="t")
+        return zone.compact(cube) if not isinstance(zone, zones.NoZone) else cube
 
     @staticmethod
     def mean_lon(tcube, zone=zones.NoZone()):
