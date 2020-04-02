@@ -24,8 +24,12 @@ class HadCM3DS(proc.ModelDS):
         self.end_year = end_year
         
         try:
-            path = util.path2exp[experiment]
-            self.import_data(path, experiment)
+            if isinstance(self, HadCM3TS):
+                path = util.path2expts[experiment]
+                self.import_data(path, experiment)
+            else:
+                path = util.path2expds[experiment]
+                self.import_data(path, experiment)
         except KeyError as error:
             print("This experiment was not found in \"Experiment_to_filename\". Data importation aborted.")
             print(error)
@@ -36,6 +40,9 @@ class HadCM3DS(proc.ModelDS):
     
     def get(self, data_array, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
             mode_z=None, value_z=None, mode_t=None, value_t=None):
+        
+        # if type(data_array) is not proc.GeoDataArray:
+        #   convert_to_GeoDataArray(data_array)
         
         data_array = self.get_lon(data_array, mode_lon, value_lon)
         data_array = self.get_lat(data_array, mode_lat, value_lat)
@@ -57,8 +64,9 @@ class HadCM3DS(proc.ModelDS):
             elif mode_lon == "value":
                 if value_lon is None:
                     raise ValueError("To use the value mode, please indicate a value_lon.")
+                new_lon = data_array.longitude.values[util.lon_to_index(data_array.longitude.values, value_lon)]
                 print(
-                    f"New longitude value : {data_array.longitude.values[util.lon_to_index(data_array.longitude.values, value_lon)]}")
+                    f"New longitude value : {new_lon}")
                 # A reprendre sur les autres + tester depassement index.
                 return data_array.isel(longitude=util.lon_to_index(data_array.longitude.values, value_lon))
             elif mode_lon == "mean":
@@ -89,8 +97,9 @@ class HadCM3DS(proc.ModelDS):
             elif mode_lat == "value":
                 if value_lat is None:
                     raise ValueError("To use the value mode, please indicate a value_lat.")
+                new_lat = data_array.latitude.values[util.lat_to_index(data_array.latitude.values, value_lat)]
                 print(
-                    f"New latitude value : {data_array.latitude.values[util.lat_to_index(data_array.latitude.values, value_lat)]}")
+                    f"New latitude value : {new_lat}")
                 return data_array.isel(latitude=util.lat_to_index(data_array.latitude.values, value_lat))
             elif mode_lat == "mean":
                 return data_array.mean(dim="latitude")
@@ -166,6 +175,9 @@ class HadCM3DS(proc.ModelDS):
             print(error)
             print("The t index was out of bound, the DataArray was not changed")
             return data_array
+    
+    def convert_to_geodataarray(self):
+        pass
 
 
 # **************
@@ -222,79 +234,89 @@ class OCNMDS(HadCM3DS):
 # TIME SERIES
 # ***********
 
-class SSTATS(HadCM3DS):
+
+class HadCM3TS(HadCM3DS):
     
-    def __init__(self, experiment, start_year, end_year, months_list=None):
-        if months_list is None:
+    def __init__(self, experiment, start_year, end_year, file_name, month_list=None):
+        
+        if month_list is None:
             self.months = self.MONTHS
         else:
-            self.months = months_list
+            self.months = month_list
         self.data = None
         self.buffer_name = "None"
         self.buffer_array = None
-        super(SSTATS, self).__init__(experiment, start_year, end_year, verbose=False)
+        self.file_name = file_name
+        
+        super(HadCM3TS, self).__init__(experiment, start_year, end_year, verbose=False)
     
     def import_data(self, path, experiment):
         
         try:
-            self.data = xr.open_dataset(f"{path}{experiment}.oceantemppg01.annual.nc") \
-                .where(lambda x: x.t >= cftime.Datetime360Day(self.start_year, 1, 1), drop=True) \
-                .where(lambda x: x.t >= cftime.Datetime360Day(self.end_year, 12, 30), drop=True)
-            #     .where(lambda x: x.t.month in util.months_to_number(self.months), drop=True)
+            
+            self.data = xr.open_dataset(f"{path}{experiment}.{self.file_name}.nc")
+            # The where+lamda structure is not working (GitHub?) so each steps are done individually
+            # .where(lambda x: x.t >= cftime.Datetime360Day(self.start_year, 1, 1), drop=True) \
+            # .where(lambda x: x.t >= cftime.Datetime360Day(self.end_year, 12, 30), drop=True)
+            # .where(lambda x: x.t.month in util.months_to_number(self.months), drop=True)
+            
+            self.data = self.data.where(self.data.t >= cftime.Datetime360Day(self.start_year, 1, 1), drop=True)
+            self.data = self.data.where(self.data.t <= cftime.Datetime360Day(self.end_year, 12, 30), drop=True)
+            self.data = proc.filter_months(self.data, self.months)
         
         except FileNotFoundError as error:
             print("The file was not found. Data importation aborted.")
             print(error)
+
+
+class SATMTS(HadCM3TS):
+    
+    def __init__(self, experiment, start_year, end_year, month_list=None):
+        self.data = None
+        super(SATMTS, self).__init__(experiment, start_year, end_year, file_name="tempsurf.monthly",
+                                     month_list=month_list)
+    
+    def sat(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None, mode_t=None,
+            value_t=None):
+        data_array = self.data.temp_mm_srf.isel(surface=0).drop("surface")
+        return self.get(data_array, zone, mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t, value_t)
+
+
+class SSTATS(HadCM3TS):
+    
+    def __init__(self, experiment, start_year, end_year):
+        self.data = None
+        super(SSTATS, self).__init__(experiment, start_year, end_year, file_name="oceantemppg01.annual")
     
     def sst(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
             mode_z=None, value_z=None, mode_t=None, value_t=None):
-        
         data_array = self.data.temp_ym_dpth.isel(depth_1=0).drop("depth_1")
         return self.get(data_array, zone, mode_lon, value_lon, mode_lat, value_lat, mode_z, value_z, mode_t, value_t)
 
 
-class MERIDATS(HadCM3DS):
+class MERIDATS(HadCM3TS):
     
-    def __init__(self, experiment, start_year, end_year, months_list=None):
-        if months_list is None:
-            self.months = self.MONTHS
-        else:
-            self.months = months_list
-
+    def __init__(self, experiment, start_year, end_year):
         self.data = None
-        self.buffer_name = "None"
-        self.buffer_array = None
-        super(MERIDATS, self).__init__(experiment, start_year, end_year, verbose=False)
-    
-    def import_data(self, path, experiment):
-        
-        try:
-            self.data = xr.open_dataset(f"{path}{experiment}.merid.annual.nc")
-        except FileNotFoundError as error:
-            print("The file was not found. Data importation aborted.")
-            print(error)
+        super(MERIDATS, self).__init__(experiment, start_year, end_year, file_name="merid.annual")
     
     def atlantic(self, zone=zones.NoZone(), mode_lat=None, value_lat=None, mode_z=None, value_z=None, mode_t=None,
                  value_t=None):
-        
         data_array = self.data.Merid_Atlantic.rename({'depth': 'z'})
         return self.get(data_array, zone, None, None, mode_lat, value_lat, mode_z, value_z, mode_t, value_t)
     
     def globalx(self, zone=zones.NoZone(), mode_lat=None, value_lat=None, mode_z=None, value_z=None, mode_t=None,
                 value_t=None):
-        
         data_array = self.data.Merid_Global.rename({'depth': 'z'})
         return self.get(data_array, zone, None, None, mode_lat, value_lat, mode_z, value_z, mode_t, value_t)
     
     def indian(self, zone=zones.NoZone(), mode_lat=None, value_lat=None, mode_z=None, value_z=None, mode_t=None,
                value_t=None):
-        
         data_array = self.data.Merid_Indian.rename({'depth': 'z'})
         return self.get(data_array, zone, None, None, mode_lat, value_lat, mode_z, value_z, mode_t, value_t)
     
     def pacific(self, zone=zones.NoZone(), mode_lat=None, value_lat=None, mode_z=None, value_z=None, mode_t=None,
                 value_t=None):
-        
         data_array = self.data.Merid_Pacific.rename({'depth': 'z'})
         return self.get(data_array, zone, None, None, mode_lat, value_lat, mode_z, value_z, mode_t, value_t)
 
