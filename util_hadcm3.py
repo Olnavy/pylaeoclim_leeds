@@ -129,9 +129,13 @@ def t_to_index(t:List[cftime.Datetime360Day], target_t:cftime.Datetime360Day):
 	return (abs(t - target_t)).argmin()
 
 def months_to_number(month_list):
-	conversion = {'ja':1, 'fb':2, 'mr':3, 'ar':4, 'my':5, 'jn':6, 'jl':7, 'ag':8, 'sp':9, 'ot':10, 'nv':11, 'dc':12}
-	return [conversion[month] for month in month_list]
-
+	try:
+		conversion = {'ja':1, 'fb':2, 'mr':3, 'ar':4, 'my':5, 'jn':6, 'jl':7, 'ag':8, 'sp':9, 'ot':10, 'nv':11, 'dc':12}
+		return [int(month) if isinstance(month,int) or month.isdigit() else conversion[month] for month in month_list]
+	except ValueError as error:
+		print(error)
+		
 # Generate
-path2exp = generate_filepath(str(pathlib.Path(__file__).parent.absolute()) + "/path2exp")
+path2expds = generate_filepath(str(pathlib.Path(__file__).parent.absolute()) + "/path2expds")
+path2expts = generate_filepath(str(pathlib.Path(__file__).parent.absolute()) + "/path2expts")
 path2lsm = generate_filepath(str(pathlib.Path(__file__).parent.absolute()) + "/path2lsm")
