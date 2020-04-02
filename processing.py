@@ -1,6 +1,8 @@
 import numpy as np
 import abc
 import zones
+import xarray as xr
+import util_hadcm3 as util
 
 
 class GeoDS:
@@ -74,7 +76,26 @@ class ModelDS(GeoDS):
 
         pass
 
+def filter_months(data_array, month_list):
+    # To define in GeoDataArray
+    condition = xr.zeros_like(data_array.t)
+    for i in range(len(data_array.t)):
+        condition[i] = data_array.t[i].values[()].month in util.months_to_number(month_list)
+    data_array = data_array.where(condition, drop=True)
+    return data_array
 
+class GeoDataArray(xr.DataArray):
+    
+    def __init__(self):
+        super(GeoDataArray,self).__init__(self)
+
+
+    def filter_months(self,month_list):
+        condition = xr.zeros_like(self.t)
+        for i in range(len(self.t)):
+            condition[i] = self.t[i].values[()].month in util.months_to_number(month_list)
+        
+        self.where(condition, drop=True)
 
 class LSM:
 
