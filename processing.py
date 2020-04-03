@@ -1,8 +1,8 @@
 import numpy as np
 import abc
-import zones
 import xarray as xr
 import util_hadcm3 as util
+import cftime
 
 
 class GeoDS:
@@ -21,8 +21,8 @@ class GeoDS:
     Methods
     -------
     """
-
-    def __init__(self, verbose=False):
+    
+    def __init__(self, verbose, logger):
         """
         Parameters
         ----------
@@ -30,13 +30,13 @@ class GeoDS:
               Determine whether to print the outputs in a logfile or in directly on the console.
               True is console - debug mode.  (default is False)
         """
-
+        self.logger = logger
         self.verbose = verbose
 
 
 class ModelDS(GeoDS):
-
-    def __init__(self, verbose=False):
+    
+    def __init__(self, verbose, logger):
         """
         Parameters
         ----------
@@ -44,8 +44,8 @@ class ModelDS(GeoDS):
             whether or not to display details about the computation.
             Outputs are printed.  (default is False)
         """
-
-        super(ModelDS, self).__init__(verbose)
+        
+        super(ModelDS, self).__init__(verbose, logger)
         self.lon = None
         self.lat = None
         self.z = None
@@ -55,50 +55,65 @@ class ModelDS(GeoDS):
         self.lsm = None
         self.start_year = None
         self.end_year = None
-
+    
     @abc.abstractmethod
     def import_data(self, path, experiment):
         pass
-
+    
     def to_ncdf(self):
         """
         Save the dataset as a netcdf file
         :return:
         """
-
+        
         pass
-
+    
     def to_csv(self):
         """
         Save the dataset as a netcdf file
         :return:
         """
-
+        
         pass
 
+
 def filter_months(data_array, month_list):
-    # To define in GeoDataArray
+    # To define in GeoDataArray !!!!and GeoDS!!!!
     condition = xr.zeros_like(data_array.t)
     for i in range(len(data_array.t)):
         condition[i] = data_array.t[i].values[()].month in util.months_to_number(month_list)
     data_array = data_array.where(condition, drop=True)
     return data_array
 
+
 class GeoDataArray(xr.DataArray):
     
-    def __init__(self):
-        super(GeoDataArray,self).__init__(self)
-
-
-    def filter_months(self,month_list):
+    def __init__(self, data, coords=None, dims=None, name=None, attrs=None, encoding=None, indexes=None,
+                 fastpath=False):
+        if isinstance(data, xr.DataArray):
+            super(GeoDataArray, self).__init__(data.values, dims=data.dims, name=data.name, attrs=data.attrs,
+                                               coords=[data[dim].values for dim in data.dims])
+        else:
+            super(GeoDataArray, self).__init__(data, coords=coords, dims=dims, name=name, attrs=attrs,
+                                               encoding=encoding, indexes=indexes, fastpath=fastpath)
+    
+    def truncate_months(self, new_month_list):
         condition = xr.zeros_like(self.t)
         for i in range(len(self.t)):
-            condition[i] = self.t[i].values[()].month in util.months_to_number(month_list)
-        
-        self.where(condition, drop=True)
+            condition[i] = self.t[i].values[()].month in util.months_to_number(new_month_list)
+        return GeoDataArray(self.where(condition, drop=True))
+    
+    def truncate_years(self, new_start_year, new_end_year):
+        data_array = self
+        if new_start_year is not None:
+            data_array = self.where(self.t >= cftime.Datetime360Day(new_start_year, 1, 1), drop=True)
+        if new_end_year is not None:
+            data_array = self.where(self.t <= cftime.Datetime360Day(new_end_year, 12, 30), drop=True)
+        return GeoDataArray(data_array)
+
 
 class LSM:
-
+    
     def __init__(self):
         self.lon = None
         self.lat = None
@@ -109,7 +124,7 @@ class LSM:
         self.mask2d = None
         self.lsm3d = None
         self.mask3d = None
-
+    
     @classmethod
     def default_lsm(cls, lon, lat, z):
         """
@@ -120,7 +135,7 @@ class LSM:
         :return:
         """
         return np.ones((len(lon), len(lat), len(z)))
-
+    
     @classmethod
     def default_mask(cls, lon, lat, z):
         """
