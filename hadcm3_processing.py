@@ -10,8 +10,8 @@ import cftime
 class HadCM3DS(proc.ModelDS):
     MONTHS = ['ja', 'fb', 'mr', 'ar', 'my', 'jn', 'jl', 'ag', 'sp', 'ot', 'nv', 'dc']
     
-    def __init__(self, experiment, start_year, end_year, verbose=False):
-        super(HadCM3DS, self).__init__(verbose)
+    def __init__(self, experiment, start_year, end_year, month_list, verbose, logger):
+        super(HadCM3DS, self).__init__(verbose, logger)
         self.paths = []
         self.lon = None
         self.lat = None
@@ -22,6 +22,12 @@ class HadCM3DS(proc.ModelDS):
         self.lsm = None
         self.start_year = start_year
         self.end_year = end_year
+        if month_list is None:
+            self.months = None
+        elif month_list == "full":
+            self.months = self.MONTHS
+        else:
+            self.months = month_list
         
         try:
             if isinstance(self, HadCM3TS):
@@ -38,18 +44,48 @@ class HadCM3DS(proc.ModelDS):
     def import_data(self, path, experiment):
         pass
     
-    def get(self, data_array, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
-            mode_z=None, value_z=None, mode_t=None, value_t=None):
+    def get(self, data, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
+            mode_z=None, value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None,
+            new_month_list=None):
         
         # if type(data_array) is not proc.GeoDataArray:
         #   convert_to_GeoDataArray(data_array)
         
+        data_array = proc.GeoDataArray(data)  # add the GeoDataArray wrapper
+        try:
+            if new_start_year is not None and new_start_year <= self.start_year:
+                raise ValueError("The new start year is smaller than the imported one.")
+            elif new_end_year is not None and new_end_year >= self.end_year:
+                raise ValueError("The new end year is larger than the imported one.")
+            elif new_start_year is None and new_end_year is not None:
+                data_array = data_array.truncate_years(self.start_year, new_end_year)
+            elif new_start_year is not None and new_end_year is None:
+                data_array = data_array.truncate_years(new_start_year, self.end_year)
+            elif new_start_year is not None and new_end_year is not None:
+                data_array = data_array.truncate_years(new_start_year, new_end_year)
+            else:
+                pass
+
+            if new_month_list is not None and self.months is None:
+                raise ValueError(f"The month truncation is not available with {type(self)}.")
+            elif new_month_list is not None \
+                and not all(month in util.months_to_number(self.months) for month in util.months_to_number(new_month_list)):
+                raise ValueError("The new month list include months not yet imported.")
+            elif new_month_list is not None:
+                data_array = data_array.truncate_months(new_month_list)
+            else:
+                pass
+
+        except ValueError as error:
+            print(error)
+            print("The truncation was aborted.")
+            
         data_array = self.get_lon(data_array, mode_lon, value_lon)
         data_array = self.get_lat(data_array, mode_lat, value_lat)
         data_array = self.get_z(data_array, mode_z, value_z)
         data_array = self.get_t(data_array, mode_t, value_t)
         
-        return zone.compact(data_array) if zone is not None else data_array
+        return zone.compact(data_array)
     
     @staticmethod
     def get_lon(data_array, mode_lon, value_lon):
@@ -189,13 +225,9 @@ class OCNMDS(HadCM3DS):
     PF
     """
     
-    def __init__(self, experiment, start_year, end_year, months_list=None):
-        if months_list is None:
-            self.months = self.MONTHS
-        else:
-            self.months = months_list
+    def __init__(self, experiment, start_year, end_year, month_list="full", verbose=False, logger="print"):
         
-        super(OCNMDS, self).__init__(experiment, start_year, end_year, verbose=False)
+        super(OCNMDS, self).__init__(experiment, start_year, end_year, month_list, verbose, logger)
         self.buffer_name = "None"
         self.buffer_array = None
     
@@ -218,16 +250,19 @@ class OCNMDS(HadCM3DS):
         self.z = None
     
     def sst(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None, mode_t=None,
-            value_t=None):
+            value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
         
         data_array = xr.open_mfdataset(self.paths).temp_mm_uo.isel(unspecified=0).drop("unspecified")
-        return self.get(data_array, zone, mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t, value_t)
+        return self.get(data_array, zone, mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t, value_t,
+                        new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
     
     def temperature(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
-                    mode_z=None, value_z=None, mode_t=None, value_t=None):
+                    mode_z=None, value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None,
+                    new_month_list=None):
         
         data_array = xr.open_mfdataset(self.paths).temp_mm_dpth.rename({'depth_1': 'z'})
-        return self.get(data_array, zone, mode_lon, value_lon, mode_lat, value_lat, mode_z, value_z, mode_t, value_t)
+        return self.get(data_array, zone, mode_lon, value_lon, mode_lat, value_lat, mode_z, value_z, mode_t, value_t,
+                        new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
 
 
 # ***********
@@ -237,32 +272,26 @@ class OCNMDS(HadCM3DS):
 
 class HadCM3TS(HadCM3DS):
     
-    def __init__(self, experiment, start_year, end_year, file_name, month_list=None):
+    def __init__(self, experiment, start_year, end_year, file_name, month_list, verbose, logger):
         
-        if month_list is None:
-            self.months = self.MONTHS
-        else:
-            self.months = month_list
         self.data = None
         self.buffer_name = "None"
         self.buffer_array = None
         self.file_name = file_name
-        
-        super(HadCM3TS, self).__init__(experiment, start_year, end_year, verbose=False)
+        super(HadCM3TS, self).__init__(experiment, start_year, end_year, month_list, verbose, logger)
     
     def import_data(self, path, experiment):
         
         try:
-            
             self.data = xr.open_dataset(f"{path}{experiment}.{self.file_name}.nc")
             # The where+lamda structure is not working (GitHub?) so each steps are done individually
             # .where(lambda x: x.t >= cftime.Datetime360Day(self.start_year, 1, 1), drop=True) \
             # .where(lambda x: x.t >= cftime.Datetime360Day(self.end_year, 12, 30), drop=True)
             # .where(lambda x: x.t.month in util.months_to_number(self.months), drop=True)
-            
             self.data = self.data.where(self.data.t >= cftime.Datetime360Day(self.start_year, 1, 1), drop=True)
             self.data = self.data.where(self.data.t <= cftime.Datetime360Day(self.end_year, 12, 30), drop=True)
             self.data = proc.filter_months(self.data, self.months)
+            # data is a xarray.Dataset -> not possible to use xarray.GeoDataArray methods. How to change that?
         
         except FileNotFoundError as error:
             print("The file was not found. Data importation aborted.")
@@ -271,54 +300,63 @@ class HadCM3TS(HadCM3DS):
 
 class SATMTS(HadCM3TS):
     
-    def __init__(self, experiment, start_year, end_year, month_list=None):
+    def __init__(self, experiment, start_year, end_year, month_list="full", verbose=False, logger="print"):
         self.data = None
         super(SATMTS, self).__init__(experiment, start_year, end_year, file_name="tempsurf.monthly",
-                                     month_list=month_list)
+                                     month_list=month_list, verbose=verbose, logger=logger)
     
     def sat(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None, mode_t=None,
-            value_t=None):
+            value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
         data_array = self.data.temp_mm_srf.isel(surface=0).drop("surface")
-        return self.get(data_array, zone, mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t, value_t)
+        return self.get(data_array, zone, mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t, value_t,
+                        new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
 
 
 class SSTATS(HadCM3TS):
     
-    def __init__(self, experiment, start_year, end_year):
+    def __init__(self, experiment, start_year, end_year, month_list=None, verbose=False, logger="print"):
         self.data = None
-        super(SSTATS, self).__init__(experiment, start_year, end_year, file_name="oceantemppg01.annual")
+        super(SSTATS, self).__init__(experiment, start_year, end_year, file_name="oceantemppg01.annual",
+                                     month_list=month_list, verbose=verbose, logger=logger)
     
     def sst(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
-            mode_z=None, value_z=None, mode_t=None, value_t=None):
+            mode_z=None, value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None,
+            new_month_list=None):
         data_array = self.data.temp_ym_dpth.isel(depth_1=0).drop("depth_1")
-        return self.get(data_array, zone, mode_lon, value_lon, mode_lat, value_lat, mode_z, value_z, mode_t, value_t)
+        return self.get(data_array, zone, mode_lon, value_lon, mode_lat, value_lat, mode_z, value_z, mode_t, value_t,
+                        new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
 
 
 class MERIDATS(HadCM3TS):
     
-    def __init__(self, experiment, start_year, end_year):
+    def __init__(self, experiment, start_year, end_year, month_list=None, verbose=False, logger="print"):
         self.data = None
-        super(MERIDATS, self).__init__(experiment, start_year, end_year, file_name="merid.annual")
+        super(MERIDATS, self).__init__(experiment, start_year, end_year, file_name="merid.annual",
+                                       month_list=month_list, verbose=verbose, logger=logger)
     
     def atlantic(self, zone=zones.NoZone(), mode_lat=None, value_lat=None, mode_z=None, value_z=None, mode_t=None,
-                 value_t=None):
+                 value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
         data_array = self.data.Merid_Atlantic.rename({'depth': 'z'})
-        return self.get(data_array, zone, None, None, mode_lat, value_lat, mode_z, value_z, mode_t, value_t)
+        return self.get(data_array, zone, None, None, mode_lat, value_lat, mode_z, value_z, mode_t, value_t,
+                        new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
     
     def globalx(self, zone=zones.NoZone(), mode_lat=None, value_lat=None, mode_z=None, value_z=None, mode_t=None,
-                value_t=None):
+                value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
         data_array = self.data.Merid_Global.rename({'depth': 'z'})
-        return self.get(data_array, zone, None, None, mode_lat, value_lat, mode_z, value_z, mode_t, value_t)
+        return self.get(data_array, zone, None, None, mode_lat, value_lat, mode_z, value_z, mode_t, value_t,
+                        new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
     
     def indian(self, zone=zones.NoZone(), mode_lat=None, value_lat=None, mode_z=None, value_z=None, mode_t=None,
-               value_t=None):
+               value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
         data_array = self.data.Merid_Indian.rename({'depth': 'z'})
-        return self.get(data_array, zone, None, None, mode_lat, value_lat, mode_z, value_z, mode_t, value_t)
+        return self.get(data_array, zone, None, None, mode_lat, value_lat, mode_z, value_z, mode_t, value_t,
+                        new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
     
     def pacific(self, zone=zones.NoZone(), mode_lat=None, value_lat=None, mode_z=None, value_z=None, mode_t=None,
-                value_t=None):
+                value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
         data_array = self.data.Merid_Pacific.rename({'depth': 'z'})
-        return self.get(data_array, zone, None, None, mode_lat, value_lat, mode_z, value_z, mode_t, value_t)
+        return self.get(data_array, zone, None, None, mode_lat, value_lat, mode_z, value_z, mode_t, value_t,
+                        new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
 
 
 # *************
