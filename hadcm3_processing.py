@@ -85,7 +85,7 @@ class HadCM3DS(proc.ModelDS):
         data_array = self.get_z(data_array, mode_z, value_z)
         data_array = self.get_t(data_array, mode_t, value_t)
         
-        return zone.compact(data_array)
+        return proc.GeoDataArray(zone.compact(data_array))
     
     @staticmethod
     def get_lon(data_array, mode_lon, value_lon):
