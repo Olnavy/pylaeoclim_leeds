@@ -66,7 +66,7 @@ class Box(Zone):
         try:
             self.lat = ds.lat
         except AttributeError:
-            self.lon = None
+            self.lat = None
         try:
             self.z = ds.z
         except AttributeError:
@@ -109,7 +109,7 @@ class Box(Zone):
         try:
             self.lat = data_array_source.latitude.values
         except AttributeError:
-            self.lon = None
+            self.lat = None
         try:
             self.z = data_array_source.z.values
         except AttributeError:
