@@ -57,7 +57,7 @@ class ModelDS(GeoDS):
         self.end_year = None
     
     @abc.abstractmethod
-    def import_data(self, path, experiment):
+    def import_data(self, experiment):
         pass
     
     def to_ncdf(self):

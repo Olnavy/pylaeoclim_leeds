@@ -12,7 +12,6 @@ class HadCM3DS(proc.ModelDS):
     
     def __init__(self, experiment, start_year, end_year, month_list, verbose, logger):
         super(HadCM3DS, self).__init__(verbose, logger)
-        self.paths = []
         self.lon = None
         self.lat = None
         self.z = None
@@ -29,19 +28,14 @@ class HadCM3DS(proc.ModelDS):
         else:
             self.months = month_list
         
-        try:
-            if isinstance(self, HadCM3TS):
-                path = util.path2expts[experiment]
-                self.import_data(path, experiment)
-            else:
-                path = util.path2expds[experiment]
-                self.import_data(path, experiment)
-        except KeyError as error:
-            print("This experiment was not found in \"Experiment_to_filename\". Data importation aborted.")
-            print(error)
+        self.import_data(experiment)
     
     @abc.abstractmethod
-    def import_data(self, path, experiment):
+    def import_data(self, experiment):
+        pass
+    
+    @abc.abstractmethod
+    def import_coordinates(self):
         pass
     
     def get(self, data, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
@@ -65,21 +59,21 @@ class HadCM3DS(proc.ModelDS):
                 data_array = data_array.truncate_years(new_start_year, new_end_year)
             else:
                 pass
-
+            
             if new_month_list is not None and self.months is None:
                 raise ValueError(f"The month truncation is not available with {type(self)}.")
-            elif new_month_list is not None \
-                and not all(month in util.months_to_number(self.months) for month in util.months_to_number(new_month_list)):
+            elif new_month_list is not None and \
+                not all(month in util.months_to_number(self.months) for month in util.months_to_number(new_month_list)):
                 raise ValueError("The new month list include months not yet imported.")
             elif new_month_list is not None:
                 data_array = data_array.truncate_months(new_month_list)
             else:
                 pass
-
+        
         except ValueError as error:
             print(error)
             print("The truncation was aborted.")
-            
+        
         data_array = self.get_lon(data_array, mode_lon, value_lon)
         data_array = self.get_lat(data_array, mode_lat, value_lat)
         data_array = self.get_z(data_array, mode_z, value_z)
@@ -220,38 +214,65 @@ class HadCM3DS(proc.ModelDS):
 # MONTH DATASETS
 # **************
 
-class OCNMDS(HadCM3DS):
+class HadCM3RDS(HadCM3DS):
+    
+    def __init__(self, experiment, start_year, end_year, file_name, month_list, verbose, logger):
+        self.buffer_name = "None"
+        self.buffer_array = None
+        self.file_name = file_name
+        self.paths = []
+        super(HadCM3RDS, self).__init__(experiment, start_year, end_year, month_list, verbose, logger)
+        
+        try:
+            self.sample_data = xr.open_dataset(self.paths[0])
+        except IndexError as error:
+            print("No dataset to import. Please check again the import options.")
+            raise error
+        except FileNotFoundError as error:
+            print("The file was not found. Data importation aborted.")
+            raise error
+        
+        self.import_coordinates()
+    
+    def import_data(self, experiment):
+        try:
+            path = util.path2expds[experiment]
+            self.paths = [f"{path}{self.file_name}{year:09d}{month}+.nc"
+                          for year in np.arange(int(self.start_year), int(self.end_year) + 1)
+                          for month in self.months]
+        except KeyError as error:
+            print("This experiment was not found in \"Experiment_to_filename\". Data importation aborted.")
+            print(error)
+
+    def import_coordinates(self):
+        pass
+
+
+class OCNMDS(HadCM3RDS):
     """
     PF
     """
     
-    def __init__(self, experiment, start_year, end_year, month_list="full", verbose=False, logger="print"):
-        
-        super(OCNMDS, self).__init__(experiment, start_year, end_year, month_list, verbose, logger)
-        self.buffer_name = "None"
-        self.buffer_array = None
-    
-    def import_data(self, path, experiment):
-        
-        try:
-            self.paths = [f"{path}pf/{experiment}o#pf{year:09d}{month}+.nc"
-                          for year in np.arange(int(self.start_year), int(self.end_year) + 1)
-                          for month in self.months]
-        
-        except FileNotFoundError as error:
-            print("One of the file was not found. Data importation aborted.")
-            print(error)
-    
     def import_coordinates(self):
-        self.lon = self.buffer_array.longitude.values
-        self.lon_b = util.coordinate_bounds(self.lon)
-        self.lat = self.buffer_array.latitude.values
-        self.lat_b = util.coordinate_bounds(self.lat)
-        self.z = None
+        self.lon = self.sample_data.longitude.values
+        lon_1 = self.sample_data.longitude_1.values
+        self.lon_b = np.append(lon_1, 2 * lon_1[-1] - lon_1[-2])
+        
+        self.lat = self.sample_data.latitude.values
+        lat_1 = self.sample_data.latitude_1.values
+        self.lat_b = np.append(lat_1, 2 * lat_1[-1] - lat_1[-2])
+
+        self.z = self.sample_data.depth.values
+        depth_1 = self.sample_data.depth_1.values
+        self.z_b = np.append(depth_1, 2 * depth_1[-1] - depth_1[-2])
+    
+    def __init__(self, experiment, start_year, end_year, month_list="full", verbose=False, logger="print"):
+        file_name = f"pf/{experiment}o#pf"
+        super(OCNMDS, self).__init__(experiment, start_year, end_year, file_name=file_name, month_list=month_list,
+                                     verbose=verbose, logger=logger)
     
     def sst(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None, mode_t=None,
             value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
-        
         data_array = xr.open_mfdataset(self.paths).temp_mm_uo.isel(unspecified=0).drop("unspecified")
         return self.get(data_array, zone, mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t, value_t,
                         new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
@@ -259,12 +280,82 @@ class OCNMDS(HadCM3DS):
     def temperature(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
                     mode_z=None, value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None,
                     new_month_list=None):
-        
         data_array = xr.open_mfdataset(self.paths).temp_mm_dpth.rename({'depth_1': 'z'})
         return self.get(data_array, zone, mode_lon, value_lon, mode_lat, value_lat, mode_z, value_z, mode_t, value_t,
                         new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
 
 
+class OCNYDS(HadCM3RDS):
+    """
+    PG
+    """
+
+    def import_coordinates(self):
+        self.lon = self.sample_data.longitude.values
+        lon_1 = self.sample_data.longitude_1.values
+        self.lon_b = np.append(lon_1, 2 * lon_1[-1] - lon_1[-2])
+    
+        self.lat = self.sample_data.latitude.values
+        lat_1 = self.sample_data.latitude_1.values
+        self.lat_b = np.append(lat_1, 2 * lat_1[-1] - lat_1[-2])
+    
+        self.z = self.sample_data.depth.values
+        depth_1 = self.sample_data.depth_1.values
+        self.z_b = np.append(depth_1, 2 * depth_1[-1] - depth_1[-2])
+
+
+class ATMUPMDS(HadCM3RDS):
+    """
+    PC
+    """
+    
+    def import_coordinates(self):
+        self.lon = self.sample_data.longitude.values
+        lon_1 = self.sample_data.longitude_1.values
+        self.lon_b = np.append(lon_1, 2 * lon_1[-1] - lon_1[-2])
+    
+        self.lat = self.sample_data.latitude.values
+        self.lat_b = self.sample_data.latitude_1.values
+        
+        self.z = self.sample_data.depth.values
+        self.z_b = util.guess_bounds(self.z)
+
+
+class ATMSURFMDS(HadCM3RDS):
+    """
+    PD
+    """
+    
+    def import_coordinates(self):
+        self.lon = self.sample_data.longitude.values
+        lon_1 = self.sample_data.longitude_1.values
+        self.lon_b = np.append(lon_1, 2 * lon_1[-1] - lon_1[-2])
+        
+        self.lat = self.sample_data.latitude.values
+        lat_1 = self.sample_data.latitude_1.values
+        self.lat_b = np.append(lat_1, 2 * lat_1[-1] - lat_1[-2])
+
+        self.z = self.sample_data.level6.values
+        self.z_b = util.guess_bounds(self.z)
+
+
+class LNDMDS(HadCM3RDS):
+    """
+    PT
+    """
+    
+    def import_coordinates(self):
+        self.lon = self.sample_data.longitude.values
+        self.lon_b = util.guess_bounds(self.lon)
+        
+        self.lat = self.sample_data.latitude.values
+        self.lat_b = util.guess_bounds(self.lat)
+        
+        self.z = self.sample_data.pseudo.values
+        self.z_b = util.guess_bounds(self.z)
+
+        # What to do of pseudo pseudo_2 and pseudo_3?
+    
 # ***********
 # TIME SERIES
 # ***********
@@ -279,10 +370,13 @@ class HadCM3TS(HadCM3DS):
         self.buffer_array = None
         self.file_name = file_name
         super(HadCM3TS, self).__init__(experiment, start_year, end_year, month_list, verbose, logger)
+        
+        self.import_coordinates()
     
-    def import_data(self, path, experiment):
+    def import_data(self, experiment):
         
         try:
+            path = util.path2expts[experiment]
             self.data = xr.open_dataset(f"{path}{experiment}.{self.file_name}.nc")
             # The where+lamda structure is not working (GitHub?) so each steps are done individually
             # .where(lambda x: x.t >= cftime.Datetime360Day(self.start_year, 1, 1), drop=True) \
@@ -296,6 +390,12 @@ class HadCM3TS(HadCM3DS):
         except FileNotFoundError as error:
             print("The file was not found. Data importation aborted.")
             print(error)
+        except KeyError as error:
+            print("This experiment was not found in \"Experiment_to_filename\". Data importation aborted.")
+            print(error)
+    
+    def import_coordinates(self):
+        super(HadCM3TS, self).import_coordinates()
 
 
 class SATMTS(HadCM3TS):

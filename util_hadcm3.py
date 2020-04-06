@@ -66,7 +66,7 @@ def z_to_index(z, target_z):
     return (np.abs(z - target_z)).argmin()
 
 
-def coordinate_bounds(coordinates):
+def guess_bounds(coordinates):
     """
     Create bound file for regriding
     :param coordinates: 1D and regular!
@@ -120,7 +120,6 @@ def generate_filepath(path):
             (key, val, trash) = line.split(";")  # Certainement mieux à faire que trasher...
             result_dict[key] = val
     return result_dict
-
 
 # TIME
 
