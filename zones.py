@@ -85,20 +85,20 @@ class Box(Zone):
             iz_box = np.where(self.z_min <= self.z <= self.z_max)
             return ilon_box, ilat_box, iz_box
     
-    def compact(self, data_array):
+    def compact(self, geo_da):
         # Test lon etc.
         
         if self.lon is not None:
-            data_array = data_array.where(data_array.longitude >= self.lon_min, drop=True) \
-                .where(data_array.longitude <= self.lon_max, drop=True)
+            geo_da.data = geo_da.data.where(geo_da.data.longitude >= self.lon_min, drop=True) \
+                .where(geo_da.data.longitude <= self.lon_max, drop=True)
         if self.lat is not None:
-            data_array = data_array.where(data_array.latitude >= self.lat_min, drop=True) \
-                .where(data_array.latitude <= self.lat_max, drop=True)
+            geo_da.data = geo_da.data.where(geo_da.data.latitude >= self.lat_min, drop=True) \
+                .where(geo_da.data.latitude <= self.lat_max, drop=True)
         if self.z is not None:
-            data_array = data_array.where(data_array.z >= self.z_min, drop=True) \
-                .where(data_array.z <= self.z_max, drop=True)
-        
-        return proc.GeoDataArray(data_array)
+            geo_da.data = geo_da.where(geo_da.data.z >= self.z_min, drop=True) \
+                .where(geo_da.data.z <= self.z_max, drop=True)
+        geo_da.fit_coordinates_to_data()
+        return geo_da
     
     def import_coordinates_from_data_array(self, data_array_source):
         try:

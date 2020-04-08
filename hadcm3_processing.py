@@ -18,6 +18,7 @@ class HadCM3DS(proc.ModelDS):
         self.lon_b = None
         self.lat_b = None
         self.z_b = None
+        self.t = None
         self.lsm = None
         self.start_year = start_year
         self.end_year = end_year
@@ -45,19 +46,18 @@ class HadCM3DS(proc.ModelDS):
         # if type(data_array) is not proc.GeoDataArray:
         #   convert_to_GeoDataArray(data_array)
         
-        data_array = proc.GeoDataArray(data)  # add the GeoDataArray wrapper
-        
+        geo_da = proc.GeoDataArray(data, ds=self)  # add the GeoDataArray wrapper
         try:
             if new_start_year is not None and new_start_year <= self.start_year:
                 raise ValueError("The new start year is smaller than the imported one.")
             elif new_end_year is not None and new_end_year >= self.end_year:
                 raise ValueError("The new end year is larger than the imported one.")
             elif new_start_year is None and new_end_year is not None:
-                data_array = data_array.truncate_years(self.start_year, new_end_year)
+                geo_da.truncate_years(self.start_year, new_end_year)
             elif new_start_year is not None and new_end_year is None:
-                data_array = data_array.truncate_years(new_start_year, self.end_year)
+                geo_da.truncate_years(new_start_year, self.end_year)
             elif new_start_year is not None and new_end_year is not None:
-                data_array = data_array.truncate_years(new_start_year, new_end_year)
+                geo_da.truncate_years(new_start_year, new_end_year)
             else:
                 pass
             
@@ -67,7 +67,7 @@ class HadCM3DS(proc.ModelDS):
                 not all(month in util.months_to_number(self.months) for month in util.months_to_number(new_month_list)):
                 raise ValueError("The new month list include months not yet imported.")
             elif new_month_list is not None:
-                data_array = data_array.truncate_months(new_month_list)
+                geo_da.truncate_months(new_month_list)
             else:
                 pass
         
@@ -75,142 +75,19 @@ class HadCM3DS(proc.ModelDS):
             print(error)
             print("The truncation was aborted.")
         
-        data_array = self.get_lon(data_array, mode_lon, value_lon)
-        data_array = self.get_lat(data_array, mode_lat, value_lat)
-        data_array = self.get_z(data_array, mode_z, value_z)
-        data_array = self.get_t(data_array, mode_t, value_t)
+        geo_da.get_lon(mode_lon, value_lon)
+        geo_da.get_lat(mode_lat, value_lat)
+        geo_da.get_z(mode_z, value_z)
+        geo_da.get_t(mode_t, value_t)
         
-        return proc.GeoDataArray(zone.import_coordinates_from_data_array(data_array).compact(data_array))
-    
-    @staticmethod
-    def get_lon(data_array, mode_lon, value_lon):
-        try:
-            if mode_lon is None:
-                return data_array
-            elif mode_lon == "index":
-                if value_lon is None:
-                    raise ValueError("To use the index mode, please indicate a value_lon.")
-                print(f"New longitude value : {data_array.longitude.values[int(value_lon)]}")
-                return data_array.isel(longitude=value_lon)
-            elif mode_lon == "value":
-                if value_lon is None:
-                    raise ValueError("To use the value mode, please indicate a value_lon.")
-                new_lon = data_array.longitude.values[util.lon_to_index(data_array.longitude.values, value_lon)]
-                print(
-                    f"New longitude value : {new_lon}")
-                # A reprendre sur les autres + tester depassement index.
-                return data_array.isel(longitude=util.lon_to_index(data_array.longitude.values, value_lon))
-            elif mode_lon == "mean":
-                return data_array.mean(dim="longitude")
-            else:
-                print("Mode wasn't recognized. The data_array was not changed.")
-                return data_array
-        except ValueError as error:
-            print(error)
-            print("The DataArray was not changed.")
-            return data_array
-        except IndexError as error:
-            print(error)
-            print("The longitude index was out of bound, the DataArray was not changed")
-            return data_array
-    
-    @staticmethod
-    def get_lat(data_array, mode_lat, value_lat):
+        geo_da.fit_coordinates_to_data()
         
-        try:
-            if mode_lat is None:
-                return data_array
-            elif mode_lat == "index":
-                if value_lat is None:
-                    raise ValueError("To use the index mode, please indicate a value_lat.")
-                print(f"New latitude value : {data_array.latitude.values[int(value_lat)]}")
-                return data_array.isel(latitude=value_lat)
-            elif mode_lat == "value":
-                if value_lat is None:
-                    raise ValueError("To use the value mode, please indicate a value_lat.")
-                new_lat = data_array.latitude.values[util.lat_to_index(data_array.latitude.values, value_lat)]
-                print(
-                    f"New latitude value : {new_lat}")
-                return data_array.isel(latitude=util.lat_to_index(data_array.latitude.values, value_lat))
-            elif mode_lat == "mean":
-                return data_array.mean(dim="latitude")
-            else:
-                print("Mode wasn't recognized. The data_array was not changed.")
-                return data_array
-        except ValueError as error:
-            print(error)
-            print("The DataArray was not changed.")
-            return data_array
-        except IndexError as error:
-            print(error)
-            print("The latitude index was out of bound, the DataArray was not changed")
-            return data_array
+        return zone.import_coordinates_from_data_array(geo_da.data).compact(geo_da)
     
-    @staticmethod
-    def get_z(data_array, mode_z, value_z):
-        
-        try:
-            if mode_z is None:
-                return data_array
-            elif mode_z == "index":
-                if value_z is None:
-                    raise ValueError("To use the index mode, please indicate a value_z.")
-                print(f"New z value : {data_array.z.values[int(value_z)]}")
-                return data_array.isel(z=value_z)
-            elif mode_z == "value":
-                if value_z is None:
-                    raise ValueError("To use the value mode, please indicate a value_z.")
-                print(f"New z value : {data_array.z.values[util.z_to_index(data_array.z.values, value_z)]}")
-                return data_array.isel(z=util.z_to_index(data_array.z.values, value_z))
-            elif mode_z == "mean":
-                return data_array.mean(dim="z")
-            else:
-                print("Mode wasn't recognized. The data_array was not changed.")
-                return data_array
-        except ValueError as error:
-            print(error)
-            print("The DataArray was not changed.")
-            return data_array
-        except IndexError as error:
-            print(error)
-            print("The z index was out of bound, the DataArray was not changed")
-            return data_array
-    
-    @staticmethod
-    def get_t(data_array, mode_t, value_t):
-        
-        try:
-            if mode_t is None:
-                return data_array
-            elif mode_t == "index":
-                if value_t is None:
-                    raise ValueError("To use the index mode, please indicate a value_t.")
-                print(f"New t value : {data_array.t.values[int(value_t)]}")
-                return data_array.isel(t=value_t)
-            elif mode_t == "value":
-                if value_t is None:
-                    raise ValueError("To use the value mode, please indicate a value_t.")
-                print(f"New t value : {data_array.t.values[util.t_to_index(data_array.t.values, value_t)]}")
-                # A reprendre sur les autres + tester depassement index.
-                return data_array.isel(t=util.t_to_index(data_array.t.values, value_t))
-            elif mode_t == "mean":
-                return data_array.mean(dim="t")
-            else:
-                print("Mode wasn't recognized. The data_array was not changed.")
-                return data_array
-        except ValueError as error:
-            print(error)
-            print("The DataArray was not changed.")
-            return data_array
-        except IndexError as error:
-            print(error)
-            print("The t index was out of bound, the DataArray was not changed")
-            return data_array
-    
-    def convert_to_geodataarray(self):
+    def extend(self,geo_data_array):
         pass
-
-
+    
+    
 # **************
 # MONTH DATASETS
 # **************
@@ -246,7 +123,8 @@ class HadCM3RDS(HadCM3DS):
             print(error)
     
     def import_coordinates(self):
-        pass
+        super(HadCM3RDS, self).import_coordinates()
+        self.t = None
 
 
 class OCNMDS(HadCM3RDS):
@@ -260,6 +138,8 @@ class OCNMDS(HadCM3RDS):
                                      verbose=verbose, logger=logger)
     
     def import_coordinates(self):
+        super(OCNMDS, self).import_coordinates()
+        
         self.lon = self.sample_data.longitude.values
         lon_1 = self.sample_data.longitude_1.values
         self.lon_b = np.append(lon_1, 2 * lon_1[-1] - lon_1[-2])
@@ -292,6 +172,8 @@ class OCNYDS(HadCM3RDS):
     """
     
     def import_coordinates(self):
+        super(OCNYDS, self).import_coordinates()
+        
         self.lon = self.sample_data.longitude.values
         lon_1 = self.sample_data.longitude_1.values
         self.lon_b = np.append(lon_1, 2 * lon_1[-1] - lon_1[-2])
@@ -311,6 +193,8 @@ class ATMUPMDS(HadCM3RDS):
     """
     
     def import_coordinates(self):
+        super(ATMUPMDS, self).import_coordinates()
+        
         self.lon = self.sample_data.longitude.values
         lon_1 = self.sample_data.longitude_1.values
         self.lon_b = np.append(lon_1, 2 * lon_1[-1] - lon_1[-2])
@@ -328,6 +212,8 @@ class ATMSURFMDS(HadCM3RDS):
     """
     
     def import_coordinates(self):
+        super(ATMSURFMDS, self).import_coordinates()
+        
         self.lon = self.sample_data.longitude.values
         lon_1 = self.sample_data.longitude_1.values
         self.lon_b = np.append(lon_1, 2 * lon_1[-1] - lon_1[-2])
@@ -346,6 +232,8 @@ class LNDMDS(HadCM3RDS):
     """
     
     def import_coordinates(self):
+        super(LNDMDS, self).import_coordinates()
+        
         self.lon = self.sample_data.longitude.values
         self.lon_b = util.guess_bounds(self.lon)
         
@@ -405,6 +293,7 @@ class HadCM3TS(HadCM3DS):
     
     def import_coordinates(self):
         super(HadCM3TS, self).import_coordinates()
+        self.t = self.data.t.values
 
 
 class SATMTS(HadCM3TS):
@@ -415,6 +304,8 @@ class SATMTS(HadCM3TS):
                                      month_list=month_list, verbose=verbose, logger=logger)
     
     def import_coordinates(self):
+        super(SATMTS, self).import_coordinates()
+        
         self.lon = self.data.longitude.values
         self.lon_b = util.guess_bounds(self.lon)
         
@@ -436,6 +327,8 @@ class SSTATS(HadCM3TS):
                                      month_list=month_list, verbose=verbose, logger=logger)
     
     def import_coordinates(self):
+        super(SSTATS, self).import_coordinates()
+        
         self.lon = self.data.longitude.values
         self.lon_b = util.guess_bounds(self.lon)
         
@@ -458,6 +351,8 @@ class SOLTOAMTS(HadCM3TS):
                                         month_list=month_list, verbose=verbose, logger=logger)
     
     def import_coordinates(self):
+        super(SOLTOAMTS, self).import_coordinates()
+        
         self.lon = self.data.longitude.values
         self.lon_b = util.guess_bounds(self.lon)
         
@@ -480,6 +375,8 @@ class EVAPMTS(HadCM3TS):
                                       month_list=month_list, verbose=verbose, logger=logger)
     
     def import_coordinates(self):
+        super(EVAPMTS, self).import_coordinates()
+        
         self.lon = self.data.longitude.values
         lon_1 = self.data.longitude_1.values
         self.lon_b = np.append(lon_1, 2 * lon_1[-1] - lon_1[-2])
@@ -503,6 +400,8 @@ class ICECONCMTS(HadCM3TS):
                                          month_list=month_list, verbose=verbose, logger=logger)
     
     def import_coordinates(self):
+        super(ICECONCMTS, self).import_coordinates()
+        
         self.lon = self.data.longitude.values
         self.lon_b = util.guess_bounds(self.lon)
         
@@ -524,6 +423,8 @@ class ICEDEPTHMTS(HadCM3TS):
                                           month_list=month_list, verbose=verbose, logger=logger)
     
     def import_coordinates(self):
+        super(ICEDEPTHMTS, self).import_coordinates()
+        
         self.lon = self.data.longitude.values
         self.lon_b = util.guess_bounds(self.lon)
         
@@ -545,6 +446,8 @@ class LHMTS(HadCM3TS):
                                     month_list=month_list, verbose=verbose, logger=logger)
     
     def import_coordinates(self):
+        super(LHMTS, self).import_coordinates()
+        
         self.lon = self.data.longitude.values
         self.lon_b = util.guess_bounds(self.lon)
         
@@ -566,6 +469,8 @@ class MERIDATS(HadCM3TS):
                                        month_list=month_list, verbose=verbose, logger=logger)
     
     def import_coordinates(self):
+        super(MERIDATS, self).import_coordinates()
+        
         self.lon = self.data.longitude.values
         self.lon_b = util.guess_bounds(self.lon)
         

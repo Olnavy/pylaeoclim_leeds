@@ -72,9 +72,13 @@ def guess_bounds(coordinates):
     :param coordinates: 1D and regular!
     :return:
     """
-    step = coordinates[1] - coordinates[0]
-    return [coordinates[0] - step / 2 + i * step for i in range(len(coordinates) + 1)]
-
+    try:
+        if coordinates is None or len(coordinates)==1:
+            return None
+        step = coordinates[1] - coordinates[0]
+        return [coordinates[0] - step / 2 + i * step for i in range(len(coordinates) + 1)]
+    except TypeError:
+        return coordinates
 
 def cell_area(n_lon, lat1, lat2):
     """
@@ -97,7 +101,7 @@ def surface_matrix(lon, lat):
     :return:
     """
     n_j, n_i = len(lat), len(lon)
-    lat_b = coordinate_bounds(lat)
+    lat_b = guess_bounds(lat)
     surface = np.zeros((n_j, n_i))
     for i in range(n_i):
         for j in range(n_j):
