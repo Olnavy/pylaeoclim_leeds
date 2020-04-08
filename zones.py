@@ -13,6 +13,10 @@ class Zone:
     def compact(self, cube):
         return
 
+    @abc.abstractmethod
+    def import_coordinates_from_data_array(self, data_array_source):
+        pass
+
 
 class NoZone(Zone):
     
@@ -21,6 +25,9 @@ class NoZone(Zone):
     
     def compact(self, data_array):
         return data_array
+
+    def import_coordinates_from_data_array(self, data_array_source):
+        return  self
 
 
 class Box(Zone):
@@ -37,21 +44,12 @@ class Box(Zone):
         else:
             self.import_coordinates_from_data_array(data_array_source)
         
-        if self.lon is not None:
-            self.lon_min = lon_min if lon_min is not None else np.min(self.lon)
-            self.lon_max = lon_max if lon_max is not None else np.max(self.lon)
-        else:
-            self.lon_min, self.lon_max = None, None
-        if self.lat is not None:
-            self.lat_min = lat_min if lat_min is not None else np.min(self.lat)
-            self.lat_max = lat_max if lat_max is not None else np.max(self.lat)
-        else:
-            self.lat_min, self.lat_max = None, None
-        if self.z is not None:
-            self.z_min = z_min if z_min is not None else np.min(self.z)
-            self.z_max = z_max if z_max is not None else np.max(self.z)
-        else:
-            self.z_min, self.z_max = None, None
+        self.lon_min = np.min(self.lon) if lon_min is None and self.lon is not None else lon_min
+        self.lon_max = np.max(self.lon) if lon_max is None and self.lon is not None else lon_max
+        self.lat_min = np.min(self.lat) if lat_min is None and self.lat is not None else lat_min
+        self.lat_max = np.max(self.lat) if lat_max is None and self.lat is not None else lat_max
+        self.z_min = np.min(self.z) if z_min is None and self.z is not None else z_min
+        self.z_max = np.max(self.z) if z_max is None and self.z is not None else z_max
         
         # if lsm is None:
         #     self.lsm = prc.LSM().default_lsm(lon, lat, z)
@@ -89,6 +87,7 @@ class Box(Zone):
     
     def compact(self, data_array):
         # Test lon etc.
+        
         if self.lon is not None:
             data_array = data_array.where(data_array.longitude >= self.lon_min, drop=True) \
                 .where(data_array.longitude <= self.lon_max, drop=True)
@@ -114,3 +113,24 @@ class Box(Zone):
             self.z = data_array_source.z.values
         except AttributeError:
             self.z = None
+        
+        self.update()
+        
+        return self
+    
+    def update(self):
+        
+        if self.lon is not None and self.lon_min is None:
+            self.lon_min = np.min(self.lon)
+        if self.lon is not None and self.lon_max is None:
+            self.lon_max = np.max(self.lon)
+        if self.lat is not None and self.lat_min is None:
+            self.lat_min = np.min(self.lat)
+        if self.lat is not None and self.lat_max is None:
+            self.lat_max = np.max(self.lat)
+        if self.z is not None and self.z_min is None:
+            self.z_min = np.min(self.z)
+        if self.z is not None and self.z_max is None:
+            self.z_max = np.max(self.z)
+
+        
