@@ -79,10 +79,11 @@ class ModelDS(GeoDS):
 
 def filter_months(data_array, month_list):
     # To define in GeoDataArray !!!!and GeoDS!!!!
-    condition = xr.zeros_like(data_array.t)
-    for i in range(len(data_array.t)):
-        condition[i] = data_array.t[i].values[()].month in util.months_to_number(month_list)
-    data_array = data_array.where(condition, drop=True)
+    if month_list is not None:
+        condition = xr.zeros_like(data_array.t)
+        for i in range(len(data_array.t)):
+            condition[i] = data_array.t[i].values[()].month in util.months_to_number(month_list)
+        data_array = data_array.where(condition, drop=True)
     return data_array
 
 
