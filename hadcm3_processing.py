@@ -46,6 +46,7 @@ class HadCM3DS(proc.ModelDS):
         #   convert_to_GeoDataArray(data_array)
         
         data_array = proc.GeoDataArray(data)  # add the GeoDataArray wrapper
+        
         try:
             if new_start_year is not None and new_start_year <= self.start_year:
                 raise ValueError("The new start year is smaller than the imported one.")
@@ -79,7 +80,7 @@ class HadCM3DS(proc.ModelDS):
         data_array = self.get_z(data_array, mode_z, value_z)
         data_array = self.get_t(data_array, mode_t, value_t)
         
-        return proc.GeoDataArray(zone.compact(data_array))
+        return proc.GeoDataArray(zone.import_coordinates_from_data_array(data_array).compact(data_array))
     
     @staticmethod
     def get_lon(data_array, mode_lon, value_lon):
@@ -243,7 +244,7 @@ class HadCM3RDS(HadCM3DS):
         except KeyError as error:
             print("This experiment was not found in \"Experiment_to_filename\". Data importation aborted.")
             print(error)
-
+    
     def import_coordinates(self):
         pass
 
@@ -253,6 +254,11 @@ class OCNMDS(HadCM3RDS):
     PF
     """
     
+    def __init__(self, experiment, start_year, end_year, month_list="full", verbose=False, logger="print"):
+        file_name = f"pf/{experiment}o#pf"
+        super(OCNMDS, self).__init__(experiment, start_year, end_year, file_name=file_name, month_list=month_list,
+                                     verbose=verbose, logger=logger)
+    
     def import_coordinates(self):
         self.lon = self.sample_data.longitude.values
         lon_1 = self.sample_data.longitude_1.values
@@ -261,15 +267,10 @@ class OCNMDS(HadCM3RDS):
         self.lat = self.sample_data.latitude.values
         lat_1 = self.sample_data.latitude_1.values
         self.lat_b = np.append(lat_1, 2 * lat_1[-1] - lat_1[-2])
-
+        
         self.z = self.sample_data.depth.values
         depth_1 = self.sample_data.depth_1.values
         self.z_b = np.append(depth_1, 2 * depth_1[-1] - depth_1[-2])
-    
-    def __init__(self, experiment, start_year, end_year, month_list="full", verbose=False, logger="print"):
-        file_name = f"pf/{experiment}o#pf"
-        super(OCNMDS, self).__init__(experiment, start_year, end_year, file_name=file_name, month_list=month_list,
-                                     verbose=verbose, logger=logger)
     
     def sst(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None, mode_t=None,
             value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
@@ -289,16 +290,16 @@ class OCNYDS(HadCM3RDS):
     """
     PG
     """
-
+    
     def import_coordinates(self):
         self.lon = self.sample_data.longitude.values
         lon_1 = self.sample_data.longitude_1.values
         self.lon_b = np.append(lon_1, 2 * lon_1[-1] - lon_1[-2])
-    
+        
         self.lat = self.sample_data.latitude.values
         lat_1 = self.sample_data.latitude_1.values
         self.lat_b = np.append(lat_1, 2 * lat_1[-1] - lat_1[-2])
-    
+        
         self.z = self.sample_data.depth.values
         depth_1 = self.sample_data.depth_1.values
         self.z_b = np.append(depth_1, 2 * depth_1[-1] - depth_1[-2])
@@ -313,7 +314,7 @@ class ATMUPMDS(HadCM3RDS):
         self.lon = self.sample_data.longitude.values
         lon_1 = self.sample_data.longitude_1.values
         self.lon_b = np.append(lon_1, 2 * lon_1[-1] - lon_1[-2])
-    
+        
         self.lat = self.sample_data.latitude.values
         self.lat_b = self.sample_data.latitude_1.values
         
@@ -334,7 +335,7 @@ class ATMSURFMDS(HadCM3RDS):
         self.lat = self.sample_data.latitude.values
         lat_1 = self.sample_data.latitude_1.values
         self.lat_b = np.append(lat_1, 2 * lat_1[-1] - lat_1[-2])
-
+        
         self.z = self.sample_data.level6.values
         self.z_b = util.guess_bounds(self.z)
 
@@ -353,9 +354,10 @@ class LNDMDS(HadCM3RDS):
         
         self.z = self.sample_data.pseudo.values
         self.z_b = util.guess_bounds(self.z)
-
+        
         # What to do of pseudo pseudo_2 and pseudo_3?
-    
+
+
 # ***********
 # TIME SERIES
 # ***********
@@ -376,8 +378,15 @@ class HadCM3TS(HadCM3DS):
     def import_data(self, experiment):
         
         try:
+            
             path = util.path2expts[experiment]
             self.data = xr.open_dataset(f"{path}{experiment}.{self.file_name}.nc")
+            
+            if min(self.data.t.values).year >= self.start_year or max(self.data.t.values).year <= self.end_year:
+                raise ValueError(f"Inavlid start_year or end_year. Please check that they fit the valid range\n"
+                                 f"Valid range : start_year = {min(self.data.t.values).year}, "
+                                 f"end_year = {max(self.data.t.values).year}")
+            
             # The where+lamda structure is not working (GitHub?) so each steps are done individually
             # .where(lambda x: x.t >= cftime.Datetime360Day(self.start_year, 1, 1), drop=True) \
             # .where(lambda x: x.t >= cftime.Datetime360Day(self.end_year, 12, 30), drop=True)
@@ -405,6 +414,13 @@ class SATMTS(HadCM3TS):
         super(SATMTS, self).__init__(experiment, start_year, end_year, file_name="tempsurf.monthly",
                                      month_list=month_list, verbose=verbose, logger=logger)
     
+    def import_coordinates(self):
+        self.lon = self.data.longitude.values
+        self.lon_b = util.guess_bounds(self.lon)
+        
+        self.lat = self.data.latitude.values
+        self.lat_b = util.guess_bounds(self.lat)
+    
     def sat(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None, mode_t=None,
             value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
         data_array = self.data.temp_mm_srf.isel(surface=0).drop("surface")
@@ -414,10 +430,17 @@ class SATMTS(HadCM3TS):
 
 class SSTATS(HadCM3TS):
     
-    def __init__(self, experiment, start_year, end_year, month_list=None, verbose=False, logger="print"):
+    def __init__(self, experiment, start_year=None, end_year=None, month_list=None, verbose=False, logger="print"):
         self.data = None
         super(SSTATS, self).__init__(experiment, start_year, end_year, file_name="oceantemppg01.annual",
                                      month_list=month_list, verbose=verbose, logger=logger)
+    
+    def import_coordinates(self):
+        self.lon = self.data.longitude.values
+        self.lon_b = util.guess_bounds(self.lon)
+        
+        self.lat = self.data.latitude.values
+        self.lat_b = util.guess_bounds(self.lat)
     
     def sst(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
             mode_z=None, value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None,
@@ -427,12 +450,127 @@ class SSTATS(HadCM3TS):
                         new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
 
 
+class SOLTOAMTS(HadCM3TS):
+    
+    def __init__(self, experiment, start_year, end_year, month_list=None, verbose=False, logger="print"):
+        self.data = None
+        super(SOLTOAMTS, self).__init__(experiment, start_year, end_year, file_name="downsolar_toa.monthly",
+                                        month_list=month_list, verbose=verbose, logger=logger)
+    
+    def import_coordinates(self):
+        self.lon = self.data.longitude.values
+        self.lon_b = util.guess_bounds(self.lon)
+        
+        self.lat = self.data.latitude.values
+        self.lat_b = util.guess_bounds(self.lat)
+    
+    def downsol_toa(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
+                    mode_t=None,
+                    value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
+        data_array = self.data.downSol_mm_TOA.isel(toa=0).drop("toa")
+        return self.get(data_array, zone, mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t, value_t,
+                        new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
+
+
+class EVAPMTS(HadCM3TS):
+    
+    def __init__(self, experiment, start_year, end_year, month_list=None, verbose=False, logger="print"):
+        self.data = None
+        super(EVAPMTS, self).__init__(experiment, start_year, end_year, file_name="evap2.monthly",
+                                      month_list=month_list, verbose=verbose, logger=logger)
+    
+    def import_coordinates(self):
+        self.lon = self.data.longitude.values
+        lon_1 = self.data.longitude_1.values
+        self.lon_b = np.append(lon_1, 2 * lon_1[-1] - lon_1[-2])
+        
+        self.lat = self.data.latitude.values
+        lat_1 = self.data.latitude_1.values
+        self.lat_b = np.append(lat_1, 2 * lat_1[-1] - lat_1[-2])
+    
+    def total_evap(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None, mode_t=None,
+                   value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
+        data_array = self.data.total_evap.isel(surface=0).drop("surface")
+        return self.get(data_array, zone, mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t, value_t,
+                        new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
+
+
+class ICECONCMTS(HadCM3TS):
+    
+    def __init__(self, experiment, start_year, end_year, month_list=None, verbose=False, logger="print"):
+        self.data = None
+        super(ICECONCMTS, self).__init__(experiment, start_year, end_year, file_name="iceconc.monthly",
+                                         month_list=month_list, verbose=verbose, logger=logger)
+    
+    def import_coordinates(self):
+        self.lon = self.data.longitude.values
+        self.lon_b = util.guess_bounds(self.lon)
+        
+        self.lat = self.data.latitude.values
+        self.lat_b = util.guess_bounds(self.lat)
+    
+    def iceconc(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None, mode_t=None,
+                value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
+        data_array = self.data.iceconc_mm_srf.isel(surface=0).drop("surface")
+        return self.get(data_array, zone, mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t, value_t,
+                        new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
+
+
+class ICEDEPTHMTS(HadCM3TS):
+    
+    def __init__(self, experiment, start_year, end_year, month_list=None, verbose=False, logger="print"):
+        self.data = None
+        super(ICEDEPTHMTS, self).__init__(experiment, start_year, end_year, file_name="icedepth.monthly",
+                                          month_list=month_list, verbose=verbose, logger=logger)
+    
+    def import_coordinates(self):
+        self.lon = self.data.longitude.values
+        self.lon_b = util.guess_bounds(self.lon)
+        
+        self.lat = self.data.latitude.values
+        self.lat_b = util.guess_bounds(self.lat)
+    
+    def icedepth(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None, mode_t=None,
+                 value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
+        data_array = self.data.icedepth_mm_srf.isel(surface=0).drop("surface")
+        return self.get(data_array, zone, mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t, value_t,
+                        new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
+
+
+class LHMTS(HadCM3TS):
+    
+    def __init__(self, experiment, start_year, end_year, month_list=None, verbose=False, logger="print"):
+        self.data = None
+        super(LHMTS, self).__init__(experiment, start_year, end_year, file_name="lh.monthly",
+                                    month_list=month_list, verbose=verbose, logger=logger)
+    
+    def import_coordinates(self):
+        self.lon = self.data.longitude.values
+        self.lon_b = util.guess_bounds(self.lon)
+        
+        self.lat = self.data.latitude.values
+        self.lat_b = util.guess_bounds(self.lat)
+    
+    def lh(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None, mode_t=None,
+           value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
+        data_array = self.data.lh_mm_srf.isel(surface=0).drop("surface")
+        return self.get(data_array, zone, mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t, value_t,
+                        new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
+
+
 class MERIDATS(HadCM3TS):
     
     def __init__(self, experiment, start_year, end_year, month_list=None, verbose=False, logger="print"):
         self.data = None
         super(MERIDATS, self).__init__(experiment, start_year, end_year, file_name="merid.annual",
                                        month_list=month_list, verbose=verbose, logger=logger)
+    
+    def import_coordinates(self):
+        self.lon = self.data.longitude.values
+        self.lon_b = util.guess_bounds(self.lon)
+        
+        self.lat = self.data.latitude.values
+        self.lat_b = util.guess_bounds(self.lat)
     
     def atlantic(self, zone=zones.NoZone(), mode_lat=None, value_lat=None, mode_z=None, value_z=None, mode_t=None,
                  value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
