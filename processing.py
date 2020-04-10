@@ -3,7 +3,6 @@ import abc
 import xarray as xr
 import util_hadcm3 as util
 import cftime
-import hadcm3_processing as hcm3
 
 
 class GeoDS:
@@ -58,7 +57,7 @@ class ModelDS(GeoDS):
         self.end_year = None
     
     @abc.abstractmethod
-    def import_data(self, experiment):
+    def import_data(self):
         pass
     
     def to_ncdf(self):
@@ -98,6 +97,7 @@ class GeoDataArray:
         else:
             self.data = xr.DataArray(data_input, coords=coords, dims=dims, name=name, attrs=attrs, encoding=encoding,
                                      indexes=indexes, fastpath=fastpath)
+        print("____ Data imported in the GeoDataArray instance.")
         
         self.lon = None
         self.lon_b = None
@@ -111,7 +111,8 @@ class GeoDataArray:
             self.import_coordinates_from_data_set(ds)
         else:
             self.import_coordinates_from_data_array(self.data)
-    
+        print("____ Coordinate imported in the GeoDataArray instance.")
+        
     def __repr__(self):
         return f"DATA: {self.data}"
     
@@ -177,27 +178,27 @@ class GeoDataArray:
                 pass
             elif mode_lon == "index":
                 if value_lon is None:
-                    raise ValueError("To use the index mode, please indicate a value_lon.")
-                print(f"New longitude value : {self.lon[int(value_lon)]}")
+                    raise ValueError("**** To use the index mode, please indicate a value_lon.")
+                print(f"____ New longitude value : {self.lon[int(value_lon)]}")
                 self.data = self.data.isel(longitude=value_lon)
             elif mode_lon == "value":
                 if value_lon is None:
-                    raise ValueError("To use the value mode, please indicate a value_lon.")
+                    raise ValueError("**** To use the value mode, please indicate a value_lon.")
                 new_lon = self.lon[util.lon_to_index(self.lon, value_lon)]
                 print(
-                    f"New longitude value : {new_lon}")
+                    f"____ New longitude value : {new_lon}")
                 self.data = self.data.isel(longitude=util.lon_to_index(self.lon, value_lon))
             elif mode_lon == "mean":
                 self.data = self.data.mean(dim="longitude")
             else:
-                print("Mode wasn't recognized. The data_array was not changed.")
+                print("**** Mode wasn't recognized. The data_array was not changed.")
             self.update_lon()
         except ValueError as error:
             print(error)
-            print("The DataArray was not changed.")
+            print("____ The DataArray was not changed.")
         except IndexError as error:
             print(error)
-            print("The longitude index was out of bound, the DataArray was not changed")
+            print("**** The longitude index was out of bound, the DataArray was not changed")
         finally:
             return self
     
@@ -207,27 +208,27 @@ class GeoDataArray:
                 pass
             elif mode_lat == "index":
                 if value_lat is None:
-                    raise ValueError("To use the index mode, please indicate a value_lat.")
-                print(f"New latitude value : {self.lat[int(value_lat)]}")
+                    raise ValueError("**** To use the index mode, please indicate a value_lat.")
+                print(f"____ New latitude value : {self.lat[int(value_lat)]}")
                 self.data = self.data.isel(latitude=value_lat)
             elif mode_lat == "value":
                 if value_lat is None:
-                    raise ValueError("To use the value mode, please indicate a value_lat.")
+                    raise ValueError("**** To use the value mode, please indicate a value_lat.")
                 new_lat = self.lat[util.lat_to_index(self.lat, value_lat)]
                 print(
-                    f"New latitude value : {new_lat}")
+                    f"____ New latitude value : {new_lat}")
                 self.data = self.data.isel(latitude=util.lat_to_index(self.lat, value_lat))
             elif mode_lat == "mean":
                 self.data = self.data.mean(dim="latitude")
             else:
-                print("Mode wasn't recognized. The data_array was not changed.")
+                print("**** Mode wasn't recognized. The data_array was not changed.")
             self.update_lat()
         except ValueError as error:
             print(error)
-            print("The DataArray was not changed.")
+            print("____ The DataArray was not changed.")
         except IndexError as error:
             print(error)
-            print("The latitude index was out of bound, the DataArray was not changed")
+            print("**** The latitude index was out of bound, the DataArray was not changed")
         finally:
             return self
     
@@ -237,12 +238,12 @@ class GeoDataArray:
                 pass
             elif mode_z == "index":
                 if value_z is None:
-                    raise ValueError("To use the index mode, please indicate a value_z.")
-                print(f"New z value : {self.z[int(value_z)]}")
+                    raise ValueError("**** To use the index mode, please indicate a value_z.")
+                print(f"____ New z value : {self.z[int(value_z)]}")
                 self.data = self.data.isel(z=value_z)
             elif mode_z == "value":
                 if value_z is None:
-                    raise ValueError("To use the value mode, please indicate a value_z.")
+                    raise ValueError("**** To use the value mode, please indicate a value_z.")
                 new_z = self.z[util.z_to_index(self.z, value_z)]
                 print(
                     f"New z value : {new_z}")
@@ -250,14 +251,14 @@ class GeoDataArray:
             elif mode_z == "mean":
                 self.data = self.data.mean(dim="z")
             else:
-                print("Mode wasn't recognized. The data_array was not changed.")
+                print("**** Mode wasn't recognized. The data_array was not changed.")
             self.update_z()
         except ValueError as error:
             print(error)
-            print("The DataArray was not changed.")
+            print("____ The DataArray was not changed.")
         except IndexError as error:
             print(error)
-            print("The z index was out of bound, the DataArray was not changed")
+            print("**** The z index was out of bound, the DataArray was not changed")
         finally:
             return self
 
@@ -267,43 +268,45 @@ class GeoDataArray:
                 pass
             elif mode_t == "index":
                 if value_t is None:
-                    raise ValueError("To use the index mode, please indicate a value_t.")
-                print(f"New t value : {self.t[int(value_t)]}")
+                    raise ValueError("**** To use the index mode, please indicate a value_t.")
+                print(f"____ New t value : {self.t[int(value_t)]}")
                 self.data = self.data.isel(t=value_t)
             elif mode_t == "value":
                 if value_t is None:
-                    raise ValueError("To use the value mode, please indicate a value_t.")
+                    raise ValueError("**** To use the value mode, please indicate a value_t.")
                 new_t = self.t[util.t_to_index(self.t, value_t)]
                 print(
-                    f"New t value : {new_t}")
+                    f"____ New t value : {new_t}")
                 self.data = self.data.isel(t=util.t_to_index(self.t, value_t))
             elif mode_t == "mean":
                 self.data = self.data.mean(dim="t")
             else:
-                print("Mode wasn't recognited. The data_array was not changed.")
+                print("**** Mode wasn't recognited. The data_array was not changed.")
         except ValueError as error:
             print(error)
-            print("The DataArray was not changed.")
+            print("____ The DataArray was not changed.")
         except IndexError as error:
             print(error)
-            print("The t index was out of bound, the DataArray was not changed")
+            print("**** The t index was out of bound, the DataArray was not changed.")
         finally:
             return self
 
-    def truncate_months(self, new_month_list):
+    def crop_months(self, new_month_list):
         condition = xr.zeros_like(self.data.t)
         for i in range(len(self.data.t)):
             condition[i] = self.data.t[i].values[()].month in util.months_to_number(new_month_list)
         self.data = self.data.where(condition, drop=True)
+        print("____ Data cropped to the new month list.")
         return self
     
-    def truncate_years(self, new_start_year, new_end_year):
+    def crop_years(self, new_start_year, new_end_year):
         if new_start_year is not None:
             self.data = self.data.where(self.data.t >= cftime.Datetime360Day(new_start_year, 1, 1),
                                         drop=True)
         if new_end_year is not None:
             self.data = self.data.where(self.data.t <= cftime.Datetime360Day(new_end_year, 12, 30),
                                         drop=True)
+        print("____ Data cropped to the new start and end years.")
         return self
     
     def fit_coordinates_to_data(self):
@@ -327,7 +330,7 @@ class GeoDataArray:
         self.lat_b = util.guess_bounds(self.lat)
         self.z_b = util.guess_bounds(self.z)
         
-        pass
+        print("____ Coordinates cropped to the new data.")
         
     def update_lon(self):
         try:

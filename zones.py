@@ -88,6 +88,7 @@ class Box(Zone):
     def compact(self, geo_da):
         # Test lon etc.
         
+        
         if self.lon is not None:
             geo_da.data = geo_da.data.where(geo_da.data.longitude >= self.lon_min, drop=True) \
                 .where(geo_da.data.longitude <= self.lon_max, drop=True)
@@ -97,6 +98,8 @@ class Box(Zone):
         if self.z is not None:
             geo_da.data = geo_da.where(geo_da.data.z >= self.z_min, drop=True) \
                 .where(geo_da.data.z <= self.z_max, drop=True)
+        
+        print("____ Data compacted to the zone.")
         geo_da.fit_coordinates_to_data()
         return geo_da
     
