@@ -139,6 +139,8 @@ def months_to_number(month_list):
     except ValueError as error:
         print(error)
 
+def kelvin_to_celsius(array):
+    return array - 273.15
 
 # Generate
 path2expds = generate_filepath(str(pathlib.Path(__file__).parent.absolute()) + "/path2expds")

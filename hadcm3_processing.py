@@ -281,7 +281,7 @@ class HadCM3TS(HadCM3DS):
         
         path = ""
         try:
-            print(f"__ Importation of {self.experiment} between {self.start_year} and {self.end_year}.")
+            print(f"__ Importation of {type(self)} : {self.experiment} between {self.start_year} and {self.end_year}.")
             
             path = util.path2expts[self.experiment]
             self.data = xr.open_dataset(f"{path}{self.experiment}.{self.file_name}.nc")
@@ -1020,10 +1020,15 @@ class SATMTS(HadCM3TS):
     def sat(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None, mode_t=None,
             value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
         print("__ Importing SAT.")
-        return self.get(self.data.temp_mm_srf.isel(surface=0).drop("surface"), zone, mode_lon, value_lon, mode_lat,
-                        value_lat, None, None, mode_t, value_t, new_start_year=new_start_year,
-                        new_end_year=new_end_year, new_month_list=new_month_list)
-
+        return self.get(self.kelvin_to_celsius(self.data.temp_mm_srf.isel(surface=0).drop("surface")), zone,
+                        mode_lon, value_lon, mode_lat,value_lat, None, None, mode_t, value_t,
+                        new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
+    
+    def kelvin_to_celsius(self, data_array):
+        data_array.valid_min = util.kelvin_to_celsius(data_array.valid_min)
+        data_array.valid_max = util.kelvin_to_celsius(data_array.valid_max)
+        data_array.values = util.kelvin_to_celsius(data_array.values)
+        return data_array
 
 class ATMT2MMTS(HadCM3TS):
     
