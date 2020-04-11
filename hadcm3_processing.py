@@ -1025,8 +1025,9 @@ class SATMTS(HadCM3TS):
                         new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
     
     def kelvin_to_celsius(self, data_array):
-        data_array.valid_min = util.kelvin_to_celsius(data_array.valid_min)
-        data_array.valid_max = util.kelvin_to_celsius(data_array.valid_max)
+        #Dirty!
+        data_array.attrs['valid_min'] = data_array.attrs['valid_min'] - 273.15
+        data_array.attrs['valid_max'] = data_array.attrs['valid_max'] - 273.15
         data_array.values = util.kelvin_to_celsius(data_array.values)
         return data_array
 
