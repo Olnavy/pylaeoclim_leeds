@@ -728,6 +728,7 @@ class MERIDATS(HadCM3TS):
         self.lat = self.data.latitude.values
         self.lat_b = util.guess_bounds(self.lat)
         
+        self.data.depth.values = -self.data.depth.values
         self.z = self.data.depth.values
         self.z_b = util.guess_bounds(self.z)
     
