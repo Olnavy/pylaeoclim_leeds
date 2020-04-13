@@ -724,11 +724,12 @@ class MERIDATS(HadCM3TS):
     def import_coordinates(self):
         super(MERIDATS, self).import_coordinates()
         
-        self.lon = self.data.longitude.values
-        self.lon_b = util.guess_bounds(self.lon)
-        
         self.lat = self.data.latitude.values
         self.lat_b = util.guess_bounds(self.lat)
+        
+        self.z = self.data.depth.values
+        self.z_b = util.guess_bounds(self.z)
+
     
     def atlantic(self, zone=zones.NoZone(), mode_lat=None, value_lat=None, mode_z=None, value_z=None, mode_t=None,
                  value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
