@@ -50,7 +50,7 @@ class HadCM3DS(proc.ModelDS):
         #   convert_to_GeoDataArray(data_array)
         
         geo_da = proc.GeoDataArray(data, ds=self)  # add the GeoDataArray wrapper
-
+        
         if any([new_start_year is not None, new_end_year is not None, new_month_list is not None]):
             print("____ Truncation to new time coordinates.")
         
@@ -120,7 +120,7 @@ class HadCM3RDS(HadCM3DS):
     
     def import_data(self):
         print(f"__ Importing {type(self)}")
-        print(f"____ Paths generated for {self.experiment} between {self.start_year} and {self.end_year}.")
+        print(f"____ Paths generated for {self.experiment} between years {self.start_year} and {self.end_year}.")
         try:
             path = util.path2expds[self.experiment]
             self.paths = [f"{path}{self.file_name}{year:09d}{month}+.nc"
@@ -281,7 +281,8 @@ class HadCM3TS(HadCM3DS):
         
         path = ""
         try:
-            print(f"__ Importation of {type(self)} : {self.experiment} between {self.start_year} and {self.end_year}.")
+            print(
+                f"__ Importation of {type(self)} : {self.experiment} between years {self.start_year} and {self.end_year}.")
             
             path = util.path2expts[self.experiment]
             self.data = xr.open_dataset(f"{path}{self.experiment}.{self.file_name}.nc")
@@ -729,7 +730,6 @@ class MERIDATS(HadCM3TS):
         
         self.z = self.data.depth.values
         self.z_b = util.guess_bounds(self.z)
-
     
     def atlantic(self, zone=zones.NoZone(), mode_lat=None, value_lat=None, mode_z=None, value_z=None, mode_t=None,
                  value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
@@ -1022,15 +1022,16 @@ class SATMTS(HadCM3TS):
             value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
         print("__ Importing SAT.")
         return self.get(self.kelvin_to_celsius(self.data.temp_mm_srf.isel(surface=0).drop("surface")), zone,
-                        mode_lon, value_lon, mode_lat,value_lat, None, None, mode_t, value_t,
+                        mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t, value_t,
                         new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
     
     def kelvin_to_celsius(self, data_array):
-        #Dirty!
+        # Dirty!
         data_array.attrs['valid_min'] = data_array.attrs['valid_min'] - 273.15
         data_array.attrs['valid_max'] = data_array.attrs['valid_max'] - 273.15
         data_array.values = util.kelvin_to_celsius(data_array.values)
         return data_array
+
 
 class ATMT2MMTS(HadCM3TS):
     
