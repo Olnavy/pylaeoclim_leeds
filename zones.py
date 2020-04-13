@@ -96,7 +96,7 @@ class Box(Zone):
             geo_da.data = geo_da.data.where(geo_da.data.latitude >= self.lat_min, drop=True) \
                 .where(geo_da.data.latitude <= self.lat_max, drop=True)
         if self.z is not None:
-            geo_da.data = geo_da.where(geo_da.data.z >= self.z_min, drop=True) \
+            geo_da.data = geo_da.data.where(geo_da.data.z >= self.z_min, drop=True) \
                 .where(geo_da.data.z <= self.z_max, drop=True)
         
         print("____ Data compacted to the zone.")
