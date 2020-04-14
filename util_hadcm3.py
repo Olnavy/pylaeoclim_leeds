@@ -142,6 +142,9 @@ def months_to_number(month_list):
 def kelvin_to_celsius(array):
     return array - 273.15
 
+def cycle_lon(array):
+    return np.append(array, array[:, 0][:, np.newaxis], axis=1)
+
 # Generate
 path2expds = generate_filepath(str(pathlib.Path(__file__).parent.absolute()) + "/path2expds")
 path2expts = generate_filepath(str(pathlib.Path(__file__).parent.absolute()) + "/path2expts")

@@ -116,8 +116,8 @@ class GeoDataArray:
     def __repr__(self):
         return f"DATA: {self.data}"
     
-    def values(self):
-        return self.data.values
+    def values(self, processing=True):
+        return util.cycle_lon(self.data.values) if processing else self.data.values
     
     def import_coordinates_from_data_set(self, ds):
         try:
@@ -343,7 +343,7 @@ class GeoDataArray:
     def update_lat(self):
         try:
             self.lat = self.data.latitude.values
-            self.lat_b = util.guess_bounds(self.lon)
+            self.lat_b = util.guess_bounds(self.lat)
         except AttributeError:
             self.lat = None
             self.lat_b = None
