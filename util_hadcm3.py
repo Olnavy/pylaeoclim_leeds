@@ -72,9 +72,7 @@ def guess_bounds(coordinate, mode):
     if mode == "lon":
         lon_b = []
         if coordinate is not None:
-            print("lon is not none")
             if lon_b is None:
-                print("lon_b is none, calculating from lon")
                 lon_b = [(coordinate[i] + coordinate[i + 1]) / 2 for i in range(len(coordinate) - 1)]
                 lon_b = np.append((3 * coordinate[0] - coordinate[1]) / 2, lon_b)
                 lon_b = np.append(lon_b, (3 * coordinate[-1] - coordinate[-2]) / 2)
@@ -97,7 +95,6 @@ def guess_bounds(coordinate, mode):
     
     if mode == "lat":
         if coordinate is not None:
-            print("lat in not None")
             return coordinate
         else:
             return None
@@ -105,9 +102,7 @@ def guess_bounds(coordinate, mode):
     if mode == "z":
         if coordinate is not None:
             z_b = []
-            print("z is not none")
             if z_b is None:
-                print("z_b is none, calculating from z")
                 z_b = [(coordinate[i] + coordinate[i + 1]) / 2 for i in range(len(coordinate) - 1)]
                 z_b = np.append((3 * coordinate[0] - coordinate[1]) / 2, z_b)
                 z_b = np.append(z_b, (3 * coordinate[-1] - coordinate[-2]) / 2)
