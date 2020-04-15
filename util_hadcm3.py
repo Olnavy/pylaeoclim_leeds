@@ -76,8 +76,8 @@ def guess_bounds(coordinate, mode):
             if lon_b is None:
                 print("lon_b is none, calculating from lon")
                 lon_b = [(coordinate[i] + coordinate[i + 1]) / 2 for i in range(len(coordinate) - 1)]
-                lon_b = np.append((3 * coordinate[0] - coordinate[1]) / 2, lon_b,
-                                  (3 * coordinate[-1] - coordinate[-2]) / 2)
+                lon_b = np.append((3 * coordinate[0] - coordinate[1]) / 2, lon_b)
+                lon_b = np.append(lon_b, (3 * coordinate[-1] - coordinate[-2]) / 2)
             elif len(coordinate) <= 1:
                 lon_b = coordinate
             elif len(lon_b) == len(coordinate):
@@ -85,12 +85,12 @@ def guess_bounds(coordinate, mode):
             elif len(lon_b) == len(coordinate) + 1:
                 pass
             elif len(lon_b) == len(coordinate) - 1:
-                lon_b = np.append(
-                    2 * lon_b[1] - lon_b[2], lon_b, 2 * lon_b[-1] - lon_b[-2])
+                lon_b = np.append(2 * lon_b[1] - lon_b[2], lon_b)
+                lon_b = np.append(lon_b, 2 * lon_b[-1] - lon_b[-2])
             else:
                 lon_b = [(coordinate[i] + coordinate[i + 1]) / 2 for i in range(len(coordinate) - 1)]
-                lon_b = np.append((3 * coordinate[0] - coordinate[1]) / 2, lon_b,
-                                  (3 * coordinate[-1] - coordinate[-2]) / 2)
+                lon_b = np.append((3 * coordinate[0] - coordinate[1]) / 2, lon_b)
+                lon_b = np.append(lon_b,(3 * coordinate[-1] - coordinate[-2]) / 2)
             return lon_b
         else:
             return None
@@ -109,8 +109,8 @@ def guess_bounds(coordinate, mode):
             if z_b is None:
                 print("z_b is none, calculating from z")
                 z_b = [(coordinate[i] + coordinate[i + 1]) / 2 for i in range(len(coordinate) - 1)]
-                z_b = np.append((3 * coordinate[0] - coordinate[1]) / 2, z_b,
-                                (3 * coordinate[-1] - coordinate[-2]) / 2)
+                z_b = np.append((3 * coordinate[0] - coordinate[1]) / 2, z_b)
+                z_b = np.append(z_b, (3 * coordinate[-1] - coordinate[-2]) / 2)
             elif len(coordinate) <= 1:
                 z_b = coordinate
             elif len(z_b) == len(coordinate):
@@ -118,12 +118,12 @@ def guess_bounds(coordinate, mode):
             elif len(z_b) == len(coordinate) + 1:
                 pass
             elif len(z_b) == len(coordinate) - 1:
-                z_b = np.append(
-                    2 * z_b[1] - z_b[2], z_b, 2 * z_b[-1] - z_b[-2])
+                z_b = np.append(2 * z_b[1] - z_b[2], z_b)
+                z_b = np.append(z_b, 2 * z_b[-1] - z_b[-2])
             else:
                 z_b = [(coordinate[i] + coordinate[i + 1]) / 2 for i in range(len(coordinate) - 1)]
-                z_b = np.append((3 * coordinate[0] - coordinate[1]) / 2, z_b,
-                                (3 * coordinate[-1] - coordinate[-2]) / 2)
+                z_b = np.append((3 * coordinate[0] - coordinate[1]) / 2, z_b)
+                z_b = np.append(z_b,(3 * coordinate[-1] - coordinate[-2]) / 2)
             return z_b
         else:
             return None

@@ -117,7 +117,8 @@ class GeoDataArray:
         return f"DATA: {self.data}"
     
     def values(self, processing=True):
-        return util.cycle_lon(self.data.values) if processing else self.data.values
+        data = np.where(self.data.values==0,np.NaN,self.data.values) if processing else self.data.values
+        return util.cycle_lon(data) if processing else data
     
     def import_coordinates_from_data_set(self, ds):
         try:
