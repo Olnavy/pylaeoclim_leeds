@@ -112,7 +112,7 @@ class GeoDataArray:
         else:
             self.import_coordinates_from_data_array(self.data)
         print("____ Coordinate imported in the GeoDataArray instance.")
-        
+    
     def __repr__(self):
         return f"DATA: {self.data}"
     
@@ -123,7 +123,6 @@ class GeoDataArray:
         try:
             self.lon = ds.lon
         except AttributeError:
-            print("in again")
             self.lon = None
         try:
             self.lon_b = ds.lon_b
@@ -149,7 +148,7 @@ class GeoDataArray:
             self.t = ds.t
         except AttributeError:
             self.t = None
-            
+    
     def import_coordinates_from_data_array(self, da):
         try:
             self.lon = da.longitude.values
@@ -167,10 +166,10 @@ class GeoDataArray:
             self.t = da.t.values
         except AttributeError:
             self.t = None
-
-        self.lon_b = util.guess_bounds(self.lon)
-        self.lat_b = util.guess_bounds(self.lat)
-        self.z_b = util.guess_bounds(self.z)
+        
+        self.lon_b = util.guess_bounds(self.lon, "lon")
+        self.lat_b = util.guess_bounds(self.lat, "lat")
+        self.z_b = util.guess_bounds(self.z, "z")
     
     def get_lon(self, mode_lon, value_lon):
         try:
@@ -261,7 +260,7 @@ class GeoDataArray:
             print("**** The z index was out of bound, the DataArray was not changed")
         finally:
             return self
-
+    
     def get_t(self, mode_t, value_t):
         try:
             if mode_t is None:
@@ -290,7 +289,7 @@ class GeoDataArray:
             print("**** The t index was out of bound, the DataArray was not changed.")
         finally:
             return self
-
+    
     def crop_months(self, new_month_list):
         condition = xr.zeros_like(self.data.t)
         for i in range(len(self.data.t)):
@@ -326,16 +325,16 @@ class GeoDataArray:
             self.t = self.data.t.values
         except AttributeError:
             self.t = None
-        self.lon_b = util.guess_bounds(self.lon)
-        self.lat_b = util.guess_bounds(self.lat)
-        self.z_b = util.guess_bounds(self.z)
+        self.lon_b = util.guess_bounds(self.lon, "lon")
+        self.lat_b = util.guess_bounds(self.lat, "lat")
+        self.z_b = util.guess_bounds(self.z, "z")
         
         print("____ Coordinates cropped to the new data.")
-        
+    
     def update_lon(self):
         try:
             self.lon = self.data.longitude.values
-            self.lon_b = util.guess_bounds(self.lon)
+            self.lon_b = util.guess_bounds(self.lon, "lon")
         except AttributeError:
             self.lon = None
             self.lon_b = None
@@ -343,7 +342,7 @@ class GeoDataArray:
     def update_lat(self):
         try:
             self.lat = self.data.latitude.values
-            self.lat_b = util.guess_bounds(self.lat)
+            self.lat_b = util.guess_bounds(self.lat, "lat")
         except AttributeError:
             self.lat = None
             self.lat_b = None
@@ -351,7 +350,7 @@ class GeoDataArray:
     def update_z(self):
         try:
             self.z = self.data.z.values
-            self.z_b = util.guess_bounds(self.z)
+            self.z_b = util.guess_bounds(self.z, "z")
         except AttributeError:
             self.z = None
             self.z_b = None

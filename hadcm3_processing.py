@@ -95,47 +95,10 @@ class HadCM3DS(proc.ModelDS):
         pass
     
     def guess_bounds(self):
-        if self.lon is not None:
-            print("lon is not none")
-            if self.lon_b is None:
-                print("lon_b is none, calculating from lon")
-                step = self.lon[1] - self.lon[0]
-                self.lon_b = [self.lon[0] - step / 2 + i * step for i in range(len(self.lon) + 1)]
-            elif len(self.lon) <=1:
-                self.lon_b = self.lon
-            elif len(self.lon_b) == len(self.lon):
-                self.lon_b = np.append(self.lon_b, 2*self.lon_b[-1] - self.lon_b[-2])
-            elif len(self.lon_b) == len(self.lon) + 1:
-                pass
-            elif len(self.lon_b) == len(self.lon) -1:
-                self.lon_b = np.append(
-                    2 * self.lon_b[1] - self.lon_b[2], self.lon_b, 2 * self.lon_b[-1] - self.lon_b[-2])
-            else:
-                step = self.lon[1] - self.lon[0]
-                self.lon_b = [self.lon[0] - step / 2 + i * step for i in range(len(self.lon) + 1)]
-        
-        if self.lat is not None:
-            print("lat in not None")
-            self.lat_b = self.lat
-            
-        if self.z is not None:
-            print("z is not none")
-            if self.z_b is None:
-                print("z_b is none, calculating from z")
-                step = self.z[1] - self.z[0]
-                self.z_b = [self.z[0] - step / 2 + i * step for i in range(len(self.z) + 1)]
-            elif len(self.z) <=1:
-                self.z_b = self.z
-            elif len(self.z_b) == len(self.z):
-                self.z_b = np.append(self.z_b, 2*self.z_b[-1] - self.z_b[-2])
-            elif len(self.z_b) == len(self.z) + 1:
-                pass
-            elif len(self.z_b) == len(self.z) -1:
-                self.z_b = np.append(
-                    2 * self.z_b[1] - self.z_b[2], self.z_b, 2 * self.z_b[-1] - self.z_b[-2])
-            else:
-                step = self.z[1] - self.z[0]
-                self.z_b = [self.z[0] - step / 2 + i * step for i in range(len(self.z) + 1)]
+        self.lon_b = util.guess_bounds(self.lon, "lon")
+        self.lat_b = util.guess_bounds(self.lat, "lat")
+        self.z_b = util.guess_bounds(self.z, "z")
+
 
 # **************
 # MONTH DATASETS
@@ -242,7 +205,7 @@ class ATMUPMDS(HadCM3RDS):
         self.lon_b = self.sample_data.longitude_1.values
         self.lat = self.sample_data.latitude.values
         self.lat_b = self.sample_data.latitude_1.values
-        self.z = self.sample_data.depth.values #??????
+        self.z = self.sample_data.depth.values  # ??????
         
         super(ATMUPMDS, self).import_coordinates()
 

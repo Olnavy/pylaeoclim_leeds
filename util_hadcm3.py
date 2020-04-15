@@ -66,19 +66,68 @@ def z_to_index(z, target_z):
     return (np.abs(z - target_z)).argmin()
 
 
-def guess_bounds(coordinates):
+def guess_bounds(coordinate, mode):
     """
-    Create bound file for regriding
-    :param coordinates: 1D and regular!
-    :return:
     """
-    try:
-        if coordinates is None or len(coordinates)==1:
+    if mode == "lon":
+        lon_b = []
+        if coordinate is not None:
+            print("lon is not none")
+            if lon_b is None:
+                print("lon_b is none, calculating from lon")
+                lon_b = [(coordinate[i] + coordinate[i + 1]) / 2 for i in range(len(coordinate) - 1)]
+                lon_b = np.append((3 * coordinate[0] - coordinate[1]) / 2, lon_b,
+                                  (3 * coordinate[-1] - coordinate[-2]) / 2)
+            elif len(coordinate) <= 1:
+                lon_b = coordinate
+            elif len(lon_b) == len(coordinate):
+                lon_b = np.append(lon_b, 2 * lon_b[-1] - lon_b[-2])
+            elif len(lon_b) == len(coordinate) + 1:
+                pass
+            elif len(lon_b) == len(coordinate) - 1:
+                lon_b = np.append(
+                    2 * lon_b[1] - lon_b[2], lon_b, 2 * lon_b[-1] - lon_b[-2])
+            else:
+                lon_b = [(coordinate[i] + coordinate[i + 1]) / 2 for i in range(len(coordinate) - 1)]
+                lon_b = np.append((3 * coordinate[0] - coordinate[1]) / 2, lon_b,
+                                  (3 * coordinate[-1] - coordinate[-2]) / 2)
+            return lon_b
+        else:
             return None
-        step = coordinates[1] - coordinates[0]
-        return [coordinates[0] - step / 2 + i * step for i in range(len(coordinates) + 1)]
-    except TypeError:
-        return coordinates
+    
+    if mode == "lat":
+        if coordinate is not None:
+            print("lat in not None")
+            return coordinate
+        else:
+            return None
+    
+    if mode == "z":
+        if coordinate is not None:
+            z_b = []
+            print("z is not none")
+            if z_b is None:
+                print("z_b is none, calculating from z")
+                z_b = [(coordinate[i] + coordinate[i + 1]) / 2 for i in range(len(coordinate) - 1)]
+                z_b = np.append((3 * coordinate[0] - coordinate[1]) / 2, z_b,
+                                (3 * coordinate[-1] - coordinate[-2]) / 2)
+            elif len(coordinate) <= 1:
+                z_b = coordinate
+            elif len(z_b) == len(coordinate):
+                z_b = np.append(z_b, 2 * z_b[-1] - z_b[-2])
+            elif len(z_b) == len(coordinate) + 1:
+                pass
+            elif len(z_b) == len(coordinate) - 1:
+                z_b = np.append(
+                    2 * z_b[1] - z_b[2], z_b, 2 * z_b[-1] - z_b[-2])
+            else:
+                z_b = [(coordinate[i] + coordinate[i + 1]) / 2 for i in range(len(coordinate) - 1)]
+                z_b = np.append((3 * coordinate[0] - coordinate[1]) / 2, z_b,
+                                (3 * coordinate[-1] - coordinate[-2]) / 2)
+            return z_b
+        else:
+            return None
+
 
 def cell_area(n_lon, lat1, lat2):
     """
@@ -101,7 +150,7 @@ def surface_matrix(lon, lat):
     :return:
     """
     n_j, n_i = len(lat), len(lon)
-    lat_b = guess_bounds(lat)
+    lat_b = guess_bounds(lat, "lat")
     surface = np.zeros((n_j, n_i))
     for i in range(n_i):
         for j in range(n_j):
@@ -125,6 +174,7 @@ def generate_filepath(path):
             result_dict[key] = val
     return result_dict
 
+
 # TIME
 
 def t_to_index(t: List[cftime.Datetime360Day], target_t: cftime.Datetime360Day):
@@ -139,11 +189,14 @@ def months_to_number(month_list):
     except ValueError as error:
         print(error)
 
+
 def kelvin_to_celsius(array):
     return array - 273.15
 
+
 def cycle_lon(array):
     return np.append(array, array[:, 0][:, np.newaxis], axis=1)
+
 
 # Generate
 path2expds = generate_filepath(str(pathlib.Path(__file__).parent.absolute()) + "/path2expds")
