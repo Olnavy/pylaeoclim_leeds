@@ -189,7 +189,7 @@ class GeoDataArray:
                     f"____ New longitude value : {new_lon}")
                 self.data = self.data.isel(longitude=util.lon_to_index(self.lon, value_lon))
             elif mode_lon == "mean":
-                self.data = self.data.mean(dim="longitude")
+                self.data = self.data.nanmean(dim="longitude")
             else:
                 print("**** Mode wasn't recognized. The data_array was not changed.")
             self.update_lon()
@@ -219,7 +219,7 @@ class GeoDataArray:
                     f"____ New latitude value : {new_lat}")
                 self.data = self.data.isel(latitude=util.lat_to_index(self.lat, value_lat))
             elif mode_lat == "mean":
-                self.data = self.data.mean(dim="latitude")
+                self.data = self.data.nanmean(dim="latitude")
             else:
                 print("**** Mode wasn't recognized. The data_array was not changed.")
             self.update_lat()
@@ -249,7 +249,7 @@ class GeoDataArray:
                     f"New z value : {new_z}")
                 self.data = self.data.isel(z=util.z_to_index(self.z, value_z))
             elif mode_z == "mean":
-                self.data = self.data.mean(dim="z")
+                self.data = self.data.nanmean(dim="z")
             else:
                 print("**** Mode wasn't recognized. The data_array was not changed.")
             self.update_z()
