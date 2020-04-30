@@ -51,6 +51,7 @@ class HadCM3DS(proc.ModelDS):
         #   convert_to_GeoDataArray(data_array)
         
         geo_da = proc.GeoDataArray(data, ds=self)  # add the GeoDataArray wrapper
+        geo_da = zone.import_coordinates_from_data_array(geo_da.data).compact(geo_da)
         
         if any([new_start_year is not None, new_end_year is not None, new_month_list is not None]):
             print("____ Truncation to new time coordinates.")
@@ -89,7 +90,7 @@ class HadCM3DS(proc.ModelDS):
         geo_da.get_t(mode_t, value_t)
         # geo_da.fit_coordinates_to_data() Is it still useful?
         
-        return zone.import_coordinates_from_data_array(geo_da.data).compact(geo_da)
+        return geo_da
     
     def extend(self, geo_data_array):
         pass
