@@ -13,7 +13,17 @@ class PlotTemplate:
     def __init__(self, sav_path):
         self.sav_path = sav_path
     
+    def core(self):
+        pass
     
+    def plot(self):
+        self.core()
+        plt.plot()
+
+    def save(self):
+        self.core()
+        plt.savefig(self.sav_path)
+        
 class OcnTzTS(PlotTemplate):
     
     def __init__(self, experiment, start_year, end_year, zone, sav_path=None):
@@ -23,7 +33,7 @@ class OcnTzTS(PlotTemplate):
         self.end_year = end_year
         self.zone = zone
         
-    def plot(self):
+    def core(self):
         ts = hcm3.OCNTATS(self.experiment, self.start_year, self.end_year)
 
         zone_up = zones.Box(lon_min=self.zone.lon_min, lon_max=self.zone.lon_max,
