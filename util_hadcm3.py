@@ -88,7 +88,7 @@ def guess_bounds(coordinate, mode):
             else:
                 lon_b = [(coordinate[i] + coordinate[i + 1]) / 2 for i in range(len(coordinate) - 1)]
                 lon_b = np.append((3 * coordinate[0] - coordinate[1]) / 2, lon_b)
-                lon_b = np.append(lon_b,(3 * coordinate[-1] - coordinate[-2]) / 2)
+                lon_b = np.append(lon_b, (3 * coordinate[-1] - coordinate[-2]) / 2)
             return lon_b
         else:
             return None
@@ -118,7 +118,7 @@ def guess_bounds(coordinate, mode):
             else:
                 z_b = [(coordinate[i] + coordinate[i + 1]) / 2 for i in range(len(coordinate) - 1)]
                 z_b = np.append((3 * coordinate[0] - coordinate[1]) / 2, z_b)
-                z_b = np.append(z_b,(3 * coordinate[-1] - coordinate[-2]) / 2)
+                z_b = np.append(z_b, (3 * coordinate[-1] - coordinate[-2]) / 2)
             return z_b
         else:
             return None
@@ -194,6 +194,6 @@ def cycle_lon(array):
 
 
 # Generate
-path2expds = generate_filepath(str(pathlib.Path(__file__).parent.absolute()) + "/path2expds")
-path2expts = generate_filepath(str(pathlib.Path(__file__).parent.absolute()) + "/path2expts")
-path2lsm = generate_filepath(str(pathlib.Path(__file__).parent.absolute()) + "/path2lsm")
+path2expds = generate_filepath(str(pathlib.Path(__file__).parent.absolute()) + "/resources/path2expds")
+path2expts = generate_filepath(str(pathlib.Path(__file__).parent.absolute()) + "/resources/path2expts")
+path2lsm = generate_filepath(str(pathlib.Path(__file__).parent.absolute()) + "/resources/path2lsm")

@@ -1,6 +1,7 @@
 demos/.ipynb_checkpoints/
 demos/Overview.ipynb
 .idea/
-path2lsm
-path2expds
-path2expts
+benchmarking/.ipynb_checkpoints/
+resources/path2lsm
+resources/path2expds
+resources/path2expts
