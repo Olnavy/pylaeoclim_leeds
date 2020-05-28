@@ -1,7 +1,7 @@
 import numpy as np
 import abc
 import xarray as xr
-import util_hadcm3 as util
+import paleoclim_leeds.util_hadcm3 as util
 import cftime
 
 
