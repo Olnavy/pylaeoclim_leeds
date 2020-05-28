@@ -5,3 +5,4 @@ benchmarking/.ipynb_checkpoints/
 resources/path2lsm
 resources/path2expds
 resources/path2expts
+__pycache__/
