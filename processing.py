@@ -190,6 +190,14 @@ class GeoDataArray:
                 self.data = self.data.isel(longitude=util.lon_to_index(self.lon, value_lon))
             elif mode_lon == "mean":
                 self.data = self.data.mean(dim="longitude", skipna=True)
+            elif mode_lon == "min":
+                self.data = self.data.min(dim="longitude", skipna=True)
+            elif mode_lon == "max":
+                self.data = self.data.max(dim="longitude", skipna=True)
+            elif mode_lon == "median":
+                self.data = self.data.median(dim="longitude", skipna=True)
+            elif mode_lon == "sum":
+                self.data = self.data.sum(dim="longitude", skipna=True)
             else:
                 print("**** Mode wasn't recognized. The data_array was not changed.")
             self.update_lon()
@@ -220,6 +228,14 @@ class GeoDataArray:
                 self.data = self.data.isel(latitude=util.lat_to_index(self.lat, value_lat))
             elif mode_lat == "mean":
                 self.data = self.data.mean(dim="latitude", skipna=True)
+            elif mode_lat == "min":
+                self.data = self.data.min(dim="latitude", skipna=True)
+            elif mode_lat == "max":
+                self.data = self.data.max(dim="latitude", skipna=True)
+            elif mode_lat == "median":
+                self.data = self.data.median(dim="latitude", skipna=True)
+            elif mode_lat == "sum":
+                self.data = self.data.sum(dim="latitude", skipna=True)
             else:
                 print("**** Mode wasn't recognized. The data_array was not changed.")
             self.update_lat()
@@ -250,6 +266,14 @@ class GeoDataArray:
                 self.data = self.data.isel(z=util.z_to_index(self.z, value_z))
             elif mode_z == "mean":
                 self.data = self.data.mean(dim="z", skipna=True)
+            elif mode_z == "min":
+                self.data = self.data.min(dim="z", skipna=True)
+            elif mode_z == "max":
+                self.data = self.data.max(dim="z", skipna=True)
+            elif mode_z == "median":
+                self.data = self.data.median(dim="z", skipna=True)
+            elif mode_z == "sum":
+                self.data = self.data.sum(dim="z", skipna=True)
             else:
                 print("**** Mode wasn't recognized. The data_array was not changed.")
             self.update_z()
@@ -279,7 +303,15 @@ class GeoDataArray:
                     f"____ New t value : {new_t}")
                 self.data = self.data.isel(t=util.t_to_index(self.t, value_t))
             elif mode_t == "mean":
-                self.data = self.data.mean(dim="t")
+                self.data = self.data.mean(dim="t", skipna=True)
+            elif mode_t == "min":
+                self.data = self.data.min(dim="t", skipna=True)
+            elif mode_t == "max":
+                self.data = self.data.max(dim="t", skipna=True)
+            elif mode_t == "median":
+                self.data = self.data.median(dim="t", skipna=True)
+            elif mode_t == "sum":
+                self.data = self.data.sum(dim="t", skipna=True)
             else:
                 print("**** Mode wasn't recognited. The data_array was not changed.")
         except ValueError as error:
