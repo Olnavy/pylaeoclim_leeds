@@ -73,7 +73,8 @@ class HadCM3DS(proc.ModelDS):
             if new_month_list is not None and self.months is None:
                 raise ValueError(f"**** The month cropping is not available with {type(self)}.")
             elif new_month_list is not None and \
-                not all(month in util.months_to_number(self.months) for month in util.months_to_number(new_month_list)):
+                    not all(
+                        month in util.months_to_number(self.months) for month in util.months_to_number(new_month_list)):
                 raise ValueError("**** The new month list include months not yet imported.")
             elif new_month_list is not None:
                 geo_da.crop_months(new_month_list)
@@ -654,7 +655,7 @@ class MERIDATS(HadCM3TS):
     
     def import_coordinates(self):
         self.lat = self.data.latitude.values
-        self.data.depth.values = -self.data.depth.values
+        self.data.assign_coords(depth=-self.data.depth)
         self.z = self.data.depth.values
         
         super(MERIDATS, self).import_coordinates()
