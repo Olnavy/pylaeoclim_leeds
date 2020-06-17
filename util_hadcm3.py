@@ -95,9 +95,7 @@ def guess_bounds(coordinate, mode):
     
     if mode == "lat":
         if coordinate is not None:
-            lat_b = [(coordinate[i] + coordinate[i + 1]) /  i in range(len(coordinate))]
-            lat_b = np.append(lat_b, (3 * coordinate[-1] - coordinate[-2]) / 2)
-            return lat_b
+            return coordinate
         else:
             return None
     
@@ -139,19 +137,19 @@ def cell_area(n_lon, lat1, lat2):
     return 2 * np.pi * r ** 2 * np.abs(np.sin(lat1_rad) - np.sin(lat2_rad)) / n_lon
 
 
-def surface_matrix(lat, lon):
+def surface_matrix(lon, lat):
     """
     Compute a matrix with all the surfaces values.
     :param lon:
     :param lat:
     :return:
     """
-    n_i, n_j = len(lat), len(lon)
+    n_j, n_i = len(lat), len(lon)
     lat_b = guess_bounds(lat, "lat")
-    surface = np.zeros((n_i, n_j))
-    for i in range(n_i - 1):
+    surface = np.zeros((n_j, n_i))
+    for i in range(n_i):
         for j in range(n_j):
-            surface[i, j] = cell_area(n_j, lat_b[i], lat_b[i + 1])
+            surface[j, i] = cell_area(n_i, lat_b[j], lat_b[j + 1])
     return surface
 
 
