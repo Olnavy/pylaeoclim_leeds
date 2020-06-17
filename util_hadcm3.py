@@ -95,7 +95,7 @@ def guess_bounds(coordinate, mode):
     
     if mode == "lat":
         if coordinate is not None:
-            lat_b = [(coordinate[i] + coordinate[i + 1]) / 2 for i in range(len(coordinate))]
+            lat_b = [(coordinate[i] + coordinate[i + 1]) /  i in range(len(coordinate))]
             lat_b = np.append(lat_b, (3 * coordinate[-1] - coordinate[-2]) / 2)
             return lat_b
         else:
