@@ -6,6 +6,7 @@ import paleoclim_leeds.util_hadcm3 as util
 import abc
 import cftime
 import os
+import time
 
 
 class HadCM3DS(proc.ModelDS):
@@ -265,9 +266,12 @@ class HadCM3TS(HadCM3DS):
                 f"__ Importation of {type(self)} : {self.experiment} between years {self.start_year} and {self.end_year}.")
             
             path = util.path2expts[self.experiment]
-            self.data = xr.open_dataset(f"{path}{self.experiment}.{self.file_name}.nc")
             
-            if min(self.data.t.values).year >= self.start_year or max(self.data.t.values).year <= self.end_year:
+            start = time.time()
+            self.data = xr.open_dataset(f"{path}{self.experiment}.{self.file_name}.nc")
+            print(f"Time elapsed for open_dataset : {time.time() - start}")
+
+            if min(self.data.t.values).year > self.start_year or max(self.data.t.values).year < self.end_year:
                 raise ValueError(f"Inavlid start_year or end_year. Please check that they fit the valid range\n"
                                  f"Valid range : start_year = {min(self.data.t.values).year}, "
                                  f"end_year = {max(self.data.t.values).year}")
@@ -276,9 +280,14 @@ class HadCM3TS(HadCM3DS):
             # .where(lambda x: x.t >= cftime.Datetime360Day(self.start_year, 1, 1), drop=True) \
             # .where(lambda x: x.t >= cftime.Datetime360Day(self.end_year, 12, 30), drop=True)
             # .where(lambda x: x.t.month in util.months_to_number(self.months), drop=True)
+            start = time.time()
             self.data = self.data.where(self.data.t >= cftime.Datetime360Day(self.start_year, 1, 1), drop=True)
+            print(f"Time elapsed for crop start year : {time.time() - start}")
             self.data = self.data.where(self.data.t <= cftime.Datetime360Day(self.end_year, 12, 30), drop=True)
+            print(f"Time elapsed for crop start and end years : {time.time() - start}")
             self.data = proc.filter_months(self.data, self.months)
+            print(f"Time elapsed for crop start and end years and months : {time.time() - start}")
+            
             # data is a xarray.Dataset -> not possible to use xarray.GeoDataArray methods. How to change that?
             
             print("____ Import succeeded.")
