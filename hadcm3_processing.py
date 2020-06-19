@@ -529,6 +529,7 @@ class OCNTATS(HadCM3TS):
     def import_coordinates(self):
         self.lon = self.data.longitude.values
         self.lat = self.data.latitude.values
+        self.data.assign_coords(depth_1=-self.data.depth_1)
         self.z = self.data.depth_1.values
         
         super(OCNTATS, self).import_coordinates()
