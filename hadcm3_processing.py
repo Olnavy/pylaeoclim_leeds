@@ -116,14 +116,6 @@ class HadCM3RDS(HadCM3DS):
         self.paths = []
         super(HadCM3RDS, self).__init__(experiment, start_year, end_year, month_list, verbose, logger)
         
-        try:
-            self.sample_data = xr.open_dataset(self.paths[0])
-        except IndexError as error:
-            print("No dataset to import. Please check again the import options.")
-            raise error
-        except FileNotFoundError as error:
-            print("The file was not found. Data importation aborted.")
-            raise error
     
     def import_data(self):
         print(f"__ Importing {type(self)}")
@@ -140,7 +132,16 @@ class HadCM3RDS(HadCM3DS):
         except KeyError as error:
             print("**** This experiment was not found in \"Experiment_to_filename\". Data import aborted.")
             raise error
-    
+
+        try:
+            self.sample_data = xr.open_dataset(self.paths[0])
+        except IndexError as error:
+            print("No dataset to import. Please check again the import options.")
+            raise error
+        except FileNotFoundError as error:
+            print("The file was not found. Data importation aborted.")
+            raise error
+
     def import_coordinates(self):
         super(HadCM3RDS, self).import_coordinates()
         self.t = None
