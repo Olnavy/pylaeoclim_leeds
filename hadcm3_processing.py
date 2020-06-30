@@ -402,7 +402,7 @@ class SALATS(HadCM3TS):
     def import_coordinates(self):
         self.lon = self.data.longitude.values
         self.lat = self.data.latitude.values
-        self.data.assign_coords(depth_1=-self.data.depth_1)
+        self.data = self.data.assign_coords(depth_1=-self.data.depth_1)
         self.z = self.data.depth_1.values
         
         super(SALATS, self).import_coordinates()
@@ -530,7 +530,7 @@ class OCNTATS(HadCM3TS):
     def import_coordinates(self):
         self.lon = self.data.longitude.values
         self.lat = self.data.latitude.values
-        self.data.assign_coords(depth_1=-self.data.depth_1)
+        self.data = self.data.assign_coords(depth_1=-self.data.depth_1)
         self.z = self.data.depth_1.values
         
         super(OCNTATS, self).import_coordinates()
@@ -576,7 +576,7 @@ class OCNUVELATS(HadCM3TS):
     def import_coordinates(self):
         self.lon = self.data.longitude_1.values
         self.lat = self.data.latitude_1.values
-        self.data.assign_coords(depth_1=-self.data.depth_1)
+        self.data = self.data.assign_coords(depth_1=-self.data.depth_1)
         self.z = self.data.depth_1.values
         
         super(OCNUVELATS, self).import_coordinates()
@@ -621,7 +621,7 @@ class OCNVVELATS(HadCM3TS):
     def import_coordinates(self):
         self.lon = self.data.longitude_1.values
         self.lat = self.data.latitude_1.values
-        self.data.assign_coords(depth_1=-self.data.depth_1)
+        self.data = self.data.assign_coords(depth_1=-self.data.depth_1)
         self.z = self.data.depth_1.values
         
         super(OCNVVELATS, self).import_coordinates()
@@ -665,7 +665,7 @@ class MERIDATS(HadCM3TS):
     
     def import_coordinates(self):
         self.lat = self.data.latitude.values
-        self.data.assign_coords(depth=-self.data.depth)
+        self.data = self.data.assign_coords(depth=-self.data.depth)
         self.z = self.data.depth.values
         
         super(MERIDATS, self).import_coordinates()
