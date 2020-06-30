@@ -4,22 +4,38 @@ import cftime
 from typing import List
 
 
-def running_mean(data, n):
+def running_mean(data, n, axis=0):
     """
-    Running mean on n years for a 1D array. Only use the past values.
+    Running mean on n years for a 1D or 2D array. Only use the past values.
     Parameters
     ----------
-    data : list of numpy 1D array
+    data : numpy 1D or 2D array with time as first dimension
         data to process the running mean
     n : int
         number of years to perform the running mean
     Returns
     -------
-    list of numpy 1D array
+    numpy 1D or 2D array
         new averaged data
     """
-    mean = np.convolve(data, np.ones(n), mode="full")
-    out_mean = np.zeros((len(data)))
+    try:
+        if data.ndim == 1:
+            mean = np.convolve(data, np.ones(n), mode="full")
+        elif data.ndim == 2:
+            n_i = data.shape[axis]
+            n_j = data.shape[1] if axis == 0 else data.shape[0]
+            mean = np.zeros((n_i, n_j))
+            for j in range(n_j):
+                mean[:, j] = np.convolve(data[:, j], np.ones(n), mode="full")[:len(data)]
+        
+        else:
+            raise ValueError("Dimensions >2 not implemented yet.")
+    except TypeError as error:
+        print(error)
+        print("Returning initial tab.")
+        return data
+    
+    out_mean = np.zeros(data.shape)
     for i in range(len(data)):
         if i + 1 < n:
             out_mean[i] = mean[i] / (i + 1)
