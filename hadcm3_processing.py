@@ -115,7 +115,6 @@ class HadCM3RDS(HadCM3DS):
         self.file_name = file_name
         self.paths = []
         super(HadCM3RDS, self).__init__(experiment, start_year, end_year, month_list, verbose, logger)
-        
     
     def import_data(self):
         print(f"__ Importing {type(self)}")
@@ -132,7 +131,7 @@ class HadCM3RDS(HadCM3DS):
         except KeyError as error:
             print("**** This experiment was not found in \"Experiment_to_filename\". Data import aborted.")
             raise error
-
+        
         try:
             self.sample_data = xr.open_dataset(self.paths[0])
         except IndexError as error:
@@ -141,7 +140,7 @@ class HadCM3RDS(HadCM3DS):
         except FileNotFoundError as error:
             print("The file was not found. Data importation aborted.")
             raise error
-
+    
     def import_coordinates(self):
         super(HadCM3RDS, self).import_coordinates()
         self.t = None
@@ -170,17 +169,18 @@ class OCNMDS(HadCM3RDS):
     def sst(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None, mode_t=None,
             value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
         print("__ Importing SST.")
-        return self.get(xr.open_mfdataset(self.paths).temp_mm_uo.isel(unspecified=0).drop("unspecified"), zone,
-                        mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t, value_t,
-                        new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
+        return self.get(
+            xr.open_mfdataset(self.paths, combine='by_coords').temp_mm_uo.isel(unspecified=0).drop("unspecified"), zone,
+            mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t, value_t,
+            new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
     
     def temperature(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
                     mode_z=None, value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None,
                     new_month_list=None):
         print("__ Importing Temperature.")
-        return self.get(xr.open_mfdataset(self.paths).temp_mm_dpth.rename({'depth_1': 'z'}), zone, mode_lon, value_lon,
-                        mode_lat, value_lat, mode_z, value_z, mode_t, value_t, new_start_year=new_start_year,
-                        new_end_year=new_end_year, new_month_list=new_month_list)
+        return self.get(xr.open_mfdataset(self.paths, combine='by_coords').temp_mm_dpth.rename({'depth_1': 'z'}), zone,
+                        mode_lon, value_lon, mode_lat, value_lat, mode_z, value_z, mode_t, value_t,
+                        new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
 
 
 class OCNYDS(HadCM3RDS):
@@ -271,7 +271,7 @@ class HadCM3TS(HadCM3DS):
             start = time.time()
             self.data = xr.open_dataset(f"{path}{self.experiment}.{self.file_name}.nc")
             print(f"Time elapsed for open_dataset : {time.time() - start}")
-
+            
             if min(self.data.t.values).year > self.start_year or max(self.data.t.values).year < self.end_year:
                 raise ValueError(f"Inavlid start_year or end_year. Please check that they fit the valid range\n"
                                  f"Valid range : start_year = {min(self.data.t.values).year}, "
