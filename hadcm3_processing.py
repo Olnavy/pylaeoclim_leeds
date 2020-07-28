@@ -186,8 +186,8 @@ class OCNMDS(HadCM3RDS):
                     mode_z=None, value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None,
                     new_month_list=None):
         print("__ Importing Salinity.")
-        return self.get(xr.open_mfdataset(self.paths, combine='by_coords').salinity.rename({'depth_1': 'z'}), zone,
-                        mode_lon, value_lon, mode_lat, value_lat, mode_z, value_z, mode_t, value_t,
+        return self.get(xr.open_mfdataset(self.paths, combine='by_coords').salinity_mm_dpth.rename({'depth_1': 'z'}),
+                        zone, mode_lon, value_lon, mode_lat, value_lat, mode_z, value_z, mode_t, value_t,
                         new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
 
 class OCNYDS(HadCM3RDS):
