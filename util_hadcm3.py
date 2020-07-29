@@ -2,6 +2,7 @@ import numpy as np
 import pathlib
 import cftime
 from typing import List
+import xarray as xr
 
 
 def running_mean(data, n, axis=0):
@@ -202,8 +203,13 @@ def months_to_number(month_list):
 
 
 def kelvin_to_celsius(array):
-    return array - 273.15
-
+    if isinstance(array, np.ndarray):
+        return array - 273.15
+    elif isinstance(array, xr.DataArray):
+        array.attrs['valid_min'] = array.attrs['valid_min'] - 273.15
+        array.attrs['valid_max'] = array.attrs['valid_max'] - 273.15
+        array.values = array.values - 273.15
+        return array
 
 def cycle_lon(array):
     return np.append(array, array[:, 0][:, np.newaxis], axis=1)
