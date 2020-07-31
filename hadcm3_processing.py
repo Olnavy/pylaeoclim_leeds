@@ -161,6 +161,7 @@ class OCNMDS(HadCM3RDS):
         self.lon_b = self.sample_data.longitude_1.values
         self.lat = self.sample_data.latitude.values
         self.lat_b = self.sample_data.latitude_1.values
+        self.data = self.data.assign_coords(depth=-self.data.depth)
         self.z = - self.sample_data.depth.values
         self.z_b = - self.sample_data.depth_1.values
         
@@ -177,7 +178,7 @@ class OCNMDS(HadCM3RDS):
     def temperature(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
                     mode_z=None, value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None,
                     new_month_list=None):
-        print("__ Importing Temperature.")
+        print("__ Importing temperature.")
         return self.get(xr.open_mfdataset(self.paths, combine='by_coords').temp_mm_dpth.rename({'depth_1': 'z'}), zone,
                         mode_lon, value_lon, mode_lat, value_lat, mode_z, value_z, mode_t, value_t,
                         new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
@@ -185,7 +186,7 @@ class OCNMDS(HadCM3RDS):
     def salinity(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
                  mode_z=None, value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None,
                  new_month_list=None):
-        print("__ Importing Salinity.")
+        print("__ Importing salinity.")
         return self.get(xr.open_mfdataset(self.paths, combine='by_coords').salinity_mm_dpth.rename({'depth_1': 'z'}),
                         zone, mode_lon, value_lon, mode_lat, value_lat, mode_z, value_z, mode_t, value_t,
                         new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
@@ -193,7 +194,7 @@ class OCNMDS(HadCM3RDS):
     def u_velocity(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
                    mode_z=None, value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None,
                    new_month_list=None):
-        print("__ Importing Eastward Velocity.")
+        print("__ Importing meridional (eastward) velocity.")
         return self.get(xr.open_mfdataset(self.paths, combine='by_coords').ucurrTot_mm_dpth.rename({'depth_1': 'z'})
                         .rename({'longitude_1': 'longitude'}).rename({'latitude_1': 'latitude'}),
                         zone, mode_lon, value_lon, mode_lat, value_lat, mode_z, value_z, mode_t, value_t,
@@ -202,7 +203,7 @@ class OCNMDS(HadCM3RDS):
     def v_velocity(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
                    mode_z=None, value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None,
                    new_month_list=None):
-        print("__ Importing Westward Velocity.")
+        print("__ Importing zonal (northward) velocity.")
         return self.get(xr.open_mfdataset(self.paths, combine='by_coords').vcurrTot_mm_dpth.rename({'depth_1': 'z'})
                         .rename({'longitude_1': 'longitude'}).rename({'latitude_1': 'latitude'}),
                         zone, mode_lon, value_lon, mode_lat, value_lat, mode_z, value_z, mode_t, value_t,
@@ -211,7 +212,7 @@ class OCNMDS(HadCM3RDS):
     def velocity(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
                  mode_z=None, value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None,
                  new_month_list=None):
-        print("__ Importing Easward and Westward Velocity and computing total velocity.")
+        print("__ Importing zonal and meridional velocities and computing total velocity.")
         return self.get(np.sqrt(
             (xr.open_mfdataset(self.paths, combine='by_coords').vcurrTot_mm_dpth.rename({'depth_1': 'z'})
              .rename({'longitude_1': 'longitude'}).rename({'latitude_1': 'latitude'})) ** 2 +
@@ -239,7 +240,7 @@ class OCNYDS(HadCM3RDS):
     def temperature(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
                     mode_z=None, value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None,
                     new_month_list=None):
-        print("__ Importing Temperature.")
+        print("__ Importing temperature.")
         return self.get(xr.open_mfdataset(self.paths, combine='by_coords').temp_ym_dpth.rename({'depth_1': 'z'}),
                         zone, mode_lon, value_lon, mode_lat, value_lat, mode_z, value_z, mode_t, value_t,
                         new_start_year=new_start_year, new_end_year=new_end_year)
@@ -247,7 +248,7 @@ class OCNYDS(HadCM3RDS):
     def salinity(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
                  mode_z=None, value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None,
                  new_month_list=None):
-        print("__ Importing Salinity.")
+        print("__ Importing salinity.")
         return self.get(xr.open_mfdataset(self.paths, combine='by_coords').salinity_ym_dpth.rename({'depth_1': 'z'}),
                         zone, mode_lon, value_lon, mode_lat, value_lat, mode_z, value_z, mode_t, value_t,
                         new_start_year=new_start_year, new_end_year=new_end_year)
