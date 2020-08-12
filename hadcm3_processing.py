@@ -168,6 +168,8 @@ class OCNMDS(HadCM3RDS):
         self.data = self.data.assign_coords(depth=-self.data.depth)
         self.z = - self.sample_data.depth.values
         self.z_b = - self.sample_data.depth_1.values
+        self.t = self.sample_data.t.values
+
         
         super(OCNMDS, self).import_coordinates()
     
@@ -243,6 +245,7 @@ class OCNYDS(HadCM3RDS):
         self.lat_b = self.sample_data.latitude_1.values
         self.z = - self.sample_data.depth.values
         self.z_b = - self.sample_data.depth_1.values
+        self.t = self.sample_data.t.values
         
         super(OCNYDS, self).import_coordinates()
     
@@ -312,6 +315,7 @@ class ATMUPMDS(HadCM3RDS):
         self.lat = self.sample_data.latitude.values
         self.lat_b = self.sample_data.latitude_1.values
         self.z = self.sample_data.depth.values  # ??????
+        self.t = self.sample_data.t.values
         
         super(ATMUPMDS, self).import_coordinates()
 
@@ -332,6 +336,7 @@ class ATMSURFMDS(HadCM3RDS):
         self.lat = self.sample_data.latitude.values
         self.lat_b = self.sample_data.latitude_1.values
         self.z = self.sample_data.level6.values
+        self.t = self.sample_data.t.values
         
         super(ATMSURFMDS, self).import_coordinates()
     
@@ -352,6 +357,7 @@ class LNDMDS(HadCM3RDS):
         self.lon = self.sample_data.longitude.values
         self.lat = self.sample_data.latitude.values
         self.z = self.sample_data.pseudo.values
+        self.t = self.sample_data.t.values
         
         super(LNDMDS, self).import_coordinates()
         
