@@ -297,7 +297,7 @@ class ATMUPMDS(HadCM3RDS):
     """
     
     def __init__(self, experiment, start_year, end_year, month_list="full", verbose=False, logger="print"):
-        file_name = f"pc/{experiment}a#pc"
+        file_name = f"pcpd/{experiment}a#pc"
         super(ATMUPMDS, self).__init__(experiment, start_year, end_year, file_name=file_name, month_list=month_list,
                                        verbose=verbose, logger=logger)
     
@@ -320,7 +320,7 @@ class ATMSURFMDS(HadCM3RDS):
     """
     
     def __init__(self, experiment, start_year, end_year, month_list="full", verbose=False, logger="print"):
-        file_name = f"pd/{experiment}a#pd"
+        file_name = f"pcpd/{experiment}a#pd"
         super(ATMSURFMDS, self).__init__(experiment, start_year, end_year, file_name=file_name, month_list=month_list,
                                          verbose=verbose, logger=logger)
     
