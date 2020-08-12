@@ -245,6 +245,7 @@ class OCNYDS(HadCM3RDS):
         self.lat_b = self.sample_data.latitude_1.values
         self.z = - self.sample_data.depth.values
         self.z_b = - self.sample_data.depth_1.values
+        print(f"test : {self.sample_data.t.values}")
         self.t = self.sample_data.t.values
         
         super(OCNYDS, self).import_coordinates()
