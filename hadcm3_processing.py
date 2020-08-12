@@ -167,8 +167,6 @@ class OCNMDS(HadCM3RDS):
         self.data = self.sample_data.assign_coords(depth=-self.sample_data.depth)
         self.z = - self.sample_data.depth.values
         self.z_b = - self.sample_data.depth_1.values
-        print(self.months)
-        print(util.months_to_number(self.months))
         self.t = [cftime.Datetime360Day(year, month, 1)
                   for year in np.arange(int(self.start_year), int(self.end_year) + 1)
                   for month in util.months_to_number(self.months)]
@@ -310,7 +308,8 @@ class ATMUPMDS(HadCM3RDS):
         self.lat_b = self.sample_data.latitude_1.values
         self.z = self.sample_data.depth.values  # ??????
         self.t = [cftime.Datetime360Day(year, month, 1)
-                  for year in np.arange(int(self.start_year), int(self.end_year) + 1) for month in self.months]
+                  for year in np.arange(int(self.start_year), int(self.end_year) + 1)
+                  for month in util.months_to_number(self.months)]
         
         super(ATMUPMDS, self).import_coordinates()
 
@@ -332,7 +331,8 @@ class ATMSURFMDS(HadCM3RDS):
         self.lat_b = self.sample_data.latitude_1.values
         self.z = self.sample_data.level6.values
         self.t = [cftime.Datetime360Day(year, month, 1)
-                  for year in np.arange(int(self.start_year), int(self.end_year) + 1) for month in self.months]
+                  for year in np.arange(int(self.start_year), int(self.end_year) + 1)
+                  for month in util.months_to_number(self.months)]
         
         super(ATMSURFMDS, self).import_coordinates()
     
