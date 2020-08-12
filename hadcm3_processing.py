@@ -128,7 +128,6 @@ class HadCM3RDS(HadCM3DS):
             else:
                 self.paths = [f"{path}{self.file_name}{year:09d}c1+.nc"
                               for year in np.arange(int(self.start_year), int(self.end_year) + 1)]
-                print([year for year in np.arange(int(self.start_year), int(self.end_year) + 1)])
             for path in self.paths:
                 if not os.path.isfile(path):
                     raise FileNotFoundError(f"** {path} was not found. Data import aborted.")
@@ -244,9 +243,7 @@ class OCNYDS(HadCM3RDS):
         self.lat_b = self.sample_data.latitude_1.values
         self.z = - self.sample_data.depth.values
         self.z_b = - self.sample_data.depth_1.values
-        print(f"test : {self.sample_data.t.values}")
         self.t = self.sample_data.t.values
-        print(self.t)
         
         super(OCNYDS, self).import_coordinates()
     
