@@ -148,6 +148,7 @@ class HadCM3RDS(HadCM3DS):
     def import_coordinates(self):
         super(HadCM3RDS, self).import_coordinates()
 
+
 class OCNMDS(HadCM3RDS):
     """
     PF
@@ -167,7 +168,6 @@ class OCNMDS(HadCM3RDS):
         self.z = - self.sample_data.depth.values
         self.z_b = - self.sample_data.depth_1.values
         self.t = self.sample_data.t.values
-
         
         super(OCNMDS, self).import_coordinates()
     
@@ -243,7 +243,7 @@ class OCNYDS(HadCM3RDS):
         self.lat_b = self.sample_data.latitude_1.values
         self.z = - self.sample_data.depth.values
         self.z_b = - self.sample_data.depth_1.values
-        self.t = self.sample_data.t.values
+        self.t = [cftime.Datetime360Day(year, 6, 1) for year in np.arange(int(self.start_year), int(self.end_year) + 1)]
         
         super(OCNYDS, self).import_coordinates()
     
@@ -334,7 +334,9 @@ class ATMSURFMDS(HadCM3RDS):
         self.lat = self.sample_data.latitude.values
         self.lat_b = self.sample_data.latitude_1.values
         self.z = self.sample_data.level6.values
-        self.t = self.sample_data.t.values
+        self.t = [cftime.Datetime360Day(year, month, 1)
+                  for year in np.arange(int(self.start_year), int(self.end_year) + 1)
+                  for month in self.months]
         
         super(ATMSURFMDS, self).import_coordinates()
     
