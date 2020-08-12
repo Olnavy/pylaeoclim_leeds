@@ -103,9 +103,9 @@ class HadCM3DS(proc.ModelDS):
         self.z_b = util.guess_bounds(self.z, "z")
 
 
-# **************
-# MONTH DATASETS
-# **************
+# ************
+# RAW DATASETS
+# ************
 
 class HadCM3RDS(HadCM3DS):
     
@@ -121,9 +121,13 @@ class HadCM3RDS(HadCM3DS):
         print(f"____ Paths generated for {self.experiment} between years {self.start_year} and {self.end_year}.")
         try:
             path = util.path2expds[self.experiment]
-            self.paths = [f"{path}{self.file_name}{year:09d}{month}+.nc"
-                          for year in np.arange(int(self.start_year), int(self.end_year) + 1)
-                          for month in self.months]
+            if self.months is not None:
+                self.paths = [f"{path}{self.file_name}{year:09d}{month}+.nc"
+                              for year in np.arange(int(self.start_year), int(self.end_year) + 1)
+                              for month in self.months]
+            else:
+                self.paths = [f"{path}{self.file_name}{year:09d}c1+.nc"
+                              for year in np.arange(int(self.start_year), int(self.end_year) + 1)]
             for path in self.paths:
                 if not os.path.isfile(path):
                     raise FileNotFoundError(f"** {path} was not found. Data import aborted.")
@@ -320,8 +324,8 @@ class ATMSURFMDS(HadCM3RDS):
     def __init__(self, experiment, start_year, end_year, month_list="full", verbose=False, logger="print"):
         file_name = f"pd/{experiment}a#pd"
         super(ATMSURFMDS, self).__init__(experiment, start_year, end_year, file_name=file_name, month_list=month_list,
-                                     verbose=verbose, logger=logger)
-        
+                                         verbose=verbose, logger=logger)
+    
     def import_coordinates(self):
         self.lon = self.sample_data.longitude.values
         self.lon_b = self.sample_data.longitude_1.values
@@ -330,9 +334,9 @@ class ATMSURFMDS(HadCM3RDS):
         self.z = self.sample_data.level6.values
         
         super(ATMSURFMDS, self).import_coordinates()
-        
+    
     def sat(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
-                    mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
+            mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
         print("__ Importing SAT.")
         return self.get(xr.open_mfdataset(self.paths, combine='by_coords').temp_mm_srf.isel(suface=0), zone,
                         mode_lon, value_lon, mode_lat, value_lat, mode_t, value_t,
