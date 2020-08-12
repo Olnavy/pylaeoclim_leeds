@@ -232,7 +232,7 @@ class OCNYDS(HadCM3RDS):
     """
     
     def __init__(self, experiment, start_year, end_year, verbose=False, logger="print"):
-        file_name = f"pg/{experiment}o#pc"
+        file_name = f"pg/{experiment}o#pg"
         super(OCNYDS, self).__init__(experiment, start_year, end_year, file_name=file_name,
                                      verbose=verbose, logger=logger, month_list=None)
     
