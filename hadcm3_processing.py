@@ -227,6 +227,11 @@ class OCNYDS(HadCM3RDS):
     PG
     """
     
+    def __init__(self, experiment, start_year, end_year, verbose=False, logger="print"):
+        file_name = f"pg/{experiment}o#pc"
+        super(OCNYDS, self).__init__(experiment, start_year, end_year, file_name=file_name,
+                                     verbose=verbose, logger=logger, month_list=None)
+    
     def import_coordinates(self):
         self.lon = self.sample_data.longitude.values
         self.lon_b = self.sample_data.longitude_1.values
@@ -292,6 +297,11 @@ class ATMUPMDS(HadCM3RDS):
     PC
     """
     
+    def __init__(self, experiment, start_year, end_year, month_list="full", verbose=False, logger="print"):
+        file_name = f"pc/{experiment}a#pc"
+        super(ATMUPMDS, self).__init__(experiment, start_year, end_year, file_name=file_name, month_list=month_list,
+                                       verbose=verbose, logger=logger)
+    
     def import_coordinates(self):
         self.lon = self.sample_data.longitude.values
         self.lon_b = self.sample_data.longitude_1.values
@@ -307,6 +317,11 @@ class ATMSURFMDS(HadCM3RDS):
     PD
     """
     
+    def __init__(self, experiment, start_year, end_year, month_list="full", verbose=False, logger="print"):
+        file_name = f"pd/{experiment}a#pd"
+        super(ATMSURFMDS, self).__init__(experiment, start_year, end_year, file_name=file_name, month_list=month_list,
+                                     verbose=verbose, logger=logger)
+        
     def import_coordinates(self):
         self.lon = self.sample_data.longitude.values
         self.lon_b = self.sample_data.longitude_1.values
