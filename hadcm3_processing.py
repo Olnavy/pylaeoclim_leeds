@@ -251,7 +251,7 @@ class OCNYDS(HadCM3RDS):
             value_t=None, new_start_year=None, new_end_year=None):
         print("__ Importing SST.")
         return self.get(
-            xr.open_mfdataset(self.paths, combine='by_coords').temp_mm_uo.isel(unspecified=0).drop("unspecified"), zone,
+            xr.open_mfdataset(self.paths, combine='by_coords').temp_ym_uo.isel(unspecified=0).drop("unspecified"), zone,
             mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t, value_t,
             new_start_year=new_start_year, new_end_year=new_end_year)
     
