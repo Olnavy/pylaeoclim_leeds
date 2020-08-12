@@ -167,7 +167,8 @@ class OCNMDS(HadCM3RDS):
         self.data = self.data.assign_coords(depth=-self.data.depth)
         self.z = - self.sample_data.depth.values
         self.z_b = - self.sample_data.depth_1.values
-        self.t = self.sample_data.t.values
+        self.t = [cftime.Datetime360Day(year, month, 1)
+                  for year in np.arange(int(self.start_year), int(self.end_year) + 1) for month in self.months]
         
         super(OCNMDS, self).import_coordinates()
     
@@ -246,15 +247,7 @@ class OCNYDS(HadCM3RDS):
         self.t = [cftime.Datetime360Day(year, 6, 1) for year in np.arange(int(self.start_year), int(self.end_year) + 1)]
         
         super(OCNYDS, self).import_coordinates()
-    
-    def sst(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None, mode_t=None,
-            value_t=None, new_start_year=None, new_end_year=None):
-        print("__ Importing SST.")
-        return self.get(
-            xr.open_mfdataset(self.paths, combine='by_coords').temp_ym_uo.isel(unspecified=0).drop("unspecified"), zone,
-            mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t, value_t,
-            new_start_year=new_start_year, new_end_year=new_end_year)
-    
+        
     def temperature(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
                     mode_z=None, value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None):
         print("__ Importing temperature.")
@@ -313,7 +306,8 @@ class ATMUPMDS(HadCM3RDS):
         self.lat = self.sample_data.latitude.values
         self.lat_b = self.sample_data.latitude_1.values
         self.z = self.sample_data.depth.values  # ??????
-        self.t = self.sample_data.t.values
+        self.t = [cftime.Datetime360Day(year, month, 1)
+                  for year in np.arange(int(self.start_year), int(self.end_year) + 1) for month in self.months]
         
         super(ATMUPMDS, self).import_coordinates()
 
@@ -335,8 +329,7 @@ class ATMSURFMDS(HadCM3RDS):
         self.lat_b = self.sample_data.latitude_1.values
         self.z = self.sample_data.level6.values
         self.t = [cftime.Datetime360Day(year, month, 1)
-                  for year in np.arange(int(self.start_year), int(self.end_year) + 1)
-                  for month in self.months]
+                  for year in np.arange(int(self.start_year), int(self.end_year) + 1) for month in self.months]
         
         super(ATMSURFMDS, self).import_coordinates()
     
