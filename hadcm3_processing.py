@@ -128,7 +128,7 @@ class HadCM3RDS(HadCM3DS):
             else:
                 self.paths = [f"{path}{self.file_name}{year:09d}c1+.nc"
                               for year in np.arange(int(self.start_year), int(self.end_year) + 1)]
-                print(year for year in np.arange(int(self.start_year), int(self.end_year) + 1))
+                print([year for year in np.arange(int(self.start_year), int(self.end_year) + 1)])
             for path in self.paths:
                 if not os.path.isfile(path):
                     raise FileNotFoundError(f"** {path} was not found. Data import aborted.")
@@ -148,8 +148,6 @@ class HadCM3RDS(HadCM3DS):
     
     def import_coordinates(self):
         super(HadCM3RDS, self).import_coordinates()
-        self.t = None
-
 
 class OCNMDS(HadCM3RDS):
     """
