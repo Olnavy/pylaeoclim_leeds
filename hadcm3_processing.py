@@ -339,7 +339,7 @@ class ATMSURFMDS(HadCM3RDS):
     def sat(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
             mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
         print("__ Importing SAT.")
-        return self.get(xr.open_mfdataset(self.paths, combine='by_coords').temp_mm_srf.isel(suface=0), zone,
+        return self.get(xr.open_mfdataset(self.paths, combine='by_coords').temp_mm_srf.isel(surface=0), zone,
                         mode_lon, value_lon, mode_lat, value_lat, mode_t, value_t,
                         new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
 
