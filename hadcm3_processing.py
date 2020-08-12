@@ -164,7 +164,7 @@ class OCNMDS(HadCM3RDS):
         self.lon_b = self.sample_data.longitude_1.values
         self.lat = self.sample_data.latitude.values
         self.lat_b = self.sample_data.latitude_1.values
-        self.data = self.data.assign_coords(depth=-self.data.depth)
+        self.data = self.sample_data.assign_coords(depth=-self.sample_data.depth)
         self.z = - self.sample_data.depth.values
         self.z_b = - self.sample_data.depth_1.values
         self.t = [cftime.Datetime360Day(year, month, 1)
