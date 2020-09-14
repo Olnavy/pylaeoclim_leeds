@@ -188,7 +188,7 @@ class OCNMDS(HadCM3RDS):
         return self.get(xr.open_mfdataset(self.paths, combine='by_coords').temp_mm_dpth.rename({'depth_1': 'z'}), zone,
                         mode_lon, value_lon, mode_lat, value_lat, mode_z, value_z, mode_t, value_t,
                         new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
-    
+
     def salinity(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
                  mode_z=None, value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None,
                  new_month_list=None):
@@ -196,6 +196,14 @@ class OCNMDS(HadCM3RDS):
         return self.get(xr.open_mfdataset(self.paths, combine='by_coords').salinity_mm_dpth.rename({'depth_1': 'z'}),
                         zone, mode_lon, value_lon, mode_lat, value_lat, mode_z, value_z, mode_t, value_t,
                         new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
+    
+    def htn(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None, mode_t=None,
+            value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
+        print("__ Importing net surface heat flux.")
+        return self.get(
+            xr.open_mfdataset(self.paths, combine='by_coords').HTN_mm_uo.isel(unspecified=0).drop("unspecified"), zone,
+            mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t, value_t,
+            new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
     
     def u_velocity(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
                    mode_z=None, value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None,
