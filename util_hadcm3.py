@@ -5,6 +5,75 @@ from typing import List
 import xarray as xr
 
 
+class Grid:
+    
+    def __init__(self, lon, lat, z):
+        self.lon = lon
+        self.lat = lat
+        self.z = z
+        self.lon_b = guess_bounds(self.lon, mode="lon")
+        self.lat_b = guess_bounds(self.lat, mode="lat")
+        self.z_b = guess_bounds(self.z, mode="z")
+    
+    def get_surface_matrix(self, n_t=0):
+        matrix = surface_matrix(self.lon, self.lat)
+        return matrix if n_t <= 0 else np.resize(matrix, (n_t, matrix.shape[0], matrix.shape[1]))
+    
+    def get_surface_ratio(self, n_t=0):
+        matrix = surface_matrix(self.lon, self.lat)
+        return matrix / np.sum(matrix) if n_t <= 0 else np.resize(matrix / np.sum(matrix),
+                                                                  (n_t, matrix.shape[0], matrix.shape[1]))
+    
+    def get_volume_matrix(self, n_t=0):
+        matrix = volume_matrix(self.lon, self.lat, self.z)
+        return matrix if n_t <= 0 else np.resize(matrix, (n_t, matrix.shape[0], matrix.shape[1], matrix.shape[2]))
+
+    def get_volume_matrix(self, n_t=0):
+        matrix = volume_matrix(self.lon, self.lat, self.z)
+        return matrix if n_t <= 0 else np.resize(matrix, (n_t, matrix.shape[0], matrix.shape[1], matrix.shape[2]))
+    
+    
+def cell_area(n_lon, lat1, lat2):
+    """
+    Area of a cell on a regular lon-lat grid.
+    :param n_lon: number of longitude divisions
+    :param lat1: bottom of the cell
+    :param lat2: top of the cell
+    :return:
+    """
+    r = 6371000
+    lat1_rad, lat2_rad = 2 * np.pi * lat1 / 360, 2 * np.pi * lat2 / 360
+    return 2 * np.pi * r ** 2 * np.abs(np.sin(lat1_rad) - np.sin(lat2_rad)) / n_lon
+
+
+def surface_matrix(lon, lat):
+    """
+    Compute a matrix with all the surfaces values.
+    :param lon:
+    :param lat:
+    :return:
+    """
+    n_j, n_i = len(lat), len(lon)
+    lat_b = guess_bounds(lat, "lat")
+    surface = np.zeros((n_j, n_i))
+    for i in range(n_i):
+        for j in range(n_j):
+            surface[j, i] = cell_area(n_i, lat_b[j], lat_b[j + 1])
+    return surface
+
+
+def volume_matrix(lon, lat, z):
+    n_lat, n_lon, n_z = len(lat), len(lon), len(z)
+    lat_b = guess_bounds(lat, "lat")
+    z_b = guess_bounds(z, "z")
+    volume = np.zeros((n_lat, n_lon))
+    for i in range(n_lat):
+        for j in range(n_lon):
+            for k in range(n_z):
+                volume[i, j, z] = cell_area(n_lon, lat_b[i], lat_b[i + 1]) * (z_b[i + 1] - z_b[i])
+    return volume
+
+
 def running_mean(data, n, axis=0):
     """
     Running mean on n years for a 1D or 2D array. Only use the past values.
@@ -141,35 +210,6 @@ def guess_bounds(coordinate, mode):
             return None
 
 
-def cell_area(n_lon, lat1, lat2):
-    """
-    Area of a cell on a regular lon-lat grid.
-    :param n_lon: number of longitude divisions
-    :param lat1: bottom of the cell
-    :param lat2: top of the cell
-    :return:
-    """
-    r = 6371000
-    lat1_rad, lat2_rad = 2 * np.pi * lat1 / 360, 2 * np.pi * lat2 / 360
-    return 2 * np.pi * r ** 2 * np.abs(np.sin(lat1_rad) - np.sin(lat2_rad)) / n_lon
-
-
-def surface_matrix(lon, lat):
-    """
-    Compute a matrix with all the surfaces values.
-    :param lon:
-    :param lat:
-    :return:
-    """
-    n_j, n_i = len(lat), len(lon)
-    lat_b = guess_bounds(lat, "lat")
-    surface = np.zeros((n_j, n_i))
-    for i in range(n_i):
-        for j in range(n_j):
-            surface[j, i] = cell_area(n_i, lat_b[j], lat_b[j + 1])
-    return surface
-
-
 def generate_filepath(path):
     """
     Generate a filepath dictionary from a txt file.
@@ -197,7 +237,8 @@ def months_to_number(month_list):
     try:
         conversion = {'ja': 1, 'fb': 2, 'mr': 3, 'ar': 4, 'my': 5, 'jn': 6, 'jl': 7, 'ag': 8, 'sp': 9, 'ot': 10,
                       'nv': 11, 'dc': 12}
-        return [int(month) if isinstance(month, int) or month.isdigit() else conversion[month] for month in month_list]
+        return [int(month) if isinstance(month, int) or month.isdigit() else conversion[month] for month in
+                month_list]
     except ValueError as error:
         print(error)
 
@@ -210,6 +251,7 @@ def kelvin_to_celsius(array):
         array.attrs['valid_max'] = array.attrs['valid_max'] - 273.15
         array.values = array.values - 273.15
         return array
+
 
 def cycle_lon(array):
     return np.append(array, array[:, 0][:, np.newaxis], axis=1)
