@@ -7,6 +7,9 @@ import abc
 import cftime
 import os
 import time
+import pathlib
+
+input_file = util.generate_input(str(pathlib.Path(__file__).parent.absolute()) + "/resources/hadcm3_input")
 
 
 class HadCM3DS(proc.ModelDS):
@@ -58,9 +61,9 @@ class HadCM3DS(proc.ModelDS):
             print("____ Truncation to new time coordinates.")
         
         try:
-            if new_start_year is not None and new_start_year <= self.start_year:
+            if new_start_year is not None and new_start_year < self.start_year:
                 raise ValueError("**** The new start year is smaller than the imported one.")
-            elif new_end_year is not None and new_end_year >= self.end_year:
+            elif new_end_year is not None and new_end_year > self.end_year:
                 raise ValueError("**** The new end year is larger than the imported one.")
             elif new_start_year is None and new_end_year is not None:
                 geo_da.crop_years(self.start_year, new_end_year)
@@ -76,7 +79,7 @@ class HadCM3DS(proc.ModelDS):
             elif new_month_list is not None and \
                     not all(
                         month in util.months_to_number(self.months) for month in util.months_to_number(new_month_list)):
-                raise ValueError("**** The new month list include months not yet imported.")
+                raise ValueError("**** The new month list includes months not yet imported.")
             elif new_month_list is not None:
                 geo_da.crop_months(new_month_list)
             else:
@@ -95,12 +98,8 @@ class HadCM3DS(proc.ModelDS):
         return geo_da
     
     def extend(self, geo_data_array):
+        ### ????
         pass
-    
-    def guess_bounds(self):
-        self.lon_b = util.guess_bounds(self.lon, "lon")
-        self.lat_b = util.guess_bounds(self.lat, "lat")
-        self.z_b = util.guess_bounds(self.z, "z")
 
 
 # ************
@@ -120,7 +119,7 @@ class HadCM3RDS(HadCM3DS):
         print(f"__ Importing {type(self)}")
         print(f"____ Paths generated for {self.experiment} between years {self.start_year} and {self.end_year}.")
         try:
-            path = util.path2expds[self.experiment]
+            path = input_file[self.experiment][1]
             if self.months is not None:
                 self.paths = [f"{path}{self.file_name}{year:09d}{month}+.nc"
                               for year in np.arange(int(self.start_year), int(self.end_year) + 1)
@@ -155,7 +154,8 @@ class OCNMDS(HadCM3RDS):
     """
     
     def __init__(self, experiment, start_year, end_year, month_list="full", verbose=False, logger="print"):
-        file_name = f"pf/{experiment}o#pf"
+        expt_id = input_file[self.experiment][0]
+        file_name = f"pf/{expt_id}o#pf"
         super(OCNMDS, self).__init__(experiment, start_year, end_year, file_name=file_name, month_list=month_list,
                                      verbose=verbose, logger=logger)
     
@@ -188,7 +188,7 @@ class OCNMDS(HadCM3RDS):
         return self.get(xr.open_mfdataset(self.paths, combine='by_coords').temp_mm_dpth.rename({'depth_1': 'z'}), zone,
                         mode_lon, value_lon, mode_lat, value_lat, mode_z, value_z, mode_t, value_t,
                         new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
-
+    
     def salinity(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
                  mode_z=None, value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None,
                  new_month_list=None):
@@ -242,7 +242,8 @@ class OCNYDS(HadCM3RDS):
     """
     
     def __init__(self, experiment, start_year, end_year, verbose=False, logger="print"):
-        file_name = f"pg/{experiment}o#pg"
+        expt_id = input_file[self.experiment][0]
+        file_name = f"pg/{expt_id}o#pg"
         super(OCNYDS, self).__init__(experiment, start_year, end_year, file_name=file_name,
                                      verbose=verbose, logger=logger, month_list=None)
     
@@ -256,7 +257,7 @@ class OCNYDS(HadCM3RDS):
         self.t = [cftime.Datetime360Day(year, 6, 1) for year in np.arange(int(self.start_year), int(self.end_year) + 1)]
         
         super(OCNYDS, self).import_coordinates()
-        
+    
     def temperature(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
                     mode_z=None, value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None):
         print("__ Importing temperature.")
@@ -305,7 +306,8 @@ class ATMUPMDS(HadCM3RDS):
     """
     
     def __init__(self, experiment, start_year, end_year, month_list="full", verbose=False, logger="print"):
-        file_name = f"pcpd/{experiment}a#pc"
+        expt_id = input_file[self.experiment][0]
+        file_name = f"pcpd/{expt_id}a#pc"
         super(ATMUPMDS, self).__init__(experiment, start_year, end_year, file_name=file_name, month_list=month_list,
                                        verbose=verbose, logger=logger)
     
@@ -328,7 +330,8 @@ class ATMSURFMDS(HadCM3RDS):
     """
     
     def __init__(self, experiment, start_year, end_year, month_list="full", verbose=False, logger="print"):
-        file_name = f"pcpd/{experiment}a#pd"
+        expt_id = input_file[self.experiment][0]
+        file_name = f"pcpd/{expt_id}a#pd"
         super(ATMSURFMDS, self).__init__(experiment, start_year, end_year, file_name=file_name, month_list=month_list,
                                          verbose=verbose, logger=logger)
     
@@ -390,7 +393,7 @@ class HadCM3TS(HadCM3DS):
             print(
                 f"__ Importation of {type(self)} : {self.experiment} between years {self.start_year} and {self.end_year}.")
             
-            path = util.path2expts[self.experiment]
+            path = input_file[self.experiment][2]
             
             start = time.time()
             self.data = xr.open_dataset(f"{path}{self.experiment}.{self.file_name}.nc")

@@ -214,6 +214,8 @@ def generate_filepath(path):
     """
     Generate a filepath dictionary from a txt file.
 
+    DEPRECATED
+
     Returns
     -------
     dict
@@ -226,6 +228,24 @@ def generate_filepath(path):
             result_dict[key] = val
     return result_dict
 
+def generate_input(path):
+    """
+    Generate an input dictionary from a txt file.
+
+    Returns
+    -------
+    dict
+        set of inputs (values) for a experiment (keys)
+    """
+    result_dict = dict()
+    with open(path) as f:
+        for line in f:
+            if line[0] == '#':
+                continue
+            key = line.split(";")[0]
+            val = line.split(";")[1:-1]
+            result_dict[key] = val
+    return result_dict
 
 # TIME
 
@@ -258,6 +278,4 @@ def cycle_lon(array):
 
 
 # Generate
-path2expds = generate_filepath(str(pathlib.Path(__file__).parent.absolute()) + "/resources/path2expds")
-path2expts = generate_filepath(str(pathlib.Path(__file__).parent.absolute()) + "/resources/path2expts")
-path2lsm = generate_filepath(str(pathlib.Path(__file__).parent.absolute()) + "/resources/path2lsm")
+# path2lsm = generate_filepath(str(pathlib.Path(__file__).parent.absolute()) + "/resources/path2lsm")

@@ -75,6 +75,11 @@ class ModelDS(GeoDS):
         """
         
         pass
+    
+    def guess_bounds(self):
+        self.lon_b = util.guess_bounds(self.lon, "lon")
+        self.lat_b = util.guess_bounds(self.lat, "lat")
+        self.z_b = util.guess_bounds(self.z, "z")
 
 
 def filter_months(data_array, month_list):

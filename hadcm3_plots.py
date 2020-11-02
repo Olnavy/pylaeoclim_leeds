@@ -1,6 +1,6 @@
 import numpy as np
-import hadcm3_processing as hcm3
-import zones
+import paleoclim_leeds.hadcm3_processing as hcm3
+import paleoclim_leeds.zones as zones
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 import paleoclim_leeds.plots as plots
