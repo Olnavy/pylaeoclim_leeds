@@ -27,10 +27,6 @@ class Grid:
     def get_volume_matrix(self, n_t=0):
         matrix = volume_matrix(self.lon, self.lat, self.z)
         return matrix if n_t <= 0 else np.resize(matrix, (n_t, matrix.shape[0], matrix.shape[1], matrix.shape[2]))
-
-    def get_volume_matrix(self, n_t=0):
-        matrix = volume_matrix(self.lon, self.lat, self.z)
-        return matrix if n_t <= 0 else np.resize(matrix, (n_t, matrix.shape[0], matrix.shape[1], matrix.shape[2]))
     
     
 def cell_area(n_lon, lat1, lat2):
@@ -56,8 +52,8 @@ def surface_matrix(lon, lat):
     n_j, n_i = len(lat), len(lon)
     lat_b = guess_bounds(lat, "lat")
     surface = np.zeros((n_j, n_i))
-    for i in range(n_i):
-        for j in range(n_j):
+    for i in range(n_i-1):
+        for j in range(n_j-1):
             surface[j, i] = cell_area(n_i, lat_b[j], lat_b[j + 1])
     return surface
 
