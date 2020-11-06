@@ -46,13 +46,12 @@ class ModelDS(GeoDS):
         """
         
         super(ModelDS, self).__init__(verbose, logger)
-        self.lon = None
-        self.lat = None
-        self.z = None
-        self.lon_b = None
-        self.lat_b = None
-        self.z_b = None
-        self.lsm = None
+        self.lon, self.lat, self.z = None, None, None
+        self.lonb, self.latb, self.zb = None, None, None
+        self.lons, self.lats, self.zs = None, None, None
+        self.lon_p, self.lat_p, self.z_p = None, None, None
+        self.lonb_p, self.latb_p, self.zb_p = None, None, None
+        self.lons_p, self.lats_p, self.zs_p = None, None, None
         self.start_year = None
         self.end_year = None
     
@@ -77,9 +76,9 @@ class ModelDS(GeoDS):
         pass
     
     def guess_bounds(self):
-        self.lon_b = util.guess_bounds(self.lon, "lon")
-        self.lat_b = util.guess_bounds(self.lat, "lat")
-        self.z_b = util.guess_bounds(self.z, "z")
+        self.lonb = util.guess_bounds(self.lon, "lon")
+        self.latb = util.guess_bounds(self.lat, "lat")
+        self.zb = util.guess_bounds(self.z, "z")
 
 
 def filter_months(data_array, month_list):
@@ -94,88 +93,50 @@ def filter_months(data_array, month_list):
 
 class GeoDataArray:
     
-    def __init__(self, data_input, ds=None, coords=None, dims=None, name=None, attrs=None, encoding=None, indexes=None,
-                 fastpath=False):
+    def __init__(self, data_input, ds=None, coords=None, dims=None, name=None, attrs=None, indexes=None,
+                 fastpath=False, transform=None):
         if isinstance(data_input, xr.DataArray):
             self.data = xr.DataArray(data_input.values, dims=data_input.dims, name=data_input.name,
                                      attrs=data_input.attrs, coords=[data_input[dim].values for dim in data_input.dims])
         else:
-            self.data = xr.DataArray(data_input, coords=coords, dims=dims, name=name, attrs=attrs, encoding=encoding,
+            self.data = xr.DataArray(data_input, coords=coords, dims=dims, name=name, attrs=attrs,
                                      indexes=indexes, fastpath=fastpath)
         print("____ Data imported in the GeoDataArray instance.")
         
-        self.lon = None
-        self.lon_b = None
-        self.lat = None
-        self.lat_b = None
-        self.z = None
-        self.z_b = None
+        self.lon = ds.lon if ds is not None else self.data.longitude
+        self.lat = ds.lat if ds is not None else self.data.latitude
+        self.z = ds.lon if ds is not None else None
+        self.lonb, self.latb, self.zb = ds.lonb if ds is not None else None, ds.latb if ds is not None else None, \
+                                        ds.zb if ds is not None else None
+        self.lons, self.lats, self.zs = ds.lons if ds is not None else None, ds.lats if ds is not None else None, \
+                                        ds.zs if ds is not None else None
+        self.lon_p, self.lat_p, self.z_p = ds.lon_p if ds is not None else None, ds.lat_p if ds is not None else None, \
+                                           ds.z_p if ds is not None else None
+        self.lonb_p, self.latb_p, self.zb_p = ds.lonb_p if ds is not None else None, \
+                                              ds.latb_p if ds is not None else None, ds.zb_p if ds is not None else None
+        self.lons_p, self.lats_p, self.zs_p = ds.lons_p if ds is not None else None, \
+                                              ds.lats_p if ds is not None else None, ds.zs_p if ds is not None else None
         self.t = None
+        self.transform = transform
         
-        if ds is not None:
-            self.import_coordinates_from_data_set(ds)
-        else:
-            self.import_coordinates_from_data_array(self.data)
         print("____ Coordinate imported in the GeoDataArray instance.")
     
     def __repr__(self):
-        return f"DATA: {self.data}"
+        return f"{util.print_coordinates('lon', self.lon)}; {util.print_coordinates('lon_p', self.lon_p)}\n" \
+               f"{util.print_coordinates('lonb', self.lonb)}; {util.print_coordinates('lonb_p', self.lonb_p)}\n" \
+               f"{util.print_coordinates('lons', self.lons)}; {util.print_coordinates('lons_p', self.lons_p)}\n" \
+               f"{util.print_coordinates('lat', self.lat)}; {util.print_coordinates('lat_p', self.lat_p)}\n" \
+               f"{util.print_coordinates('latb', self.latb)}; {util.print_coordinates('latb_p', self.latb_p)}\n" \
+               f"{util.print_coordinates('lats', self.lats)}; {util.print_coordinates('lats_p', self.lats_p)}\n" \
+               f"{util.print_coordinates('z', self.z)}; {util.print_coordinates('z_p', self.z_p)}\n" \
+               f"{util.print_coordinates('zb', self.zb)}; {util.print_coordinates('zb_p', self.zb_p)}\n" \
+               f"{util.print_coordinates('zs', self.zs)}; {util.print_coordinates('zs_p', self.zs_p)}\n" \
+               f"{util.print_coordinates('t', self.t)}\n" \
+               f"DATA: {self.data}"
     
     def values(self, processing=True):
         data = np.where(self.data.values == 0, np.NaN, self.data.values) if processing else self.data.values
-        return util.cycle_lon(data) if processing else data
-    
-    def import_coordinates_from_data_set(self, ds):
-        try:
-            self.lon = ds.lon
-        except AttributeError:
-            self.lon = None
-        try:
-            self.lon_b = ds.lon_b
-        except AttributeError:
-            self.lon_b = None
-        try:
-            self.lat = ds.lat
-        except AttributeError:
-            self.lat = None
-        try:
-            self.lat_b = ds.lat_b
-        except AttributeError:
-            self.lat_b = None
-        try:
-            self.z = ds.z
-        except AttributeError:
-            self.z = None
-        try:
-            self.z_b = ds.z_b
-        except AttributeError:
-            self.z_b = None
-        try:
-            self.t = ds.t
-        except AttributeError:
-            self.t = None
-    
-    def import_coordinates_from_data_array(self, da):
-        try:
-            self.lon = da.longitude.values
-        except AttributeError:
-            self.lon = None
-        try:
-            self.lat = da.latitude.values
-        except AttributeError:
-            self.lat = None
-        try:
-            self.z = da.z.values
-        except AttributeError:
-            self.z = None
-        try:
-            self.t = da.t.values
-        except AttributeError:
-            self.t = None
-        
-        self.lon_b = util.guess_bounds(self.lon, "lon")
-        self.lat_b = util.guess_bounds(self.lat, "lat")
-        self.z_b = util.guess_bounds(self.z, "z")
+        return self.transform(data) if processing else data
     
     def get_lon(self, mode_lon, value_lon):
         try:
@@ -205,7 +166,7 @@ class GeoDataArray:
                 self.data = self.data.sum(dim="longitude", skipna=True)
             else:
                 print("**** Mode wasn't recognized. The data_array was not changed.")
-            self.update_lon()
+            self.update_lon(mode_lon, value_lon)
         except ValueError as error:
             print(error)
             print("____ The DataArray was not changed.")
@@ -214,6 +175,29 @@ class GeoDataArray:
             print("**** The longitude index was out of bound, the DataArray was not changed")
         finally:
             return self
+    
+    def update_lon(self, mode_lon, value_lon):
+        if mode_lon is None:
+            pass
+        elif mode_lon == "index":
+            if value_lon is None:
+                raise ValueError("**** To use the index mode, please indicate a value_lon.")
+            print(f"____ New longitude value : {self.lon[int(value_lon)]}")
+            self.lon = self.lon[int(value_lon)]
+            self.lonb, self.lons = self.lon, None
+            self.lon_p, self.lonb_p, self.lons_p = self.lon, self.lon, None
+        elif mode_lon == "value":
+            if value_lon is None:
+                raise ValueError("**** To use the value mode, please indicate a value_lon.")
+            new_lon = self.lon[util.lon_to_index(self.lon, value_lon)]  # Take the closest longitude
+            self.lon = new_lon
+            self.lonb, self.lons = self.lon, None
+            self.lon_p, self.lonb_p, self.lons_p = self.lon, self.lon, None
+        elif mode_lon in ["mean", "min", "max", "median", "sum"]:
+            self.lon, self.lonb, self.lons = None, None, None
+            self.lon_p, self.lonb_p, self.lons_p = None, None, None
+        else:
+            print("**** Mode wasn't recognized. The data_array was not changed.")
     
     def get_lat(self, mode_lat, value_lat):
         try:
@@ -243,7 +227,7 @@ class GeoDataArray:
                 self.data = self.data.sum(dim="latitude", skipna=True)
             else:
                 print("**** Mode wasn't recognized. The data_array was not changed.")
-            self.update_lat()
+            self.update_lat(mode_lat, value_lat)
         except ValueError as error:
             print(error)
             print("____ The DataArray was not changed.")
@@ -252,6 +236,29 @@ class GeoDataArray:
             print("**** The latitude index was out of bound, the DataArray was not changed")
         finally:
             return self
+    
+    def update_lat(self, mode_lat, value_lat):
+        if mode_lat is None:
+            pass
+        elif mode_lat == "index":
+            if value_lat is None:
+                raise ValueError("**** To use the index mode, please indicate a value_lat.")
+            print(f"____ New latitude value : {self.lat[int(value_lat)]}")
+            self.lat = self.lat[int(value_lat)]
+            self.latb, self.lats = self.lat, None
+            self.lat_p, self.latb_p, self.lats_p = self.lat, self.lat, None
+        elif mode_lat == "value":
+            if value_lat is None:
+                raise ValueError("**** To use the value mode, please indicate a value_lat.")
+            new_lat = self.lat[util.lat_to_index(self.lat, value_lat)]  # Take the closest latitude
+            self.lat = new_lat
+            self.latb, self.lats = self.lat, None
+            self.lat_p, self.latb_p, self.lats_p = self.lat, self.lat, None
+        elif mode_lat in ["mean", "min", "max", "median", "sum"]:
+            self.lat, self.latb, self.lats = None, None, None
+            self.lat_p, self.latb_p, self.lats_p = None, None, None
+        else:
+            print("**** Mode wasn't recognized. The data_array was not changed.")
     
     def get_z(self, mode_z, value_z):
         try:
@@ -281,7 +288,7 @@ class GeoDataArray:
                 self.data = self.data.sum(dim="z", skipna=True)
             else:
                 print("**** Mode wasn't recognized. The data_array was not changed.")
-            self.update_z()
+            self.update_z(mode_z, value_z)
         except ValueError as error:
             print(error)
             print("____ The DataArray was not changed.")
@@ -290,6 +297,29 @@ class GeoDataArray:
             print("**** The z index was out of bound, the DataArray was not changed")
         finally:
             return self
+    
+    def update_z(self, mode_z, value_z):
+        if mode_z is None:
+            pass
+        elif mode_z == "index":
+            if value_z is None:
+                raise ValueError("**** To use the index mode, please indicate a value_z.")
+            print(f"____ New z value : {self.z[int(value_z)]}")
+            self.z = self.z[int(value_z)]
+            self.zb, self.zs = self.z, None
+            self.z_p, self.zb_p, self.zs_p = self.z, self.z, None
+        elif mode_z == "value":
+            if value_z is None:
+                raise ValueError("**** To use the value mode, please indicate a value_z.")
+            new_z = self.z[util.z_to_index(self.z, value_z)]  # Take the closest z
+            self.z = new_z
+            self.zb, self.zs = self.z, None
+            self.z_p, self.zb_p, self.zs_p = self.z, self.z, None
+        elif mode_z in ["mean", "min", "max", "median", "sum"]:
+            self.z, self.zb, self.zs = None, None, None
+            self.z_p, self.zb_p, self.zs_p = None, None, None
+        else:
+            print("**** Mode wasn't recognized. The data_array was not changed.")
     
     def get_t(self, mode_t, value_t):
         try:
@@ -363,35 +393,11 @@ class GeoDataArray:
             self.t = self.data.t.values
         except AttributeError:
             self.t = None
-        self.lon_b = util.guess_bounds(self.lon, "lon")
-        self.lat_b = util.guess_bounds(self.lat, "lat")
-        self.z_b = util.guess_bounds(self.z, "z")
+        self.lonb = util.guess_bounds(self.lon, "lon")
+        self.latb = util.guess_bounds(self.lat, "lat")
+        self.zb = util.guess_bounds(self.z, "z")
         
         print("____ Coordinates cropped to the new data.")
-    
-    def update_lon(self):
-        try:
-            self.lon = self.data.longitude.values
-            self.lon_b = util.guess_bounds(self.lon, "lon")
-        except AttributeError:
-            self.lon = None
-            self.lon_b = None
-    
-    def update_lat(self):
-        try:
-            self.lat = self.data.latitude.values
-            self.lat_b = util.guess_bounds(self.lat, "lat")
-        except AttributeError:
-            self.lat = None
-            self.lat_b = None
-    
-    def update_z(self):
-        try:
-            self.z = self.data.z.values
-            self.z_b = util.guess_bounds(self.z, "z")
-        except AttributeError:
-            self.z = None
-            self.z_b = None
 
 
 class LSM:
