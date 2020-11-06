@@ -17,12 +17,12 @@ class HadCM3DS(proc.ModelDS):
     
     def __init__(self, experiment, start_year, end_year, month_list, verbose, logger):
         super(HadCM3DS, self).__init__(verbose, logger)
-        self.lon = None
-        self.lat = None
-        self.z = None
-        self.lon_b = None
-        self.lat_b = None
-        self.z_b = None
+        self.lon, self.lat, self.z = None, None, None
+        self.lonb, self.latb, self.zb = None, None, None
+        self.lons, self.lats, self.zs = None, None, None
+        self.lon_p, self.lat_p, self.z_p = None, None, None
+        self.lonb_p, self.latb_p, self.zb_p = None, None, None
+        self.lons_p, self.lats_p, self.zs_p = None, None, None
         self.t = None
         self.lsm = None
         self.start_year = start_year
@@ -44,8 +44,8 @@ class HadCM3DS(proc.ModelDS):
     
     @abc.abstractmethod
     def import_coordinates(self):
-        print("____ Coordinates imported in the HadCM3DS instance.")
-        self.guess_bounds()
+        print("____ Coordinates imported in the HadCM3DS dataset.")
+        # self.guess_bounds()
     
     def get(self, data, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
             mode_z=None, value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None,
@@ -77,8 +77,8 @@ class HadCM3DS(proc.ModelDS):
             if new_month_list is not None and self.months is None:
                 raise ValueError(f"**** The month cropping is not available with {type(self)}.")
             elif new_month_list is not None and \
-                    not all(
-                        month in util.months_to_number(self.months) for month in util.months_to_number(new_month_list)):
+                not all(
+                    month in util.months_to_number(self.months) for month in util.months_to_number(new_month_list)):
                 raise ValueError("**** The new month list includes months not yet imported.")
             elif new_month_list is not None:
                 geo_da.crop_months(new_month_list)
@@ -98,7 +98,7 @@ class HadCM3DS(proc.ModelDS):
         return geo_da
     
     def extend(self, geo_data_array):
-        ### ????
+        # ????
         pass
 
 
@@ -109,8 +109,7 @@ class HadCM3DS(proc.ModelDS):
 class HadCM3RDS(HadCM3DS):
     
     def __init__(self, experiment, start_year, end_year, file_name, month_list, verbose, logger):
-        self.buffer_name = "None"
-        self.buffer_array = None
+        self.sample_data = None
         self.file_name = file_name
         self.paths = []
         super(HadCM3RDS, self).__init__(experiment, start_year, end_year, month_list, verbose, logger)
@@ -148,6 +147,104 @@ class HadCM3RDS(HadCM3DS):
         super(HadCM3RDS, self).import_coordinates()
 
 
+class ATMUPMDS(HadCM3RDS):
+    """
+    PC
+    """
+    
+    def __init__(self, experiment, start_year, end_year, month_list="full", verbose=False, logger="print"):
+        expt_id = input_file[self.experiment][0]
+        file_name = f"pcpd/{expt_id}a#pc"
+        super(ATMUPMDS, self).__init__(experiment, start_year, end_year, file_name=file_name, month_list=month_list,
+                                       verbose=verbose, logger=logger)
+    
+    def transform(self, array_r):
+        array = array_r
+        if "longitude" in array.dims:
+            array = xr.concat([array, array.isel(longitude=0)], dim="longitude")
+        if "longitude_1" in array.dims:
+            array = xr.concat([array, array.isel(longitude_1=0)], dim="longitude_1")
+        if "latitude" in array.dims:
+            array = xr.concat([array.isel(latitude=0), array, array.isel(latitude=-1)], dim="latitude")
+        return array.transpose(*array_r.dims)
+    
+    def import_coordinates(self):
+        self.lon, self.lonb = np.sort(self.sample_data.longitude.values), np.sort(self.sample_data.longitude_1.values)
+        self.lons = self.lonb[1:] - self.lonb[0:-1]
+        self.lon_p = np.append(self.lon, self.lon[-1] + self.lons[-1])
+        self.lonb_p = np.append(self.lonb, 2 * self.lonb[-1] - self.lonb[-2])
+        self.lons = self.lonb_p[1:] - self.lonb_p[0:-1]
+        
+        self.lat, self.latb = np.sort(self.sample_data.latitude.values), np.sort(self.sample_data.latitude_1.values)
+        self.lats = self.latb[1:] - self.latb[0:-1]
+        self.lat_p = np.concatenate(([-90], self.lat, [90]))
+        self.latb_p = self.latb
+        self.lats_p = self.latb_p[1:] - self.latb_p[0:-1]
+        
+        self.z = np.sort(self.sample_data.p.values)
+        self.zs = self.z[1:] - self.z[0:-1]
+        self.zb = np.concatenate(
+            (self.z[:-1] - self.zs / 2, [self.z[-1] - self.zs[-1] / 2], [self.z[-1] + self.zs[-1] / 2]))
+        self.z_p = self.z
+        self.zb_p = self.zb
+        self.zs_p = self.zb_p[1:] - self.zb_p[0:-1]
+        
+        self.t = [cftime.Datetime360Day(year, month, 1)
+                  for year in np.arange(int(self.start_year), int(self.end_year) + 1)
+                  for month in util.months_to_number(self.months)]
+        
+        super(ATMUPMDS, self).import_coordinates()
+
+
+class ATMSURFMDS(HadCM3RDS):
+    """
+    PD
+    """
+    
+    def __init__(self, experiment, start_year, end_year, month_list="full", verbose=False, logger="print"):
+        expt_id = input_file[self.experiment][0]
+        file_name = f"pcpd/{expt_id}a#pd"
+        super(ATMSURFMDS, self).__init__(experiment, start_year, end_year, file_name=file_name, month_list=month_list,
+                                         verbose=verbose, logger=logger)
+    
+    def transform(self, array_r):
+        array = array_r
+        if "longitude" in array.dims:
+            array = xr.concat([array, array.isel(longitude=0)], dim="longitude")
+        if "longitude_1" in array.dims:
+            array = xr.concat([array, array.isel(longitude_1=0)], dim="longitude_1")
+        if "latitude_1" in array.dims:
+            array.isel(latitude_1=-1).values = array.isel(latitude_1=-2).values
+            array = xr.concat([array.isel(latitude_1=0), array, array.isel(latitude_1=-2)], dim="latitude_1")
+        return array.transpose(*array_r.dims)
+    
+    def import_coordinates(self):
+        self.lon, self.lonb = np.sort(self.sample_data.longitude.values), np.sort(self.sample_data.longitude_1.values)
+        self.lons = self.lonb[1:] - self.lonb[0:-1]
+        self.lon_p = np.append(self.lon, self.lon[-1] + self.lons[-1])
+        self.lonb_p = np.append(self.lonb, [2 * self.lonb[-1] - self.lonb[-2]])
+        self.lons_p = self.lonb_p[1:] - self.lonb_p[0:-1]
+        
+        self.lat, self.latb = np.sort(self.sample_data.latitude.values), np.sort(self.sample_data.latitude_1.values)
+        self.lats = self.latb[1:] - self.latb[0:-1]
+        self.lat_p = self.lat
+        self.latb_p = np.concatenate(([-90], self.latb, [2 * self.latb[-1] - self.latb[-2]]))
+        self.lats_p = self.latb_p[1:] - self.latb_p[0:-1]
+        
+        self.t = [cftime.Datetime360Day(year, month, 1)
+                  for year in np.arange(int(self.start_year), int(self.end_year) + 1)
+                  for month in util.months_to_number(self.months)]
+        
+        super(ATMSURFMDS, self).import_coordinates()
+    
+    def sat(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
+            mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
+        print("__ Importing SAT.")
+        return self.get(xr.open_mfdataset(self.paths, combine='by_coords').temp_mm_srf.isel(surface=0), zone,
+                        mode_lon, value_lon, mode_lat, value_lat, mode_t, value_t,
+                        new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
+
+
 class OCNMDS(HadCM3RDS):
     """
     PF
@@ -159,17 +256,44 @@ class OCNMDS(HadCM3RDS):
         super(OCNMDS, self).__init__(experiment, start_year, end_year, file_name=file_name, month_list=month_list,
                                      verbose=verbose, logger=logger)
     
+    def transform(self, array_r):
+        array = array_r
+        if "longitude" in array.dims:
+            array = xr.concat([array, array.isel(longitude=0)], dim="longitude")
+        if "longitude_1" in array.dims:
+            array = xr.concat([array, array.isel(longitude_1=0)], dim="longitude_1")
+        if "latitude" in array.dims:
+            array.isel(latitude=-1).values = array.isel(latitude=-2).values
+            array = xr.concat([array.isel(latitude=np.arange(0, len(array.latitude) - 1, 1)), array.isel(latitude=-2),
+                               array.isel(latitude=-2)], dim="latitude")
+        if "latitude_1" in array.dims:
+            array.isel(latitude_1=-1).values = array.isel(latitude_1=-2).values
+            array = xr.concat(
+                [array.isel(latitude_1=0), array.isel(latitude_1=np.arange(0, len(array.latitude_1) - 1, 1)),
+                 array.isel(latitude_1=-2), array.isel(latitude_1=-2)], dim="latitude_1")
+        return array.transpose(*array_r.dims)
+    
     def import_coordinates(self):
-        self.lon = self.sample_data.longitude.values
-        self.lon_b = self.sample_data.longitude_1.values
-        self.lat = self.sample_data.latitude.values
-        self.lat_b = self.sample_data.latitude_1.values
-        self.data = self.sample_data.assign_coords(depth=-self.sample_data.depth)
-        self.z = - self.sample_data.depth.values
-        self.z_b = - self.sample_data.depth_1.values
-        self.t = [cftime.Datetime360Day(year, month, 1)
-                  for year in np.arange(int(self.start_year), int(self.end_year) + 1)
-                  for month in util.months_to_number(self.months)]
+        self.lon, self.lonb = np.sort(self.sample_data.longitude.values), np.sort(self.sample_data.longitude_1.values)
+        self.lons = self.lonb[1:] - self.lonb[0:-1]
+        self.lon_p = np.append(self.lon, self.lon[-1] + self.lons[-1])
+        self.lonb_p = np.append(self.lonb, 2 * self.lonb[-1] - self.lonb[-2])
+        self.lons_p = self.lonb_p[1:] - self.lonb_p[0:-1]
+        
+        self.lat, self.latb = np.sort(self.sample_data.latitude.values), np.sort(self.sample_data.latitude_1.values)
+        self.lats = self.latb[1:] - self.latb[0:-1]
+        self.lat_p = np.append(self.lat, self.lat[-1] + self.lats[-1])
+        self.latb_p = np.concatenate(
+            ([2 * self.latb[0] - self.latb[1]], self.latb, [2 * self.latb[-1] - self.latb[-2]]))
+        self.lats_p = self.latb_p[1:] - self.latb_p[0:-1]
+        
+        self.z, self.zb = -np.sort(self.sample_data.depth.values), -np.sort(self.sample_data.depth_1.values)
+        self.zs = self.zb[1:] - self.zb[0:-1]
+        self.z_p = self.z
+        self.zb_p = np.append(self.zb, self.zb[-1] + (self.z[-1] - self.zb[-1]) * 2)
+        self.zs_p = self.zb_p[1:] - self.zb_p[0:-1]
+        
+        self.t = [cftime.Datetime360Day(year, 6, 1) for year in np.arange(int(self.start_year), int(self.end_year) + 1)]
         
         super(OCNMDS, self).import_coordinates()
     
@@ -247,13 +371,43 @@ class OCNYDS(HadCM3RDS):
         super(OCNYDS, self).__init__(experiment, start_year, end_year, file_name=file_name,
                                      verbose=verbose, logger=logger, month_list=None)
     
+    def transform(self, array_r):
+        array = array_r
+        if "longitude" in array.dims:
+            array = xr.concat([array, array.isel(longitude=0)], dim="longitude")
+        if "longitude_1" in array.dims:
+            array = xr.concat([array, array.isel(longitude_1=0)], dim="longitude_1")
+        if "latitude" in array.dims:
+            array.isel(latitude=-1).values = array.isel(latitude=-2).values
+            array = xr.concat([array.isel(latitude=np.arange(0, len(array.latitude) - 1, 1)), array.isel(latitude=-2),
+                               array.isel(latitude=-2)], dim="latitude")
+        if "latitude_1" in array.dims:
+            array.isel(latitude_1=-1).values = array.isel(latitude_1=-2).values
+            array = xr.concat(
+                [array.isel(latitude_1=0), array.isel(latitude_1=np.arange(0, len(array.latitude_1) - 1, 1)),
+                 array.isel(latitude_1=-2), array.isel(latitude_1=-2)], dim="latitude_1")
+        return array.transpose(*array_r.dims)
+    
     def import_coordinates(self):
-        self.lon = self.sample_data.longitude.values
-        self.lon_b = self.sample_data.longitude_1.values
-        self.lat = self.sample_data.latitude.values
-        self.lat_b = self.sample_data.latitude_1.values
-        self.z = - self.sample_data.depth.values
-        self.z_b = - self.sample_data.depth_1.values
+        self.lon, self.lonb = np.sort(self.sample_data.longitude.values), np.sort(self.sample_data.longitude_1.values)
+        self.lons = self.lonb[1:] - self.lonb[0:-1]
+        self.lon_p = np.append(self.lon, self.lon[-1] + self.lons[-1])
+        self.lonb_p = np.append(self.lonb, 2 * self.lonb[-1] - self.lonb[-2])
+        self.lons_p = self.lonb_p[1:] - self.lonb_p[0:-1]
+        
+        self.lat, self.latb = np.sort(self.sample_data.latitude.values), np.sort(self.sample_data.latitude_1.values)
+        self.lats = self.latb[1:] - self.latb[0:-1]
+        self.lat_p = np.append(self.lat, self.lat[-1] + self.lats[-1])
+        self.latb_p = np.concatenate(
+            ([2 * self.latb[0] - self.latb[1]], self.latb, [2 * self.latb[-1] - self.latb[-2]]))
+        self.lats_p = self.latb_p[1:] - self.latb_p[0:-1]
+        
+        self.z, self.zb = -np.sort(self.sample_data.depth.values), -np.sort(self.sample_data.depth_1.values)
+        self.zs = self.zb[1:] - self.zb[0:-1]
+        self.z_p = self.z
+        self.zb_p = self.zb
+        self.zs_p = self.zb_p[1:] - self.zb_p[0:-1]
+        
         self.t = [cftime.Datetime360Day(year, 6, 1) for year in np.arange(int(self.start_year), int(self.end_year) + 1)]
         
         super(OCNYDS, self).import_coordinates()
@@ -300,61 +454,6 @@ class OCNYDS(HadCM3RDS):
             new_start_year=new_start_year, new_end_year=new_end_year)
 
 
-class ATMUPMDS(HadCM3RDS):
-    """
-    PC
-    """
-    
-    def __init__(self, experiment, start_year, end_year, month_list="full", verbose=False, logger="print"):
-        expt_id = input_file[self.experiment][0]
-        file_name = f"pcpd/{expt_id}a#pc"
-        super(ATMUPMDS, self).__init__(experiment, start_year, end_year, file_name=file_name, month_list=month_list,
-                                       verbose=verbose, logger=logger)
-    
-    def import_coordinates(self):
-        self.lon = self.sample_data.longitude.values
-        self.lon_b = self.sample_data.longitude_1.values
-        self.lat = self.sample_data.latitude.values
-        self.lat_b = self.sample_data.latitude_1.values
-        self.z = self.sample_data.depth.values  # ??????
-        self.t = [cftime.Datetime360Day(year, month, 1)
-                  for year in np.arange(int(self.start_year), int(self.end_year) + 1)
-                  for month in util.months_to_number(self.months)]
-        
-        super(ATMUPMDS, self).import_coordinates()
-
-
-class ATMSURFMDS(HadCM3RDS):
-    """
-    PD
-    """
-    
-    def __init__(self, experiment, start_year, end_year, month_list="full", verbose=False, logger="print"):
-        expt_id = input_file[self.experiment][0]
-        file_name = f"pcpd/{expt_id}a#pd"
-        super(ATMSURFMDS, self).__init__(experiment, start_year, end_year, file_name=file_name, month_list=month_list,
-                                         verbose=verbose, logger=logger)
-    
-    def import_coordinates(self):
-        self.lon = self.sample_data.longitude.values
-        self.lon_b = self.sample_data.longitude_1.values
-        self.lat = self.sample_data.latitude.values
-        self.lat_b = self.sample_data.latitude_1.values
-        self.z = self.sample_data.level6.values
-        self.t = [cftime.Datetime360Day(year, month, 1)
-                  for year in np.arange(int(self.start_year), int(self.end_year) + 1)
-                  for month in util.months_to_number(self.months)]
-        
-        super(ATMSURFMDS, self).import_coordinates()
-    
-    def sat(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
-            mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
-        print("__ Importing SAT.")
-        return self.get(xr.open_mfdataset(self.paths, combine='by_coords').temp_mm_srf.isel(surface=0), zone,
-                        mode_lon, value_lon, mode_lat, value_lat, mode_t, value_t,
-                        new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
-
-
 class LNDMDS(HadCM3RDS):
     """
     PT
@@ -381,8 +480,6 @@ class HadCM3TS(HadCM3DS):
     def __init__(self, experiment, start_year, end_year, file_name, month_list, verbose, logger):
         
         self.data = None
-        self.buffer_name = "None"
-        self.buffer_array = None
         self.file_name = file_name
         super(HadCM3TS, self).__init__(experiment, start_year, end_year, month_list, verbose, logger)
     
