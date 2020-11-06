@@ -27,8 +27,8 @@ class Grid:
     def get_volume_matrix(self, n_t=0):
         matrix = volume_matrix(self.lon, self.lat, self.z)
         return matrix if n_t <= 0 else np.resize(matrix, (n_t, matrix.shape[0], matrix.shape[1], matrix.shape[2]))
-    
-    
+
+
 def cell_area(n_lon, lat1, lat2):
     """
     Area of a cell on a regular lon-lat grid.
@@ -52,8 +52,8 @@ def surface_matrix(lon, lat):
     n_j, n_i = len(lat), len(lon)
     lat_b = guess_bounds(lat, "lat")
     surface = np.zeros((n_j, n_i))
-    for i in range(n_i-1):
-        for j in range(n_j-1):
+    for i in range(n_i - 1):
+        for j in range(n_j - 1):
             surface[j, i] = cell_area(n_i, lat_b[j], lat_b[j + 1])
     return surface
 
@@ -224,6 +224,7 @@ def generate_filepath(path):
             result_dict[key] = val
     return result_dict
 
+
 def generate_input(path):
     """
     Generate an input dictionary from a txt file.
@@ -242,6 +243,7 @@ def generate_input(path):
             val = line.split(";")[1:-1]
             result_dict[key] = val
     return result_dict
+
 
 # TIME
 
@@ -272,6 +274,18 @@ def kelvin_to_celsius(array):
 def cycle_lon(array):
     return np.append(array, array[:, 0][:, np.newaxis], axis=1)
 
+
+def print_coordinates(name, coordinate):
+    if coordinate is None:
+        return f"{name}: None"
+    elif isinstance(coordinate, np.float32) or isinstance(coordinate, float):
+        return f"{name}: [{coordinate}; 1]"
+    elif len(coordinate) >= 2:
+        return f"{name}: [{coordinate[0]}; {coordinate[1]}; ...; {coordinate[-2]}; {coordinate[-1]}; {len(coordinate)}]"
+    elif len(coordinate) == 1:
+        return f"{name}: [{coordinate[0]}; {len(coordinate)}]"
+    else:
+        return f"{name}: Null"
 
 # Generate
 # path2lsm = generate_filepath(str(pathlib.Path(__file__).parent.absolute()) + "/resources/path2lsm")
