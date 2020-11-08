@@ -92,7 +92,7 @@ class Box(Zone):
             self.z = z
         
         # self.update()
-        
+        print(data_source)
         return self
     
     def get_indexes(self):
@@ -122,6 +122,8 @@ class Box(Zone):
             geo_da.data = geo_da.data.where(geo_da.data.z >= self.z_min, drop=True)
         if self.z_max is not None:
             geo_da.data = geo_da.data.where(geo_da.data.z <= self.z_max, drop=True)
+        
+        print(geo_da)
         
         print("____ Data compacted to the zone.")
         # geo_da.fit_coordinates_to_data()
@@ -156,4 +158,5 @@ class Box(Zone):
             geo_da.lonb_p = geo_da.lonb_p[np.where(geo_da.lon <= self.lon_max)]
             geo_da.lons_p = geo_da.lonb_p[1:] - geo_da.lonb_p[0:-1]
             
+        print(geo_da)
         return geo_da
