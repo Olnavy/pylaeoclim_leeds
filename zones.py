@@ -13,7 +13,7 @@ class Zone:
         return
     
     @abc.abstractmethod
-    def import_coordinates_from_data_array(self, data_array_source):
+    def import_coordinates(self, data_source, lon, lat, z):
         pass
 
 
@@ -64,7 +64,7 @@ class Box(Zone):
         #     self.lsm = lsm
     
     def import_coordinates(self, data_source, lon, lat, z):
-
+        
         if data_source is not None:
             self.lon, self.lat, self.z = data_source.lon, data_source.lat, data_source.z
             self.lonb, self.latb, self.zb = data_source.lonb, data_source.latb, data_source.zb
@@ -93,7 +93,7 @@ class Box(Zone):
     
     def compact(self, geo_da):
         # Test lon etc.
-
+        
         if self.lon_min is not None:
             geo_da.data = geo_da.data.where(geo_da.data.longitude >= self.lon_min, drop=True)
         if self.lon_max is not None:
@@ -125,14 +125,13 @@ class Box(Zone):
             self.z_min = np.min(self.z)
         if self.z is not None and self.z_max is None:
             self.z_max = np.max(self.z)
-            
+    
     def fit_coordinate_to_data(self):
         if self.lon_min is not None:
             self.lon = self.lon[np.where(self.lon >= self.lon_min)]
             self.lon_p = self.lon_p[np.where(self.lon_p >= self.lon_min)]
-            self.lonb = self.lonb[np.where(self.lon >= self.lon)] ### not good, find something else.
+            self.lonb = self.lonb[np.where(self.lon >= self.lon)]  # not good, find something else.
             self.lonb_p = self.lonb_p[np.where(self.lon >= self.lon)]
             self.lons_p = self.lonb_p[1:] - self.lonb_p[0:-1]
         if self.lon_max is not None:
             new_lon_p = np.where(self.lon_p >= self.lon_min)
-            
