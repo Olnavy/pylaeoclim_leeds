@@ -102,60 +102,66 @@ class Box(Zone):
     def fit_coordinates_to_data(self, geo_da):
         if self.lon_min is not None:
             condition = np.where(geo_da.lon >= self.lon_min)
+            conditionb = np.where(geo_da.lonb >= self.lon_min)
             lon = geo_da.lon[condition]
             lon_p = geo_da.lon_p[condition]
-            lonb = geo_da.lonb[condition]  # not good, find something else.
-            lonb_p = geo_da.lonb_p[condition]
+            lonb = geo_da.lonb[conditionb]  # not good, find something else.
+            lonb_p = geo_da.lonb_p[conditionb]
             lons = geo_da.lonb[1:] - geo_da.lonb[0:-1]
             lons_p = geo_da.lonb_p[1:] - geo_da.lonb_p[0:-1]
             geo_da.lon, geo_da.lonb, geo_da.lons = lon, lonb, lons
             geo_da.lon_p, geo_da.lonb_p, geo_da.lons_p = lon_p, lonb_p, lons_p
         if self.lon_max is not None:
             condition = np.where(geo_da.lon <= self.lon_max)
+            conditionb = np.where(geo_da.lonb <= self.lon_max)
             lon = geo_da.lon[condition]
             lon_p = geo_da.lon_p[condition]
-            lonb = geo_da.lonb[condition]  # not good, find something else.
-            lonb_p = geo_da.lonb_p[condition]
+            lonb = geo_da.lonb[conditionb]  # not good, find something else.
+            lonb_p = geo_da.lonb_p[conditionb]
             lons = geo_da.lonb[1:] - geo_da.lonb[0:-1]
             lons_p = geo_da.lonb_p[1:] - geo_da.lonb_p[0:-1]
             geo_da.lon, geo_da.lonb, geo_da.lons = lon, lonb, lons
             geo_da.lon_p, geo_da.lonb_p, geo_da.lons_p = lon_p, lonb_p, lons_p
         if self.lat_min is not None:
             condition = np.where(geo_da.lat >= self.lat_min)
+            conditionb = np.where(geo_da.latb >= self.lat_min)
             lat = geo_da.lat[condition]
             lat_p = geo_da.lat_p[condition]
-            latb = geo_da.latb[condition]  # not good, find something else.
-            latb_p = geo_da.latb_p[condition]
+            latb = geo_da.latb[conditionb]  # not good, find something else.
+            latb_p = geo_da.latb_p[conditionb]
             lats = geo_da.latb[1:] - geo_da.latb[0:-1]
             lats_p = geo_da.latb_p[1:] - geo_da.latb_p[0:-1]
             geo_da.lat, geo_da.latb, geo_da.lats = lat, latb, lats
             geo_da.lat_p, geo_da.latb_p, geo_da.lats_p = lat_p, latb_p, lats_p
         if self.lat_max is not None:
             condition = np.where(geo_da.lat <= self.lat_max)
+            conditionb = np.where(geo_da.latb <= self.lat_max)
             lat = geo_da.lat[condition]
             lat_p = geo_da.lat_p[condition]
-            latb = geo_da.latb[condition]  # not good, find something else.
-            latb_p = geo_da.latb_p[condition]
+            latb = geo_da.latb[conditionb]  # not good, find something else.
+            latb_p = geo_da.latb_p[conditionb]
             lats = geo_da.latb[1:] - geo_da.latb[0:-1]
             lats_p = geo_da.latb_p[1:] - geo_da.latb_p[0:-1]
             geo_da.lat, geo_da.latb, geo_da.lats = lat, latb, lats
             geo_da.lat_p, geo_da.latb_p, geo_da.lats_p = lat_p, latb_p, lats_p
         if self.z_min is not None:
             condition = np.where(geo_da.z >= self.z_min)
+            conditionb = np.where(geo_da.zb >= self.z_min)
             z = geo_da.z[condition]
             z_p = geo_da.z_p[condition]
-            zb = geo_da.zb[condition]  # not good, find something else.
-            zb_p = geo_da.zb_p[condition]
+            zb = geo_da.zb[conditionb]  # not good, find something else.
+            zb_p = geo_da.zb_p[conditionb]
             zs = geo_da.zb[1:] - geo_da.zb[0:-1]
             zs_p = geo_da.zb_p[1:] - geo_da.zb_p[0:-1]
             geo_da.z, geo_da.zb, geo_da.zs = z, zb, zs
             geo_da.z_p, geo_da.zb_p, geo_da.zs_p = z_p, zb_p, zs_p
         if self.z_max is not None:
             condition = np.where(geo_da.z <= self.z_max)
+            conditionb = np.where(geo_da.zb <= self.z_max)
             z = geo_da.z[condition]
             z_p = geo_da.z_p[condition]
-            zb = geo_da.zb[condition]  # not good, find something else.
-            zb_p = geo_da.zb_p[condition]
+            zb = geo_da.zb[conditionb]  # not good, find something else.
+            zb_p = geo_da.zb_p[conditionb]
             zs = geo_da.zb[1:] - geo_da.zb[0:-1]
             zs_p = geo_da.zb_p[1:] - geo_da.zb_p[0:-1]
             geo_da.z, geo_da.zb, geo_da.zs = z, zb, zs
