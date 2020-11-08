@@ -311,8 +311,9 @@ class OCNMDS(HadCM3RDS):
         self.zb_p = np.append(self.zb, self.zb[-1] + (self.z[-1] - self.zb[-1]) * 2)
         self.zs_p = self.zb_p[1:] - self.zb_p[0:-1]
         
-        self.t = [cftime.Datetime360Day(year, 6, 1) for year in np.arange(int(self.start_year), int(self.end_year) + 1)]
-        
+        self.t = [cftime.Datetime360Day(year, month, 1)
+                  for year in np.arange(int(self.start_year), int(self.end_year) + 1)
+                  for month in util.months_to_number(self.months)]
         super(OCNMDS, self).import_coordinates()
     
     def sst(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None, mode_t=None,
