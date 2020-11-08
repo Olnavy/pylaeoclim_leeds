@@ -110,8 +110,8 @@ class Box(Zone):
             geo_da.data = geo_da.data.where(geo_da.data.z <= self.z_max, drop=True)
         
         print("____ Data compacted to the zone.")
-        geo_da.fit_coordinates_to_data()
-        return geo_da
+        # geo_da.fit_coordinates_to_data()
+        return self.fit_coordinates_to_data(geo_da)
     
     def update(self):
         
@@ -128,16 +128,18 @@ class Box(Zone):
         if self.z is not None and self.z_max is None:
             self.z_max = np.max(self.z)
     
-    def fit_coordinates_to_data(self):
+    def fit_coordinates_to_data(self, geo_da):
         if self.lon_min is not None:
-            self.lon = self.lon[np.where(self.lon >= self.lon_min)]
-            self.lon_p = self.lon_p[np.where(self.lon_p >= self.lon_min)]
-            self.lonb = self.lonb[np.where(self.lon >= self.lon_min)]  # not good, find something else.
-            self.lonb_p = self.lonb_p[np.where(self.lon >= self.lon_min)]
-            self.lons_p = self.lonb_p[1:] - self.lonb_p[0:-1]
+            geo_da.lon = self.lon[np.where(self.lon >= self.lon_min)]
+            geo_da.lon_p = self.lon_p[np.where(self.lon_p >= self.lon_min)]
+            geo_da.lonb = self.lonb[np.where(self.lon >= self.lon_min)]  # not good, find something else.
+            geo_da.lonb_p = self.lonb_p[np.where(self.lon >= self.lon_min)]
+            geo_da.lons_p = self.lonb_p[1:] - self.lonb_p[0:-1]
         if self.lon_max is not None:
-            self.lon = self.lon[np.where(self.lon <= self.lon_max)]
-            self.lon_p = self.lon_p[np.where(self.lon_p <= self.lon_max)]
-            self.lonb = self.lonb[np.where(self.lon <= self.lon_max)]  # not good, find something else.
-            self.lonb_p = self.lonb_p[np.where(self.lon <= self.lon_max)]
-            self.lons_p = self.lonb_p[1:] - self.lonb_p[0:-1]
+            geo_da.lon = self.lon[np.where(self.lon <= self.lon_max)]
+            geo_da.lon_p = self.lon_p[np.where(self.lon_p <= self.lon_max)]
+            geo_da.lonb = self.lonb[np.where(self.lon <= self.lon_max)]  # not good, find something else.
+            geo_da.lonb_p = self.lonb_p[np.where(self.lon <= self.lon_max)]
+            geo_da.lons_p = self.lonb_p[1:] - self.lonb_p[0:-1]
+            
+        return geo_da
