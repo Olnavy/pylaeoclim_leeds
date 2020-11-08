@@ -275,6 +275,10 @@ def cycle_lon(array):
     return np.append(array, array[:, 0][:, np.newaxis], axis=1)
 
 
+def cycle_box(lon_min,lon_max,lat_min,lat_max):
+    return [[lon_min, lon_min, lon_max, lon_max, lon_min],
+            [lat_min,lat_max, lat_max, lat_min, lat_min]]
+
 def print_coordinates(name, coordinate):
     if coordinate is None:
         return f"{name}: None"
