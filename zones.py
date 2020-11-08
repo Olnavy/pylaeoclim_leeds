@@ -1,6 +1,7 @@
 import numpy as np
 # import numpy.ma as ma
 import abc
+import paleoclim_leeds.util_hadcm3 as util
 
 
 class Zone:
@@ -63,6 +64,19 @@ class Box(Zone):
         # else:
         #     self.lsm = lsm
     
+    def __repr__(self):
+        return f"lon_min: {self.lon_min}, lon_max: {self.lon_max}, lat_min: {self.lat_min}, lat_max: {self.lat_max}"\
+               f"z_min: {self.z_min}, z_max: {self.z_max}\n"\
+               f"{util.print_coordinates('lon', self.lon)}; {util.print_coordinates('lon_p', self.lon_p)}\n" \
+               f"{util.print_coordinates('lonb', self.lonb)}; {util.print_coordinates('lonb_p', self.lonb_p)}\n" \
+               f"{util.print_coordinates('lons', self.lons)}; {util.print_coordinates('lons_p', self.lons_p)}\n" \
+               f"{util.print_coordinates('lat', self.lat)}; {util.print_coordinates('lat_p', self.lat_p)}\n" \
+               f"{util.print_coordinates('latb', self.latb)}; {util.print_coordinates('latb_p', self.latb_p)}\n" \
+               f"{util.print_coordinates('lats', self.lats)}; {util.print_coordinates('lats_p', self.lats_p)}\n" \
+               f"{util.print_coordinates('z', self.z)}; {util.print_coordinates('z_p', self.z_p)}\n" \
+               f"{util.print_coordinates('zb', self.zb)}; {util.print_coordinates('zb_p', self.zb_p)}\n" \
+               f"{util.print_coordinates('zs', self.zs)}; {util.print_coordinates('zs_p', self.zs_p)}\n" \
+    
     def import_coordinates(self, data_source=None, lon=None, lat=None, z=None):
         
         if data_source is not None:
@@ -77,7 +91,7 @@ class Box(Zone):
             self.lat = lat
             self.z = z
         
-        self.update()
+        # self.update()
         
         return self
     
@@ -114,7 +128,7 @@ class Box(Zone):
         return self.fit_coordinates_to_data(geo_da)
     
     def update(self):
-        
+        # A CHANGER
         if self.lon is not None and self.lon_min is None:
             self.lon_min = np.min(self.lon)
         if self.lon is not None and self.lon_max is None:
@@ -130,16 +144,16 @@ class Box(Zone):
     
     def fit_coordinates_to_data(self, geo_da):
         if self.lon_min is not None:
-            geo_da.lon = self.lon[np.where(self.lon >= self.lon_min)]
-            geo_da.lon_p = self.lon_p[np.where(self.lon_p >= self.lon_min)]
-            geo_da.lonb = self.lonb[np.where(self.lon >= self.lon_min)]  # not good, find something else.
-            geo_da.lonb_p = self.lonb_p[np.where(self.lon >= self.lon_min)]
-            geo_da.lons_p = self.lonb_p[1:] - self.lonb_p[0:-1]
+            geo_da.lon = geo_da.lon[np.where(geo_da.lon >= self.lon_min)]
+            geo_da.lon_p = geo_da.lon_p[np.where(geo_da.lon_p >= self.lon_min)]
+            geo_da.lonb = geo_da.lonb[np.where(geo_da.lon >= self.lon_min)]  # not good, find something else.
+            geo_da.lonb_p = geo_da.lonb_p[np.where(geo_da.lon >= self.lon_min)]
+            geo_da.lons_p = geo_da.lonb_p[1:] - geo_da.lonb_p[0:-1]
         if self.lon_max is not None:
-            geo_da.lon = self.lon[np.where(self.lon <= self.lon_max)]
-            geo_da.lon_p = self.lon_p[np.where(self.lon_p <= self.lon_max)]
-            geo_da.lonb = self.lonb[np.where(self.lon <= self.lon_max)]  # not good, find something else.
-            geo_da.lonb_p = self.lonb_p[np.where(self.lon <= self.lon_max)]
-            geo_da.lons_p = self.lonb_p[1:] - self.lonb_p[0:-1]
+            geo_da.lon = geo_da.lon[np.where(geo_da.lon <= self.lon_max)]
+            geo_da.lon_p = geo_da.lon_p[np.where(geo_da.lon_p <= self.lon_max)]
+            geo_da.lonb = geo_da.lonb[np.where(geo_da.lon <= self.lon_max)]  # not good, find something else.
+            geo_da.lonb_p = geo_da.lonb_p[np.where(geo_da.lon <= self.lon_max)]
+            geo_da.lons_p = geo_da.lonb_p[1:] - geo_da.lonb_p[0:-1]
             
         return geo_da
