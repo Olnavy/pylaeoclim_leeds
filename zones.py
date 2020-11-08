@@ -128,7 +128,7 @@ class Box(Zone):
         if self.z is not None and self.z_max is None:
             self.z_max = np.max(self.z)
     
-    def fit_coordinate_to_data(self):
+    def fit_coordinates_to_data(self):
         if self.lon_min is not None:
             self.lon = self.lon[np.where(self.lon >= self.lon_min)]
             self.lon_p = self.lon_p[np.where(self.lon_p >= self.lon_min)]
