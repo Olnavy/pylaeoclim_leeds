@@ -50,8 +50,8 @@ class HadCM3DS(proc.ModelDS):
             new_month_list=None):
         
         geo_da = proc.GeoDataArray(data, ds=self, transform=self.transform)  # add the GeoDataArray wrapper
-        # geo_da = zone.import_coordinates_from_data_array(geo_da.data).compact(geo_da)
-        geo_da = zone.import_coordinates(self).compact(geo_da)
+        # geo_da = zone.import_coordinates(geo_da).compact(geo_da)
+        geo_da = zone.compact(geo_da)
         
         if any([new_start_year is not None, new_end_year is not None, new_month_list is not None]):
             print("____ Truncation to new time coordinates.")
