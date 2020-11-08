@@ -25,7 +25,7 @@ class NoZone(Zone):
     def compact(self, data_array):
         return data_array
     
-    def import_coordinates(self, data_source, lon, lat, z):
+    def import_coordinates(self, data_source=None, lon=None, lat=None, z=None):
         return self
 
 
@@ -63,7 +63,7 @@ class Box(Zone):
         # else:
         #     self.lsm = lsm
     
-    def import_coordinates(self, data_source, lon, lat, z):
+    def import_coordinates(self, data_source=None, lon=None, lat=None, z=None):
         
         if data_source is not None:
             self.lon, self.lat, self.z = data_source.lon, data_source.lat, data_source.z
