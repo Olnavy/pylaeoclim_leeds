@@ -6,3 +6,5 @@ resources/path2lsm
 resources/path2expds
 resources/path2expts
 __pycache__/
+resources/hadcm3_input
+resources/noresm_input
