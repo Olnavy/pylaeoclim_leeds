@@ -77,35 +77,6 @@ class Box(Zone):
                # f"{util.print_coordinates('zb', self.zb)}; {util.print_coordinates('zb_p', self.zb_p)}\n" \
                # f"{util.print_coordinates('zs', self.zs)}; {util.print_coordinates('zs_p', self.zs_p)}\n" \
                
-    # def import_coordinates(self, data_source=None, lon=None, lat=None, z=None):
-    #
-    #     if data_source is not None:
-    #         self.lon, self.lat, self.z = data_source.lon, data_source.lat, data_source.z
-    #         self.lonb, self.latb, self.zb = data_source.lonb, data_source.latb, data_source.zb
-    #         self.lons, self.lats, self.zs = data_source.lons, data_source.lats, data_source.zs
-    #         self.lon_p, self.lat_p, self.z_p = data_source.lon_p, data_source.lat_p, data_source.z_p
-    #         self.lonb_p, self.latb_p, self.zb_p = data_source.lonb_p, data_source.latb_p, data_source.zb_p
-    #         self.lons_p, self.lats_p, self.zs_p = data_source.lons_p, data_source.lats_p, data_source.zs_p
-    #     else:
-    #         self.lon = lon
-    #         self.lat = lat
-    #         self.z = z
-    #
-    #     # self.update()
-    #     print(data_source)
-    #     return self
-    
-    def get_indexes(self, lon, lat, z):
-        
-        if any([lon is None, lat is None, z is None]):
-            print("Caution : Please import coordinates first")
-            raise KeyError("Caution : Please import coordinates first")
-        
-        else:
-            ilon_box = np.where(self.lon_min <= lon <= self.lon_max)
-            ilat_box = np.where(self.lat_min <= lat <= self.lat_max)
-            iz_box = np.where(self.z_min <= z <= self.z_max)
-            return ilon_box, ilat_box, iz_box
     
     def compact(self, geo_da):
         # Test lon etc.
@@ -126,9 +97,103 @@ class Box(Zone):
         print("____ Data compacted to the zone.")
         # geo_da.fit_coordinates_to_data()
         return self.fit_coordinates_to_data(geo_da)
+
     
+    def fit_coordinates_to_data(self, geo_da):
+        if self.lon_min is not None:
+            condition = np.where(geo_da.lon >= self.lon_min)
+            lon = geo_da.lon[condition]
+            lon_p = geo_da.lon_p[condition]
+            lonb = geo_da.lonb[condition]  # not good, find something else.
+            lonb_p = geo_da.lonb_p[condition]
+            lons = geo_da.lonb[1:] - geo_da.lonb[0:-1]
+            lons_p = geo_da.lonb_p[1:] - geo_da.lonb_p[0:-1]
+            geo_da.lon, geo_da.lonb, geo_da.lons = lon, lonb, lons
+            geo_da.lon_p, geo_da.lonb_p, geo_da.lons_p = lon_p, lonb_p, lons_p
+        if self.lon_max is not None:
+            condition = np.where(geo_da.lon <= self.lon_max)
+            lon = geo_da.lon[condition]
+            lon_p = geo_da.lon_p[condition]
+            lonb = geo_da.lonb[condition]  # not good, find something else.
+            lonb_p = geo_da.lonb_p[condition]
+            lons = geo_da.lonb[1:] - geo_da.lonb[0:-1]
+            lons_p = geo_da.lonb_p[1:] - geo_da.lonb_p[0:-1]
+            geo_da.lon, geo_da.lonb, geo_da.lons = lon, lonb, lons
+            geo_da.lon_p, geo_da.lonb_p, geo_da.lons_p = lon_p, lonb_p, lons_p
+        if self.lat_min is not None:
+            condition = np.where(geo_da.lat >= self.lat_min)
+            lat = geo_da.lat[condition]
+            lat_p = geo_da.lat_p[condition]
+            latb = geo_da.latb[condition]  # not good, find something else.
+            latb_p = geo_da.latb_p[condition]
+            lats = geo_da.latb[1:] - geo_da.latb[0:-1]
+            lats_p = geo_da.latb_p[1:] - geo_da.latb_p[0:-1]
+            geo_da.lat, geo_da.latb, geo_da.lats = lat, latb, lats
+            geo_da.lat_p, geo_da.latb_p, geo_da.lats_p = lat_p, latb_p, lats_p
+        if self.lat_max is not None:
+            condition = np.where(geo_da.lat <= self.lat_max)
+            lat = geo_da.lat[condition]
+            lat_p = geo_da.lat_p[condition]
+            latb = geo_da.latb[condition]  # not good, find something else.
+            latb_p = geo_da.latb_p[condition]
+            lats = geo_da.latb[1:] - geo_da.latb[0:-1]
+            lats_p = geo_da.latb_p[1:] - geo_da.latb_p[0:-1]
+            geo_da.lat, geo_da.latb, geo_da.lats = lat, latb, lats
+            geo_da.lat_p, geo_da.latb_p, geo_da.lats_p = lat_p, latb_p, lats_p
+        if self.z_min is not None:
+            condition = np.where(geo_da.z >= self.z_min)
+            z = geo_da.z[condition]
+            z_p = geo_da.z_p[condition]
+            zb = geo_da.zb[condition]  # not good, find something else.
+            zb_p = geo_da.zb_p[condition]
+            zs = geo_da.zb[1:] - geo_da.zb[0:-1]
+            zs_p = geo_da.zb_p[1:] - geo_da.zb_p[0:-1]
+            geo_da.z, geo_da.zb, geo_da.zs = z, zb, zs
+            geo_da.z_p, geo_da.zb_p, geo_da.zs_p = z_p, zb_p, zs_p
+        if self.z_max is not None:
+            condition = np.where(geo_da.z <= self.z_max)
+            z = geo_da.z[condition]
+            z_p = geo_da.z_p[condition]
+            zb = geo_da.zb[condition]  # not good, find something else.
+            zb_p = geo_da.zb_p[condition]
+            zs = geo_da.zb[1:] - geo_da.zb[0:-1]
+            zs_p = geo_da.zb_p[1:] - geo_da.zb_p[0:-1]
+            geo_da.z, geo_da.zb, geo_da.zs = z, zb, zs
+            geo_da.z_p, geo_da.zb_p, geo_da.zs_p = z_p, zb_p, zs_p
+        return geo_da
+
+    # def import_coordinates(self, data_source=None, lon=None, lat=None, z=None):
+    # TO RECREATE FOR get_indexes!!
+    #     if data_source is not None:
+    #         self.lon, self.lat, self.z = data_source.lon, data_source.lat, data_source.z
+    #         self.lonb, self.latb, self.zb = data_source.lonb, data_source.latb, data_source.zb
+    #         self.lons, self.lats, self.zs = data_source.lons, data_source.lats, data_source.zs
+    #         self.lon_p, self.lat_p, self.z_p = data_source.lon_p, data_source.lat_p, data_source.z_p
+    #         self.lonb_p, self.latb_p, self.zb_p = data_source.lonb_p, data_source.latb_p, data_source.zb_p
+    #         self.lons_p, self.lats_p, self.zs_p = data_source.lons_p, data_source.lats_p, data_source.zs_p
+    #     else:
+    #         self.lon = lon
+    #         self.lat = lat
+    #         self.z = z
+    #
+    #     # self.update()
+    #     print(data_source)
+    #     return self
+
+    def get_indexes(self, lon, lat, z):
+    
+        if any([lon is None, lat is None, z is None]):
+            print("Caution : Please import coordinates first")
+            raise KeyError("Caution : Please import coordinates first")
+    
+        else:
+            ilon_box = np.where(self.lon_min <= lon <= self.lon_max)
+            ilat_box = np.where(self.lat_min <= lat <= self.lat_max)
+            iz_box = np.where(self.z_min <= z <= self.z_max)
+            return ilon_box, ilat_box, iz_box
+
     # def update(self):
-    #     # A CHANGER
+    #     # A SUPPRIMER?
     #     if self.lon is not None and self.lon_min is None:
     #         self.lon_min = np.min(self.lon)
     #     if self.lon is not None and self.lon_max is None:
@@ -141,19 +206,3 @@ class Box(Zone):
     #         self.z_min = np.min(self.z)
     #     if self.z is not None and self.z_max is None:
     #         self.z_max = np.max(self.z)
-    
-    def fit_coordinates_to_data(self, geo_da):
-        if self.lon_min is not None:
-            geo_da.lon = geo_da.lon[np.where(geo_da.lon >= self.lon_min)]
-            geo_da.lon_p = geo_da.lon_p[np.where(geo_da.lon_p >= self.lon_min)]
-            geo_da.lonb = geo_da.lonb[np.where(geo_da.lon >= self.lon_min)]  # not good, find something else.
-            geo_da.lonb_p = geo_da.lonb_p[np.where(geo_da.lon >= self.lon_min)]
-            geo_da.lons_p = geo_da.lonb_p[1:] - geo_da.lonb_p[0:-1]
-        if self.lon_max is not None:
-            geo_da.lon = geo_da.lon[np.where(geo_da.lon <= self.lon_max)]
-            geo_da.lon_p = geo_da.lon_p[np.where(geo_da.lon_p <= self.lon_max)]
-            geo_da.lonb = geo_da.lonb[np.where(geo_da.lon <= self.lon_max)]  # not good, find something else.
-            geo_da.lonb_p = geo_da.lonb_p[np.where(geo_da.lon <= self.lon_max)]
-            geo_da.lons_p = geo_da.lonb_p[1:] - geo_da.lonb_p[0:-1]
-            
-        return geo_da
