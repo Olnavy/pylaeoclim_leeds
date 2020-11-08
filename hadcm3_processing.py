@@ -17,12 +17,6 @@ class HadCM3DS(proc.ModelDS):
     
     def __init__(self, experiment, start_year, end_year, month_list, verbose, logger):
         super(HadCM3DS, self).__init__(verbose, logger)
-        self.lon, self.lat, self.z = None, None, None
-        self.lonb, self.latb, self.zb = None, None, None
-        self.lons, self.lats, self.zs = None, None, None
-        self.lon_p, self.lat_p, self.z_p = None, None, None
-        self.lonb_p, self.latb_p, self.zb_p = None, None, None
-        self.lons_p, self.lats_p, self.zs_p = None, None, None
         self.t = None
         self.lsm = None
         self.start_year = start_year
@@ -39,6 +33,10 @@ class HadCM3DS(proc.ModelDS):
         self.import_coordinates()
     
     @abc.abstractmethod
+    def transform(self, array_r):
+        pass
+    
+    @abc.abstractmethod
     def import_data(self):
         pass
     
@@ -51,11 +49,9 @@ class HadCM3DS(proc.ModelDS):
             mode_z=None, value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None,
             new_month_list=None):
         
-        # if type(data_array) is not proc.GeoDataArray:
-        #   convert_to_GeoDataArray(data_array)
-        
-        geo_da = proc.GeoDataArray(data, ds=self)  # add the GeoDataArray wrapper
-        geo_da = zone.import_coordinates_from_data_array(geo_da.data).compact(geo_da)
+        geo_da = proc.GeoDataArray(data, ds=self, transform=self.transform)  # add the GeoDataArray wrapper
+        # geo_da = zone.import_coordinates_from_data_array(geo_da.data).compact(geo_da)
+        geo_da = zone.import_coordinate(self).compact(geo_da)
         
         if any([new_start_year is not None, new_end_year is not None, new_month_list is not None]):
             print("____ Truncation to new time coordinates.")
@@ -117,6 +113,14 @@ class HadCM3RDS(HadCM3DS):
     def import_data(self):
         print(f"__ Importing {type(self)}")
         print(f"____ Paths generated for {self.experiment} between years {self.start_year} and {self.end_year}.")
+
+        # ADD A METHOD TO CHECK THE VALID RANGE
+        #
+        # if min(self.data.t.values).year > self.start_year or max(self.data.t.values).year < self.end_year:
+        #     raise ValueError(f"Inavlid start_year or end_year. Please check that they fit the valid range\n"
+        #                      f"Valid range : start_year = {min(self.data.t.values).year}, "
+        #                      f"end_year = {max(self.data.t.values).year}")
+        
         try:
             path = input_file[self.experiment][1]
             if self.months is not None:
@@ -145,7 +149,19 @@ class HadCM3RDS(HadCM3DS):
     
     def import_coordinates(self):
         super(HadCM3RDS, self).import_coordinates()
-
+    
+    def __repr__(self):
+        return f"{util.print_coordinates('lon', self.lon)}; {util.print_coordinates('lon_p', self.lon_p)}\n" \
+               f"{util.print_coordinates('lonb', self.lonb)}; {util.print_coordinates('lonb_p', self.lonb_p)}\n" \
+               f"{util.print_coordinates('lons', self.lons)}; {util.print_coordinates('lons_p', self.lons_p)}\n" \
+               f"{util.print_coordinates('lat', self.lat)}; {util.print_coordinates('lat_p', self.lat_p)}\n" \
+               f"{util.print_coordinates('latb', self.latb)}; {util.print_coordinates('latb_p', self.latb_p)}\n" \
+               f"{util.print_coordinates('lats', self.lats)}; {util.print_coordinates('lats_p', self.lats_p)}\n" \
+               f"{util.print_coordinates('z', self.z)}; {util.print_coordinates('z_p', self.z_p)}\n" \
+               f"{util.print_coordinates('zb', self.zb)}; {util.print_coordinates('zb_p', self.zb_p)}\n" \
+               f"{util.print_coordinates('zs', self.zs)}; {util.print_coordinates('zs_p', self.zs_p)}\n" \
+               f"{util.print_coordinates('t', self.t)}\n" \
+               f"DATA: {self.sample_data}"
 
 class ATMUPMDS(HadCM3RDS):
     """
@@ -173,7 +189,7 @@ class ATMUPMDS(HadCM3RDS):
         self.lons = self.lonb[1:] - self.lonb[0:-1]
         self.lon_p = np.append(self.lon, self.lon[-1] + self.lons[-1])
         self.lonb_p = np.append(self.lonb, 2 * self.lonb[-1] - self.lonb[-2])
-        self.lons = self.lonb_p[1:] - self.lonb_p[0:-1]
+        self.lons_p = self.lonb_p[1:] - self.lonb_p[0:-1]
         
         self.lat, self.latb = np.sort(self.sample_data.latitude.values), np.sort(self.sample_data.latitude_1.values)
         self.lats = self.latb[1:] - self.latb[0:-1]
@@ -251,7 +267,7 @@ class OCNMDS(HadCM3RDS):
     """
     
     def __init__(self, experiment, start_year, end_year, month_list="full", verbose=False, logger="print"):
-        expt_id = input_file[self.experiment][0]
+        expt_id = input_file[experiment][0]
         file_name = f"pf/{expt_id}o#pf"
         super(OCNMDS, self).__init__(experiment, start_year, end_year, file_name=file_name, month_list=month_list,
                                      verbose=verbose, logger=logger)
@@ -271,6 +287,8 @@ class OCNMDS(HadCM3RDS):
             array = xr.concat(
                 [array.isel(latitude_1=0), array.isel(latitude_1=np.arange(0, len(array.latitude_1) - 1, 1)),
                  array.isel(latitude_1=-2), array.isel(latitude_1=-2)], dim="latitude_1")
+        if "depth_1" in array.dims:
+            array = xr.concat([array, array.isel(depth_1=-1)], dim="depth_1")
         return array.transpose(*array_r.dims)
     
     def import_coordinates(self):
