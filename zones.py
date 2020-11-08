@@ -78,6 +78,8 @@ class Box(Zone):
             self.z = z
         
         self.update()
+        
+        return self
     
     def get_indexes(self):
         
@@ -130,8 +132,12 @@ class Box(Zone):
         if self.lon_min is not None:
             self.lon = self.lon[np.where(self.lon >= self.lon_min)]
             self.lon_p = self.lon_p[np.where(self.lon_p >= self.lon_min)]
-            self.lonb = self.lonb[np.where(self.lon >= self.lon)]  # not good, find something else.
-            self.lonb_p = self.lonb_p[np.where(self.lon >= self.lon)]
+            self.lonb = self.lonb[np.where(self.lon >= self.lon_min)]  # not good, find something else.
+            self.lonb_p = self.lonb_p[np.where(self.lon >= self.lon_min)]
             self.lons_p = self.lonb_p[1:] - self.lonb_p[0:-1]
         if self.lon_max is not None:
-            new_lon_p = np.where(self.lon_p >= self.lon_min)
+            self.lon = self.lon[np.where(self.lon <= self.lon_max)]
+            self.lon_p = self.lon_p[np.where(self.lon_p <= self.lon_max)]
+            self.lonb = self.lonb[np.where(self.lon <= self.lon_max)]  # not good, find something else.
+            self.lonb_p = self.lonb_p[np.where(self.lon <= self.lon_max)]
+            self.lons_p = self.lonb_p[1:] - self.lonb_p[0:-1]

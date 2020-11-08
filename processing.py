@@ -116,7 +116,7 @@ class GeoDataArray:
                                               ds.latb_p if ds is not None else None, ds.zb_p if ds is not None else None
         self.lons_p, self.lats_p, self.zs_p = ds.lons_p if ds is not None else None, \
                                               ds.lats_p if ds is not None else None, ds.zs_p if ds is not None else None
-        self.t = None
+        self.t = ds.t if ds is not None else None
         self.transform = transform
         
         print("____ Coordinate imported in the GeoDataArray instance.")
