@@ -169,7 +169,7 @@ class ATMUPMDS(HadCM3RDS):
     """
     
     def __init__(self, experiment, start_year, end_year, month_list="full", verbose=False, logger="print"):
-        expt_id = input_file[self.experiment][0]
+        expt_id = input_file[experiment][0]
         file_name = f"pcpd/{expt_id}a#pc"
         super(ATMUPMDS, self).__init__(experiment, start_year, end_year, file_name=file_name, month_list=month_list,
                                        verbose=verbose, logger=logger)
@@ -218,7 +218,7 @@ class ATMSURFMDS(HadCM3RDS):
     """
     
     def __init__(self, experiment, start_year, end_year, month_list="full", verbose=False, logger="print"):
-        expt_id = input_file[self.experiment][0]
+        expt_id = input_file[experiment][0]
         file_name = f"pcpd/{expt_id}a#pd"
         super(ATMSURFMDS, self).__init__(experiment, start_year, end_year, file_name=file_name, month_list=month_list,
                                          verbose=verbose, logger=logger)
@@ -385,7 +385,7 @@ class OCNYDS(HadCM3RDS):
     """
     
     def __init__(self, experiment, start_year, end_year, verbose=False, logger="print"):
-        expt_id = input_file[self.experiment][0]
+        expt_id = input_file[experiment][0]
         file_name = f"pg/{expt_id}o#pg"
         super(OCNYDS, self).__init__(experiment, start_year, end_year, file_name=file_name,
                                      verbose=verbose, logger=logger, month_list=None)
