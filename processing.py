@@ -135,8 +135,8 @@ class GeoDataArray:
                f"DATA: {self.data}"
     
     def values(self, processing=True):
-        return self.transform(self.data.where(self.data.values == 0)).values if processing \
-            else self.data.where(self.data.values == 0).values
+        return self.transform(self.data.where(self.data.values != 0)).values if processing \
+            else self.data.where(self.data.values != 0).values
     
     def get_lon(self, mode_lon, value_lon):
         try:
