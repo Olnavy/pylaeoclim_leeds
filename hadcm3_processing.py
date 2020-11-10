@@ -32,7 +32,6 @@ class HadCM3DS(proc.ModelDS):
         self.import_data()
         self.import_coordinates()
     
-    @abc.abstractmethod
     @staticmethod
     def transform(array_r):
         pass
