@@ -149,74 +149,74 @@ def z_to_index(z, target_z):
 
 
 def guess_bounds(coordinate):
-    if coordinate is not None:
-        if len(coordinate) <= 1:
+    if len(coordinate) <= 1:
             coordinate_b = coordinate
         else:
-            coordinate_b = [(coordinate[i] + coordinate[i + 1]) / 2 for i in range(len(coordinate))]
+            coordinate_b = [(coordinate[i] + coordinate[i + 1]) / 2 for i in range(len(coordinate)-1)]
             coordinate_b = np.append((3 * coordinate[0] - coordinate[1]) / 2, coordinate_b)
+            coordinate_b = np.append(coordinate_b, (3 * coordinate[-1] - coordinate[-2]) / 2)
         return coordinate_b
     else:
         raise ValueError("Empty coordinate.")
     
 
-def guess_bounds_old(coordinate, mode):
-    """
-    DEPRECATED
-    """
-    if mode == "lon":
-        lon_b = []
-        if coordinate is not None:
-            if lon_b is None:
-                lon_b = [(coordinate[i] + coordinate[i + 1]) / 2 for i in range(len(coordinate) - 1)]
-                lon_b = np.append((3 * coordinate[0] - coordinate[1]) / 2, lon_b)
-                lon_b = np.append(lon_b, (3 * coordinate[-1] - coordinate[-2]) / 2)
-            elif len(coordinate) <= 1:
-                lon_b = coordinate
-            elif len(lon_b) == len(coordinate):
-                lon_b = np.append(lon_b, 2 * lon_b[-1] - lon_b[-2])
-            elif len(lon_b) == len(coordinate) + 1:
-                pass
-            elif len(lon_b) == len(coordinate) - 1:
-                lon_b = np.append(2 * lon_b[1] - lon_b[2], lon_b)
-                lon_b = np.append(lon_b, 2 * lon_b[-1] - lon_b[-2])
-            else:
-                lon_b = [(coordinate[i] + coordinate[i + 1]) / 2 for i in range(len(coordinate) - 1)]
-                lon_b = np.append((3 * coordinate[0] - coordinate[1]) / 2, lon_b)
-                lon_b = np.append(lon_b, (3 * coordinate[-1] - coordinate[-2]) / 2)
-            return lon_b
-        else:
-            return None
-    
-    if mode == "lat":
-        if coordinate is not None:
-            return coordinate
-        else:
-            return None
-    
-    if mode == "z":
-        if coordinate is not None:
-            z_b = []
-            if z_b is None:
-                z_b = [(coordinate[i] + coordinate[i + 1]) / 2 for i in range(len(coordinate) - 1)]
-                z_b = np.append((3 * coordinate[0] - coordinate[1]) / 2, z_b)
-                z_b = np.append(z_b, (3 * coordinate[-1] - coordinate[-2]) / 2)
-            elif len(coordinate) <= 1:
-                z_b = coordinate
-            elif len(z_b) == len(coordinate):
-                z_b = np.append(z_b, 2 * z_b[-1] - z_b[-2])
-            elif len(z_b) == len(coordinate) + 1:
-                pass
-            elif len(z_b) == len(coordinate) - 1:
-                z_b = np.append(2 * z_b[1] - z_b[2], z_b)
-                z_b = np.append(z_b, 2 * z_b[-1] - z_b[-2])
-            else:
-                z_b = [(coordinate[i] + coordinate[i + 1]) / 2 for i in range(len(coordinate) - 1)]
-                z_b = np.append((3 * coordinate[0] - coordinate[1]) / 2, z_b)
-                z_b = np.append(z_b, (3 * coordinate[-1] - coordinate[-2]) / 2)
-            return z_b
-        else:
-            return None
+# def guess_bounds_old(coordinate, mode):
+#     """
+#     DEPRECATED
+#     """
+#     if mode == "lon":
+#         lon_b = []
+#         if coordinate is not None:
+#             if lon_b is None:
+#                 lon_b = [(coordinate[i] + coordinate[i + 1]) / 2 for i in range(len(coordinate) - 1)]
+#                 lon_b = np.append((3 * coordinate[0] - coordinate[1]) / 2, lon_b)
+#                 lon_b = np.append(lon_b, (3 * coordinate[-1] - coordinate[-2]) / 2)
+#             elif len(coordinate) <= 1:
+#                 lon_b = coordinate
+#             elif len(lon_b) == len(coordinate):
+#                 lon_b = np.append(lon_b, 2 * lon_b[-1] - lon_b[-2])
+#             elif len(lon_b) == len(coordinate) + 1:
+#                 pass
+#             elif len(lon_b) == len(coordinate) - 1:
+#                 lon_b = np.append(2 * lon_b[1] - lon_b[2], lon_b)
+#                 lon_b = np.append(lon_b, 2 * lon_b[-1] - lon_b[-2])
+#             else:
+#                 lon_b = [(coordinate[i] + coordinate[i + 1]) / 2 for i in range(len(coordinate) - 1)]
+#                 lon_b = np.append((3 * coordinate[0] - coordinate[1]) / 2, lon_b)
+#                 lon_b = np.append(lon_b, (3 * coordinate[-1] - coordinate[-2]) / 2)
+#             return lon_b
+#         else:
+#             return None
+#
+#     if mode == "lat":
+#         if coordinate is not None:
+#             return coordinate
+#         else:
+#             return None
+#
+#     if mode == "z":
+#         if coordinate is not None:
+#             z_b = []
+#             if z_b is None:
+#                 z_b = [(coordinate[i] + coordinate[i + 1]) / 2 for i in range(len(coordinate) - 1)]
+#                 z_b = np.append((3 * coordinate[0] - coordinate[1]) / 2, z_b)
+#                 z_b = np.append(z_b, (3 * coordinate[-1] - coordinate[-2]) / 2)
+#             elif len(coordinate) <= 1:
+#                 z_b = coordinate
+#             elif len(z_b) == len(coordinate):
+#                 z_b = np.append(z_b, 2 * z_b[-1] - z_b[-2])
+#             elif len(z_b) == len(coordinate) + 1:
+#                 pass
+#             elif len(z_b) == len(coordinate) - 1:
+#                 z_b = np.append(2 * z_b[1] - z_b[2], z_b)
+#                 z_b = np.append(z_b, 2 * z_b[-1] - z_b[-2])
+#             else:
+#                 z_b = [(coordinate[i] + coordinate[i + 1]) / 2 for i in range(len(coordinate) - 1)]
+#                 z_b = np.append((3 * coordinate[0] - coordinate[1]) / 2, z_b)
+#                 z_b = np.append(z_b, (3 * coordinate[-1] - coordinate[-2]) / 2)
+#             return z_b
+#         else:
+#             return None
 
 
 def generate_filepath(path):
