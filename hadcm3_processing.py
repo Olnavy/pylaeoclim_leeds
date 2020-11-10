@@ -162,7 +162,6 @@ class HadCM3RDS(HadCM3DS):
                f"{util.print_coordinates('t', self.t)}\n" \
                f"DATA: {self.sample_data}"
 
-
 class ATMUPMDS(HadCM3RDS):
     """
     PC

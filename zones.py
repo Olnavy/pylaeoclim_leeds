@@ -100,6 +100,11 @@ class Box(Zone):
 
     
     def fit_coordinates_to_data(self, geo_da):
+        """
+        A reprendre
+        :param geo_da:
+        :return:
+        """
         if self.lon_min is not None:
             condition = np.where(geo_da.lon >= self.lon_min)
             conditionb = np.where(geo_da.lonb >= self.lon_min)

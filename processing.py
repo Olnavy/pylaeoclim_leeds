@@ -76,9 +76,9 @@ class ModelDS(GeoDS):
         pass
     
     def guess_bounds(self):
-        self.lonb = util.guess_bounds(self.lon, "lon")
-        self.latb = util.guess_bounds(self.lat, "lat")
-        self.zb = util.guess_bounds(self.z, "z")
+        self.lonb = util.guess_bounds(self.lon)
+        self.latb = util.guess_bounds(self.lat)
+        self.zb = util.guess_bounds(self.z)
 
 
 def filter_months(data_array, month_list):
@@ -101,22 +101,28 @@ class GeoDataArray:
         else:
             self.data = xr.DataArray(data_input, coords=coords, dims=dims, name=name, attrs=attrs,
                                      indexes=indexes, fastpath=fastpath)
+        self.sort_data()
         print("____ Data imported in the GeoDataArray instance.")
         
-        self.lon = ds.lon if ds is not None else self.data.longitude
-        self.lat = ds.lat if ds is not None else self.data.latitude
-        self.z = ds.lon if ds is not None else None
-        self.lonb, self.latb, self.zb = ds.lonb if ds is not None else None, ds.latb if ds is not None else None, \
-                                        ds.zb if ds is not None else None
-        self.lons, self.lats, self.zs = ds.lons if ds is not None else None, ds.lats if ds is not None else None, \
-                                        ds.zs if ds is not None else None
-        self.lon_p, self.lat_p, self.z_p = ds.lon_p if ds is not None else None, ds.lat_p if ds is not None else None, \
-                                           ds.z_p if ds is not None else None
-        self.lonb_p, self.latb_p, self.zb_p = ds.lonb_p if ds is not None else None, \
-                                              ds.latb_p if ds is not None else None, ds.zb_p if ds is not None else None
-        self.lons_p, self.lats_p, self.zs_p = ds.lons_p if ds is not None else None, \
-                                              ds.lats_p if ds is not None else None, ds.zs_p if ds is not None else None
-        self.t = ds.t if ds is not None else None
+        self.lon = np.sort(ds.lon) if ds is not None else np.sort(self.data.longitude)
+        self.lat = np.sort(ds.lat) if ds is not None else np.sort(self.data.latitude)
+        self.z = np.sort(ds.lon) if ds is not None else None
+        self.lonb, self.latb, self.zb = np.sort(ds.lonb) if ds is not None and ds.lonb is not None else None, \
+                                        np.sort(ds.latb) if ds is not None and ds.latb is not None else None, \
+                                        np.sort(ds.zb) if ds is not None and ds.zb is not None else None
+        self.lons, self.lats, self.zs = np.sort(ds.lons) if ds is not None and ds.lons is not None else None, \
+                                        np.sort(ds.lats) if ds is not None and ds.lats is not None else None, \
+                                        np.sort(ds.zs) if ds is not None and ds.zs is not None else None
+        self.lon_p, self.lat_p, self.z_p = np.sort(ds.lon_p) if ds is not None and ds.lon_p is not None else None, \
+                                           np.sort(ds.lat_p) if ds is not None and ds.lat_p is not None else None, \
+                                           np.sort(ds.z_p) if ds is not None and ds.z_p is not None else None
+        self.lonb_p, self.latb_p, self.zb_p = np.sort(ds.lonb_p) if ds is not None and ds.lonb_p is not None else None,\
+                                              np.sort(ds.latb_p) if ds is not None and ds.latb_p is not None else None,\
+                                              np.sort(ds.zb_p) if ds is not None and ds.zb_p is not None else None
+        self.lons_p, self.lats_p, self.zs_p = np.sort(ds.lons_p) if ds is not None and ds.lons_p is not None else None,\
+                                              np.sort(ds.lats_p) if ds is not None and ds.lats_p is not None else None,\
+                                              np.sort(ds.zs_p) if ds is not None and ds.zs_p is not None else None
+        self.t = np.sort(ds.t) if ds is not None else None
         self.transform = transform
         
         print("____ Coordinate imported in the GeoDataArray instance.")
@@ -137,6 +143,14 @@ class GeoDataArray:
     def values(self, processing=True):
         return self.transform(self.data.where(self.data.values != 0)).values if processing \
             else self.data.where(self.data.values != 0).values
+    
+    def sort_data(self):
+        """
+        Sort all dimensions of the data.
+        :return:
+        """
+        for dim in self.data.dims:
+            self.data = self.data.sortby(dim, ascending=True)
     
     def get_lon(self, mode_lon, value_lon):
         try:
