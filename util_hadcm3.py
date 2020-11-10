@@ -149,7 +149,8 @@ def z_to_index(z, target_z):
 
 
 def guess_bounds(coordinate):
-    if len(coordinate) <= 1:
+    if coordinate is not None:
+        if len(coordinate) <= 1:
             coordinate_b = coordinate
         else:
             coordinate_b = [(coordinate[i] + coordinate[i + 1]) / 2 for i in range(len(coordinate)-1)]
