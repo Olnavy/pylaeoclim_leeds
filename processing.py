@@ -104,9 +104,9 @@ class GeoDataArray:
         self.sort_data()
         print("____ Data imported in the GeoDataArray instance.")
         
-        self.lon = np.sort(ds.lon) if ds is not None else np.sort(self.data.longitude)
-        self.lat = np.sort(ds.lat) if ds is not None else np.sort(self.data.latitude)
-        self.z = np.sort(ds.lon) if ds is not None else None
+        self.lon = np.sort(ds.lon) if ds is not None and ds.lon is not None else np.sort(self.data.longitude)
+        self.lat = np.sort(ds.lat) if ds is not None and ds.lat is not None else np.sort(self.data.latitude)
+        self.z = np.sort(ds.z) if ds is not None and ds.z is not None else None
         self.lonb, self.latb, self.zb = np.sort(ds.lonb) if ds is not None and ds.lonb is not None else None, \
                                         np.sort(ds.latb) if ds is not None and ds.latb is not None else None, \
                                         np.sort(ds.zb) if ds is not None and ds.zb is not None else None
@@ -116,11 +116,11 @@ class GeoDataArray:
         self.lon_p, self.lat_p, self.z_p = np.sort(ds.lon_p) if ds is not None and ds.lon_p is not None else None, \
                                            np.sort(ds.lat_p) if ds is not None and ds.lat_p is not None else None, \
                                            np.sort(ds.z_p) if ds is not None and ds.z_p is not None else None
-        self.lonb_p, self.latb_p, self.zb_p = np.sort(ds.lonb_p) if ds is not None and ds.lonb_p is not None else None,\
-                                              np.sort(ds.latb_p) if ds is not None and ds.latb_p is not None else None,\
+        self.lonb_p, self.latb_p, self.zb_p = np.sort(ds.lonb_p) if ds is not None and ds.lonb_p is not None else None, \
+                                              np.sort(ds.latb_p) if ds is not None and ds.latb_p is not None else None, \
                                               np.sort(ds.zb_p) if ds is not None and ds.zb_p is not None else None
-        self.lons_p, self.lats_p, self.zs_p = np.sort(ds.lons_p) if ds is not None and ds.lons_p is not None else None,\
-                                              np.sort(ds.lats_p) if ds is not None and ds.lats_p is not None else None,\
+        self.lons_p, self.lats_p, self.zs_p = np.sort(ds.lons_p) if ds is not None and ds.lons_p is not None else None, \
+                                              np.sort(ds.lats_p) if ds is not None and ds.lats_p is not None else None, \
                                               np.sort(ds.zs_p) if ds is not None and ds.zs_p is not None else None
         self.t = np.sort(ds.t) if ds is not None else None
         self.transform = transform
@@ -153,34 +153,64 @@ class GeoDataArray:
             self.data = self.data.sortby(dim, ascending=True)
     
     def get_lon(self, mode_lon, value_lon):
+        
         try:
             if mode_lon is None:
                 pass
-            elif mode_lon == "index":
-                if value_lon is None:
-                    raise ValueError("**** To use the index mode, please indicate a value_lon.")
-                print(f"____ New longitude value : {self.lon[int(value_lon)]}")
-                self.data = self.data.isel(longitude=value_lon)
-            elif mode_lon == "value":
-                if value_lon is None:
-                    raise ValueError("**** To use the value mode, please indicate a value_lon.")
-                new_lon = self.lon[util.lon_to_index(self.lon, value_lon)]
-                print(
-                    f"____ New longitude value : {new_lon}")
-                self.data = self.data.isel(longitude=util.lon_to_index(self.lon, value_lon))
-            elif mode_lon == "mean":
-                self.data = self.data.mean(dim="longitude", skipna=True)
-            elif mode_lon == "min":
-                self.data = self.data.min(dim="longitude", skipna=True)
-            elif mode_lon == "max":
-                self.data = self.data.max(dim="longitude", skipna=True)
-            elif mode_lon == "median":
-                self.data = self.data.median(dim="longitude", skipna=True)
-            elif mode_lon == "sum":
-                self.data = self.data.sum(dim="longitude", skipna=True)
-            else:
-                print("**** Mode wasn't recognized. The data_array was not changed.")
-            self.update_lon(mode_lon, value_lon)
+            elif 'longitude' in self.data.dims:
+                if mode_lon == "index":
+                    if value_lon is None:
+                        raise ValueError("**** To use the index mode, please indicate a value_lon.")
+                    print(f"____ New longitude value : {self.lon[int(value_lon)]}")
+                    self.data = self.data.isel(longitude=value_lon)
+                elif mode_lon == "value":
+                    if value_lon is None:
+                        raise ValueError("**** To use the value mode, please indicate a value_lon.")
+                    new_lon = self.lon[util.lon_to_index(self.lon, value_lon)]
+                    print(
+                        f"____ New longitude value : {new_lon}")
+                    self.data = self.data.isel(longitude=util.lon_to_index(self.lon, value_lon))
+                elif mode_lon == "mean":
+                    self.data = self.data.mean(dim="longitude", skipna=True)
+                elif mode_lon == "min":
+                    self.data = self.data.min(dim="longitude", skipna=True)
+                elif mode_lon == "max":
+                    self.data = self.data.max(dim="longitude", skipna=True)
+                elif mode_lon == "median":
+                    self.data = self.data.median(dim="longitude", skipna=True)
+                elif mode_lon == "sum":
+                    self.data = self.data.sum(dim="longitude", skipna=True)
+                else:
+                    print("**** Mode wasn't recognized. The data_array was not changed.")
+                self.update_lon(mode_lon, value_lon)
+            
+            elif 'longitudeb' in self.data.dims:
+                if mode_lon == "index":
+                    if value_lon is None:
+                        raise ValueError("**** To use the index mode, please indicate a value_lon.")
+                    print(f"____ New longitude value : {self.lonb[int(value_lon)]}")
+                    self.data = self.data.isel(longitudeb=value_lon)
+                elif mode_lon == "value":
+                    if value_lon is None:
+                        raise ValueError("**** To use the value mode, please indicate a value_lon.")
+                    new_lon = self.lonb[util.lon_to_index(self.lonb, value_lon)]
+                    print(
+                        f"____ New longitude value : {new_lon}")
+                    self.data = self.data.isel(longitudeb=util.lon_to_index(self.lonb, value_lon))
+                elif mode_lon == "mean":
+                    self.data = self.data.mean(dim="longitudeb", skipna=True)
+                elif mode_lon == "min":
+                    self.data = self.data.min(dim="longitudeb", skipna=True)
+                elif mode_lon == "max":
+                    self.data = self.data.max(dim="longitudeb", skipna=True)
+                elif mode_lon == "median":
+                    self.data = self.data.median(dim="longitudeb", skipna=True)
+                elif mode_lon == "sum":
+                    self.data = self.data.sum(dim="longitudeb", skipna=True)
+                else:
+                    print("**** Mode wasn't recognized. The data_array was not changed.")
+                self.update_lon(mode_lon, value_lon)
+        
         except ValueError as error:
             print(error)
             print("____ The DataArray was not changed.")
@@ -196,14 +226,15 @@ class GeoDataArray:
         elif mode_lon == "index":
             if value_lon is None:
                 raise ValueError("**** To use the index mode, please indicate a value_lon.")
-            print(f"____ New longitude value : {self.lon[int(value_lon)]}")
-            self.lon = self.lon[int(value_lon)]
+            self.lon = self.lon[int(value_lon)] if 'longitude' in self.data.dims else self.lonb[int(value_lon)]
             self.lonb, self.lons = self.lon, None
             self.lon_p, self.lonb_p, self.lons_p = self.lon, self.lon, None
         elif mode_lon == "value":
             if value_lon is None:
                 raise ValueError("**** To use the value mode, please indicate a value_lon.")
-            new_lon = self.lon[util.lon_to_index(self.lon, value_lon)]  # Take the closest longitude
+            # Take the closest longitude
+            new_lon = self.lon[util.lon_to_index(self.lon, value_lon)] if 'longitude' in self.data.dims else self.lonb[
+                util.lon_to_index(self.lonb, value_lon)]
             self.lon = new_lon
             self.lonb, self.lons = self.lon, None
             self.lon_p, self.lonb_p, self.lons_p = self.lon, self.lon, None
@@ -217,31 +248,60 @@ class GeoDataArray:
         try:
             if mode_lat is None:
                 pass
-            elif mode_lat == "index":
-                if value_lat is None:
-                    raise ValueError("**** To use the index mode, please indicate a value_lat.")
-                print(f"____ New latitude value : {self.lat[int(value_lat)]}")
-                self.data = self.data.isel(latitude=value_lat)
-            elif mode_lat == "value":
-                if value_lat is None:
-                    raise ValueError("**** To use the value mode, please indicate a value_lat.")
-                new_lat = self.lat[util.lat_to_index(self.lat, value_lat)]
-                print(
-                    f"____ New latitude value : {new_lat}")
-                self.data = self.data.isel(latitude=util.lat_to_index(self.lat, value_lat))
-            elif mode_lat == "mean":
-                self.data = self.data.mean(dim="latitude", skipna=True)
-            elif mode_lat == "min":
-                self.data = self.data.min(dim="latitude", skipna=True)
-            elif mode_lat == "max":
-                self.data = self.data.max(dim="latitude", skipna=True)
-            elif mode_lat == "median":
-                self.data = self.data.median(dim="latitude", skipna=True)
-            elif mode_lat == "sum":
-                self.data = self.data.sum(dim="latitude", skipna=True)
-            else:
-                print("**** Mode wasn't recognized. The data_array was not changed.")
-            self.update_lat(mode_lat, value_lat)
+            elif 'latitude' in self.data.dims:
+                if mode_lat == "index":
+                    if value_lat is None:
+                        raise ValueError("**** To use the index mode, please indicate a value_lat.")
+                    print(f"____ New latitude value : {self.lat[int(value_lat)]}")
+                    self.data = self.data.isel(latitude=value_lat)
+                elif mode_lat == "value":
+                    if value_lat is None:
+                        raise ValueError("**** To use the value mode, please indicate a value_lat.")
+                    new_lat = self.lat[util.lat_to_index(self.lat, value_lat)]
+                    print(
+                        f"____ New latitude value : {new_lat}")
+                    self.data = self.data.isel(latitude=util.lat_to_index(self.lat, value_lat))
+                elif mode_lat == "mean":
+                    self.data = self.data.mean(dim="latitude", skipna=True)
+                elif mode_lat == "min":
+                    self.data = self.data.min(dim="latitude", skipna=True)
+                elif mode_lat == "max":
+                    self.data = self.data.max(dim="latitude", skipna=True)
+                elif mode_lat == "median":
+                    self.data = self.data.median(dim="latitude", skipna=True)
+                elif mode_lat == "sum":
+                    self.data = self.data.sum(dim="latitude", skipna=True)
+                else:
+                    print("**** Mode wasn't recognized. The data_array was not changed.")
+                self.update_lat(mode_lat, value_lat)
+            
+            elif 'latitudeb' in self.data.dims:
+                if mode_lat == "index":
+                    if value_lat is None:
+                        raise ValueError("**** To use the index mode, please indicate a value_lat.")
+                    print(f"____ New latitude value : {self.latb[int(value_lat)]}")
+                    self.data = self.data.isel(latitudeb=value_lat)
+                elif mode_lat == "value":
+                    if value_lat is None:
+                        raise ValueError("**** To use the value mode, please indicate a value_lat.")
+                    new_lat = self.latb[util.lat_to_index(self.latb, value_lat)]
+                    print(
+                        f"____ New latitude value : {new_lat}")
+                    self.data = self.data.isel(latitudeb=util.lat_to_index(self.latb, value_lat))
+                elif mode_lat == "mean":
+                    self.data = self.data.mean(dim="latitudeb", skipna=True)
+                elif mode_lat == "min":
+                    self.data = self.data.min(dim="latitudeb", skipna=True)
+                elif mode_lat == "max":
+                    self.data = self.data.max(dim="latitudeb", skipna=True)
+                elif mode_lat == "median":
+                    self.data = self.data.median(dim="latitudeb", skipna=True)
+                elif mode_lat == "sum":
+                    self.data = self.data.sum(dim="latitudeb", skipna=True)
+                else:
+                    print("**** Mode wasn't recognized. The data_array was not changed.")
+                self.update_lat(mode_lat, value_lat)
+        
         except ValueError as error:
             print(error)
             print("____ The DataArray was not changed.")
@@ -258,13 +318,15 @@ class GeoDataArray:
             if value_lat is None:
                 raise ValueError("**** To use the index mode, please indicate a value_lat.")
             print(f"____ New latitude value : {self.lat[int(value_lat)]}")
-            self.lat = self.lat[int(value_lat)]
+            self.lat = self.lat[int(value_lat)] if 'latitude' in self.data.dims else self.latb[int(value_lat)]
             self.latb, self.lats = self.lat, None
             self.lat_p, self.latb_p, self.lats_p = self.lat, self.lat, None
         elif mode_lat == "value":
             if value_lat is None:
                 raise ValueError("**** To use the value mode, please indicate a value_lat.")
-            new_lat = self.lat[util.lat_to_index(self.lat, value_lat)]  # Take the closest latitude
+            # Take the closest latitude
+            new_lat = self.lat[util.lat_to_index(self.lat, value_lat)] if 'latitudeb' in self.data.dims else self.latb[
+                util.lat_to_index(self.latb, value_lat)]
             self.lat = new_lat
             self.latb, self.lats = self.lat, None
             self.lat_p, self.latb_p, self.lats_p = self.lat, self.lat, None
@@ -278,31 +340,61 @@ class GeoDataArray:
         try:
             if mode_z is None:
                 pass
-            elif mode_z == "index":
-                if value_z is None:
-                    raise ValueError("**** To use the index mode, please indicate a value_z.")
-                print(f"____ New z value : {self.z[int(value_z)]}")
-                self.data = self.data.isel(z=value_z)
-            elif mode_z == "value":
-                if value_z is None:
-                    raise ValueError("**** To use the value mode, please indicate a value_z.")
-                new_z = self.z[util.z_to_index(self.z, value_z)]
-                print(
-                    f"New z value : {new_z}")
-                self.data = self.data.isel(z=util.z_to_index(self.z, value_z))
-            elif mode_z == "mean":
-                self.data = self.data.mean(dim="z", skipna=True)
-            elif mode_z == "min":
-                self.data = self.data.min(dim="z", skipna=True)
-            elif mode_z == "max":
-                self.data = self.data.max(dim="z", skipna=True)
-            elif mode_z == "median":
-                self.data = self.data.median(dim="z", skipna=True)
-            elif mode_z == "sum":
-                self.data = self.data.sum(dim="z", skipna=True)
-            else:
-                print("**** Mode wasn't recognized. The data_array was not changed.")
-            self.update_z(mode_z, value_z)
+            
+            elif 'z' in self.data.dims:
+                if mode_z == "index":
+                    if value_z is None:
+                        raise ValueError("**** To use the index mode, please indicate a value_z.")
+                    print(f"____ New z value : {self.z[int(value_z)]}")
+                    self.data = self.data.isel(z=value_z)
+                elif mode_z == "value":
+                    if value_z is None:
+                        raise ValueError("**** To use the value mode, please indicate a value_z.")
+                    new_z = self.z[util.z_to_index(self.z, value_z)]
+                    print(
+                        f"New z value : {new_z}")
+                    self.data = self.data.isel(z=util.z_to_index(self.z, value_z))
+                elif mode_z == "mean":
+                    self.data = self.data.mean(dim="z", skipna=True)
+                elif mode_z == "min":
+                    self.data = self.data.min(dim="z", skipna=True)
+                elif mode_z == "max":
+                    self.data = self.data.max(dim="z", skipna=True)
+                elif mode_z == "median":
+                    self.data = self.data.median(dim="z", skipna=True)
+                elif mode_z == "sum":
+                    self.data = self.data.sum(dim="z", skipna=True)
+                else:
+                    print("**** Mode wasn't recognized. The data_array was not changed.")
+                self.update_z(mode_z, value_z)
+            
+            elif 'zb' in self.data.dims:
+                if mode_z == "index":
+                    if value_z is None:
+                        raise ValueError("**** To use the index mode, please indicate a value_z.")
+                    print(f"____ New z value : {self.zb[int(value_z)]}")
+                    self.data = self.data.isel(zb=value_z)
+                elif mode_z == "value":
+                    if value_z is None:
+                        raise ValueError("**** To use the value mode, please indicate a value_z.")
+                    new_z = self.zb[util.z_to_index(self.zb, value_z)]
+                    print(
+                        f"New z value : {new_z}")
+                    self.data = self.data.isel(zb=util.z_to_index(self.zb, value_z))
+                elif mode_z == "mean":
+                    self.data = self.data.mean(dim="zb", skipna=True)
+                elif mode_z == "min":
+                    self.data = self.data.min(dim="zb", skipna=True)
+                elif mode_z == "max":
+                    self.data = self.data.max(dim="zb", skipna=True)
+                elif mode_z == "median":
+                    self.data = self.data.median(dim="zb", skipna=True)
+                elif mode_z == "sum":
+                    self.data = self.data.sum(dim="zb", skipna=True)
+                else:
+                    print("**** Mode wasn't recognized. The data_array was not changed.")
+                self.update_z(mode_z, value_z)
+        
         except ValueError as error:
             print(error)
             print("____ The DataArray was not changed.")
@@ -318,14 +410,15 @@ class GeoDataArray:
         elif mode_z == "index":
             if value_z is None:
                 raise ValueError("**** To use the index mode, please indicate a value_z.")
-            print(f"____ New z value : {self.z[int(value_z)]}")
-            self.z = self.z[int(value_z)]
+            self.z = self.z[int(value_z)] if 'z' in self.data.dims else self.zb[int(value_z)]
             self.zb, self.zs = self.z, None
             self.z_p, self.zb_p, self.zs_p = self.z, self.z, None
         elif mode_z == "value":
             if value_z is None:
                 raise ValueError("**** To use the value mode, please indicate a value_z.")
-            new_z = self.z[util.z_to_index(self.z, value_z)]  # Take the closest z
+            # Take the closest z
+            new_z = self.z[util.z_to_index(self.z, value_z)] if 'z' in self.data.dims else self.zb[
+                util.z_to_index(self.zb, value_z)]
             self.z = new_z
             self.zb, self.zs = self.z, None
             self.z_p, self.zb_p, self.zs_p = self.z, self.z, None

@@ -162,6 +162,7 @@ class HadCM3RDS(HadCM3DS):
                f"{util.print_coordinates('t', self.t)}\n" \
                f"DATA: {self.sample_data}"
 
+
 class ATMUPMDS(HadCM3RDS):
     """
     PC
@@ -178,8 +179,8 @@ class ATMUPMDS(HadCM3RDS):
         array = array_r
         if "longitude" in array.dims:
             array = xr.concat([array, array.isel(longitude=0)], dim="longitude")
-        if "longitude_1" in array.dims:
-            array = xr.concat([array, array.isel(longitude_1=0)], dim="longitude_1")
+        if "longitudeb" in array.dims:
+            array = xr.concat([array, array.isel(longitudeb=0)], dim="longitudeb")
         if "latitude" in array.dims:
             array = xr.concat([array.isel(latitude=0), array, array.isel(latitude=-1)], dim="latitude")
         return array.transpose(*array_r.dims)
@@ -210,6 +211,16 @@ class ATMUPMDS(HadCM3RDS):
                   for month in util.months_to_number(self.months)]
         
         super(ATMUPMDS, self).import_coordinates()
+    
+    def temperature(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
+                    mode_z=None, value_z=None, mode_t=None, value_t=None,
+                    new_start_year=None, new_end_year=None, new_month_list=None):
+        print("__ Importing atmosphere temperaure.")
+        return self.get(xr.open_mfdataset(
+            self.paths, combine='by_coords').temp_mm_p.rename({'p': 'z'}).rename({'longitude_1': 'longitudeb'}).
+                        rename({'latitude_1': 'latitudeb'}), zone,
+                        mode_lon, value_lon, mode_lat, value_lat, mode_z, value_z, mode_t, value_t,
+                        new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
 
 
 class ATMSURFMDS(HadCM3RDS):
@@ -228,11 +239,11 @@ class ATMSURFMDS(HadCM3RDS):
         array = array_r
         if "longitude" in array.dims:
             array = xr.concat([array, array.isel(longitude=0)], dim="longitude")
-        if "longitude_1" in array.dims:
-            array = xr.concat([array, array.isel(longitude_1=0)], dim="longitude_1")
-        if "latitude_1" in array.dims:
-            array.isel(latitude_1=-1).values = array.isel(latitude_1=-2).values
-            array = xr.concat([array.isel(latitude_1=0), array, array.isel(latitude_1=-2)], dim="latitude_1")
+        if "longitudeb" in array.dims:
+            array = xr.concat([array, array.isel(longitudeb=0)], dim="longitudeb")
+        if "latitudeb" in array.dims:
+            array.isel(latitudeb=-1).values = array.isel(latitudeb=-2).values
+            array = xr.concat([array.isel(latitudeb=0), array, array.isel(latitudeb=-2)], dim="latitudeb")
         return array.transpose(*array_r.dims)
     
     def import_coordinates(self):
@@ -258,7 +269,7 @@ class ATMSURFMDS(HadCM3RDS):
             mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
         print("__ Importing SAT.")
         return self.get(xr.open_mfdataset(self.paths, combine='by_coords').temp_mm_srf.isel(surface=0), zone,
-                        mode_lon, value_lon, mode_lat, value_lat, mode_t, value_t,
+                        mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t, value_t,
                         new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
 
 
@@ -278,19 +289,19 @@ class OCNMDS(HadCM3RDS):
         array = array_r
         if "longitude" in array.dims:
             array = xr.concat([array, array.isel(longitude=0)], dim="longitude")
-        if "longitude_1" in array.dims:
-            array = xr.concat([array, array.isel(longitude_1=0)], dim="longitude_1")
+        if "longitudeb" in array.dims:
+            array = xr.concat([array, array.isel(longitudeb=0)], dim="longitudeb")
         if "latitude" in array.dims:
             array.isel(latitude=-1).values = array.isel(latitude=-2).values
             array = xr.concat([array.isel(latitude=np.arange(0, len(array.latitude) - 1, 1)), array.isel(latitude=-2),
                                array.isel(latitude=-2)], dim="latitude")
-        if "latitude_1" in array.dims:
-            array.isel(latitude_1=-1).values = array.isel(latitude_1=-2).values
+        if "latitudeb" in array.dims:
+            array.isel(latitudeb=-1).values = array.isel(latitudeb=-2).values
             array = xr.concat(
-                [array.isel(latitude_1=0), array.isel(latitude_1=np.arange(0, len(array.latitude_1) - 1, 1)),
-                 array.isel(latitude_1=-2), array.isel(latitude_1=-2)], dim="latitude_1")
-        if "depth_1" in array.dims:
-            array = xr.concat([array, array.isel(depth_1=-1)], dim="depth_1")
+                [array.isel(latitudeb=0), array.isel(latitudeb=np.arange(0, len(array.latitudeb) - 1, 1)),
+                 array.isel(latitudeb=-2), array.isel(latitudeb=-2)], dim="latitudeb")
+        if "zb" in array.dims:
+            array = xr.concat([array, array.isel(zb=-1)], dim="zb")
         return array.transpose(*array_r.dims)
     
     def import_coordinates(self):
@@ -330,7 +341,7 @@ class OCNMDS(HadCM3RDS):
                     mode_z=None, value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None,
                     new_month_list=None):
         print("__ Importing temperature.")
-        return self.get(xr.open_mfdataset(self.paths, combine='by_coords').temp_mm_dpth.rename({'depth_1': 'z'}), zone,
+        return self.get(xr.open_mfdataset(self.paths, combine='by_coords').temp_mm_dpth.rename({'depth_1': 'zb'}), zone,
                         mode_lon, value_lon, mode_lat, value_lat, mode_z, value_z, mode_t, value_t,
                         new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
     
@@ -338,7 +349,7 @@ class OCNMDS(HadCM3RDS):
                  mode_z=None, value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None,
                  new_month_list=None):
         print("__ Importing salinity.")
-        return self.get(xr.open_mfdataset(self.paths, combine='by_coords').salinity_mm_dpth.rename({'depth_1': 'z'}),
+        return self.get(xr.open_mfdataset(self.paths, combine='by_coords').salinity_mm_dpth.rename({'depth_1': 'zb'}),
                         zone, mode_lon, value_lon, mode_lat, value_lat, mode_z, value_z, mode_t, value_t,
                         new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
     
@@ -354,8 +365,8 @@ class OCNMDS(HadCM3RDS):
                    mode_z=None, value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None,
                    new_month_list=None):
         print("__ Importing meridional (eastward) velocity.")
-        return self.get(xr.open_mfdataset(self.paths, combine='by_coords').ucurrTot_mm_dpth.rename({'depth_1': 'z'})
-                        .rename({'longitude_1': 'longitude'}).rename({'latitude_1': 'latitude'}),
+        return self.get(xr.open_mfdataset(self.paths, combine='by_coords').ucurrTot_mm_dpth.rename({'depth_1': 'zb'})
+                        .rename({'longitude_1': 'longitudeb'}).rename({'latitude_1': 'latitudeb'}),
                         zone, mode_lon, value_lon, mode_lat, value_lat, mode_z, value_z, mode_t, value_t,
                         new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
     
@@ -363,8 +374,8 @@ class OCNMDS(HadCM3RDS):
                    mode_z=None, value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None,
                    new_month_list=None):
         print("__ Importing zonal (northward) velocity.")
-        return self.get(xr.open_mfdataset(self.paths, combine='by_coords').vcurrTot_mm_dpth.rename({'depth_1': 'z'})
-                        .rename({'longitude_1': 'longitude'}).rename({'latitude_1': 'latitude'}),
+        return self.get(xr.open_mfdataset(self.paths, combine='by_coords').vcurrTot_mm_dpth.rename({'depth_1': 'zb'})
+                        .rename({'longitude_1': 'longitudeb'}).rename({'latitude_1': 'latitudeb'}),
                         zone, mode_lon, value_lon, mode_lat, value_lat, mode_z, value_z, mode_t, value_t,
                         new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
     
@@ -373,10 +384,10 @@ class OCNMDS(HadCM3RDS):
                  new_month_list=None):
         print("__ Importing zonal and meridional velocities and computing total velocity.")
         return self.get(np.sqrt(
-            (xr.open_mfdataset(self.paths, combine='by_coords').vcurrTot_mm_dpth.rename({'depth_1': 'z'})
-             .rename({'longitude_1': 'longitude'}).rename({'latitude_1': 'latitude'})) ** 2 +
-            (xr.open_mfdataset(self.paths, combine='by_coords').vcurrTot_mm_dpth.rename({'depth_1': 'z'})
-             .rename({'longitude_1': 'longitude'}).rename({'latitude_1': 'latitude'})) ** 2),
+            (xr.open_mfdataset(self.paths, combine='by_coords').vcurrTot_mm_dpth.rename({'depth_1': 'zb'})
+             .rename({'longitude_1': 'longitudeb'}).rename({'latitude_1': 'latitudeb'})) ** 2 +
+            (xr.open_mfdataset(self.paths, combine='by_coords').vcurrTot_mm_dpth.rename({'depth_1': 'zb'})
+             .rename({'longitude_1': 'longitudeb'}).rename({'latitude_1': 'latitudeb'})) ** 2),
             zone, mode_lon, value_lon, mode_lat, value_lat, mode_z, value_z, mode_t, value_t,
             new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
 
@@ -397,17 +408,17 @@ class OCNYDS(HadCM3RDS):
         array = array_r
         if "longitude" in array.dims:
             array = xr.concat([array, array.isel(longitude=0)], dim="longitude")
-        if "longitude_1" in array.dims:
-            array = xr.concat([array, array.isel(longitude_1=0)], dim="longitude_1")
+        if "longitudeb" in array.dims:
+            array = xr.concat([array, array.isel(longitudeb=0)], dim="longitudeb")
         if "latitude" in array.dims:
             array.isel(latitude=-1).values = array.isel(latitude=-2).values
             array = xr.concat([array.isel(latitude=np.arange(0, len(array.latitude) - 1, 1)), array.isel(latitude=-2),
                                array.isel(latitude=-2)], dim="latitude")
-        if "latitude_1" in array.dims:
-            array.isel(latitude_1=-1).values = array.isel(latitude_1=-2).values
+        if "latitudeb" in array.dims:
+            array.isel(latitudeb=-1).values = array.isel(latitudeb=-2).values
             array = xr.concat(
-                [array.isel(latitude_1=0), array.isel(latitude_1=np.arange(0, len(array.latitude_1) - 1, 1)),
-                 array.isel(latitude_1=-2), array.isel(latitude_1=-2)], dim="latitude_1")
+                [array.isel(latitudeb=0), array.isel(latitudeb=np.arange(0, len(array.latitudeb) - 1, 1)),
+                 array.isel(latitudeb=-2), array.isel(latitudeb=-2)], dim="latitudeb")
         return array.transpose(*array_r.dims)
     
     def import_coordinates(self):
@@ -437,30 +448,30 @@ class OCNYDS(HadCM3RDS):
     def temperature(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
                     mode_z=None, value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None):
         print("__ Importing temperature.")
-        return self.get(xr.open_mfdataset(self.paths, combine='by_coords').temp_ym_dpth.rename({'depth_1': 'z'}),
+        return self.get(xr.open_mfdataset(self.paths, combine='by_coords').temp_ym_dpth.rename({'depth_1': 'zb'}),
                         zone, mode_lon, value_lon, mode_lat, value_lat, mode_z, value_z, mode_t, value_t,
                         new_start_year=new_start_year, new_end_year=new_end_year)
     
     def salinity(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
                  mode_z=None, value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None):
         print("__ Importing salinity.")
-        return self.get(xr.open_mfdataset(self.paths, combine='by_coords').salinity_ym_dpth.rename({'depth_1': 'z'}),
+        return self.get(xr.open_mfdataset(self.paths, combine='by_coords').salinity_ym_dpth.rename({'depth_1': 'zb'}),
                         zone, mode_lon, value_lon, mode_lat, value_lat, mode_z, value_z, mode_t, value_t,
                         new_start_year=new_start_year, new_end_year=new_end_year)
     
     def u_velocity(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
                    mode_z=None, value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None):
         print("__ Importing meridional (eastward) velocity.")
-        return self.get(xr.open_mfdataset(self.paths, combine='by_coords').ucurrTot_mm_dpth.rename({'depth_1': 'z'})
-                        .rename({'longitude_1': 'longitude'}).rename({'latitude_1': 'latitude'}),
+        return self.get(xr.open_mfdataset(self.paths, combine='by_coords').ucurrTot_mm_dpth.rename({'depth_1': 'zb'})
+                        .rename({'longitude_1': 'longitudeb'}).rename({'latitude_1': 'latitudeb'}),
                         zone, mode_lon, value_lon, mode_lat, value_lat, mode_z, value_z, mode_t, value_t,
                         new_start_year=new_start_year, new_end_year=new_end_year)
     
     def v_velocity(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
                    mode_z=None, value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None):
         print("__ Importing zonal (northward) velocity.")
-        return self.get(xr.open_mfdataset(self.paths, combine='by_coords').vcurrTot_mm_dpth.rename({'depth_1': 'z'})
-                        .rename({'longitude_1': 'longitude'}).rename({'latitude_1': 'latitude'}),
+        return self.get(xr.open_mfdataset(self.paths, combine='by_coords').vcurrTot_mm_dpth.rename({'depth_1': 'zb'})
+                        .rename({'longitude_1': 'longitudeb'}).rename({'latitude_1': 'latitudeb'}),
                         zone, mode_lon, value_lon, mode_lat, value_lat, mode_z, value_z, mode_t, value_t,
                         new_start_year=new_start_year, new_end_year=new_end_year)
     
@@ -468,10 +479,10 @@ class OCNYDS(HadCM3RDS):
                  mode_z=None, value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None):
         print("__ Importing zonal and meridional velocities and computing total velocity.")
         return self.get(np.sqrt(
-            (xr.open_mfdataset(self.paths, combine='by_coords').vcurrTot_mm_dpth.rename({'depth_1': 'z'})
-             .rename({'longitude_1': 'longitude'}).rename({'latitude_1': 'latitude'})) ** 2 +
-            (xr.open_mfdataset(self.paths, combine='by_coords').vcurrTot_mm_dpth.rename({'depth_1': 'z'})
-             .rename({'longitude_1': 'longitude'}).rename({'latitude_1': 'latitude'})) ** 2),
+            (xr.open_mfdataset(self.paths, combine='by_coords').vcurrTot_mm_dpth.rename({'depth_1': 'zb'})
+             .rename({'longitude_1': 'longitudeb'}).rename({'latitude_1': 'latitudeb'})) ** 2 +
+            (xr.open_mfdataset(self.paths, combine='by_coords').vcurrTot_mm_dpth.rename({'depth_1': 'zb'})
+             .rename({'longitude_1': 'longitudeb'}).rename({'latitude_1': 'latitudeb'})) ** 2),
             zone, mode_lon, value_lon, mode_lat, value_lat, mode_z, value_z, mode_t, value_t,
             new_start_year=new_start_year, new_end_year=new_end_year)
 
@@ -821,8 +832,8 @@ class OCNUVEL01MTS(HadCM3TS):
     def u_vel(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
               mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
         print("__ Importing eastward sea water velocity at 5m (monthly).")
-        return self.get(self.data.ucurrTot_mm_dpth.isel(depth_1=0).rename({'longitude_1': 'longitude'}).rename(
-            {'latitude_1': 'latitude'}), zone, mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t, value_t,
+        return self.get(self.data.ucurrTot_mm_dpth.isel(depth_1=0).rename({'longitude_1': 'longitudeb'}).rename(
+            {'latitude_1': 'latitudeb'}), zone, mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t, value_t,
             new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
 
 
@@ -845,8 +856,9 @@ class OCNUVELATS(HadCM3TS):
               value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
         print("__ Importing eastward sea water velocity (annual).")
         return self.get(
-            self.data.ucurrTot_mm_dpth.rename({'longitude_1': 'longitude'}).rename({'latitude_1': 'latitude'}).rename(
-                {"depth_1": "z"}), zone, mode_lon, value_lon, mode_lat, value_lat, mode_z, value_z, mode_t, value_t,
+            self.data.ucurrTot_mm_dpth.rename({'longitude_1': 'longitudeb'}).rename({'latitude_1': 'latitudeb'})
+                .rename({"depth_1": "z"}), zone,
+            mode_lon, value_lon, mode_lat, value_lat, mode_z, value_z, mode_t, value_t,
             new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
 
 
@@ -866,8 +878,8 @@ class OCNVVEL01MTS(HadCM3TS):
     def v_vel(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
               mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
         print("__ Importing westward sea water velocity at 5m (monthly).")
-        return self.get(self.data.vcurrTot_mm_dpth.isel(depth_1=0).rename({'longitude_1': 'longitude'}).rename(
-            {'latitude_1': 'latitude'}), zone, mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t, value_t,
+        return self.get(self.data.vcurrTot_mm_dpth.isel(depth_1=0).rename({'longitude_1': 'longitudeb'}).rename(
+            {'latitude_1': 'latitudeb'}), zone, mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t, value_t,
             new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
 
 
@@ -890,8 +902,9 @@ class OCNVVELATS(HadCM3TS):
               value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
         print("__ Importing westward sea water velocity (annual).")
         return self.get(
-            self.data.vcurrTot_mm_dpth.rename({'longitude_1': 'longitude'}).rename({'latitude_1': 'latitude'}).rename(
-                {"depth_1": "z"}), zone, mode_lon, value_lon, mode_lat, value_lat, mode_z, value_z, mode_t, value_t,
+            self.data.vcurrTot_mm_dpth.rename({'longitude_1': 'longitudeb'}).rename(
+                {'latitude_1': 'latitudeb'}).rename({"depth_1": "z"}), zone, mode_lon, value_lon, mode_lat, value_lat,
+            mode_z, value_z, mode_t, value_t,
             new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
 
 
@@ -1120,14 +1133,13 @@ class ICECONCMTS(HadCM3TS):
         return ATMSURFMDS.transform(array_r)
     
     def import_coordinates(self):
-        
         self.lon = np.sort(self.data.longitude.values)
         self.lonb = util.guess_bounds(self.lon)
         self.lons = self.lonb[1:] - self.lonb[0:-1]
         self.lon_p = np.append(self.lon, self.lon[-1] + self.lons[-1])
         self.lonb_p = util.guess_bounds(self.lon_p)
         self.lons_p = self.lonb_p[1:] - self.lonb_p[0:-1]
-
+        
         self.lat = np.sort(self.data.latitude.values)
         self.latb = util.guess_bounds(self.lat)
         self.lats = self.latb[1:] - self.latb[0:-1]
@@ -1157,21 +1169,20 @@ class ICEDEPTHMTS(HadCM3TS):
         return ATMSURFMDS.transform(array_r)
     
     def import_coordinates(self):
-        
         self.lon = np.sort(self.data.longitude.values)
         self.lonb = util.guess_bounds(self.lon)
         self.lons = self.lonb[1:] - self.lonb[0:-1]
         self.lon_p = np.append(self.lon, self.lon[-1] + self.lons[-1])
         self.lonb_p = util.guess_bounds(self.lon_p)
         self.lons_p = self.lonb_p[1:] - self.lonb_p[0:-1]
-    
+        
         self.lat = np.sort(self.data.latitude.values)
         self.latb = util.guess_bounds(self.lat)
         self.lats = self.latb[1:] - self.latb[0:-1]
         self.lat_p = self.lat
         self.latb_p = util.guess_bounds(self.lat_p)
         self.lats_p = self.latb_p[1:] - self.latb_p[0:-1]
-    
+        
         super(ICEDEPTHMTS, self).import_coordinates()
     
     def ice_depth(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None, mode_t=None,
@@ -1217,7 +1228,7 @@ class SATMTS(HadCM3TS):
         self.lon_p = np.append(self.lon, self.lon[-1] + self.lons[-1])
         self.lonb_p = util.guess_bounds(self.lon_p)
         self.lons_p = self.lonb_p[1:] - self.lonb_p[0:-1]
-
+        
         self.lat = np.sort(self.data.latitude.values)
         self.latb = util.guess_bounds(self.lat)
         self.lats = self.latb[1:] - self.latb[0:-1]
@@ -1390,8 +1401,8 @@ class U10MTS(HadCM3TS):
              mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
         print("__ Importing eastward component of wind at 10m.")
         return self.get(
-            self.data.u_mm_10m.isel(ht=0).drop("ht").rename({'longitude_1': 'longitude'}).rename(
-                {'latitude_1': 'latitude'}), zone, mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t,
+            self.data.u_mm_10m.isel(ht=0).drop("ht").rename({'longitude_1': 'longitudeb'}).rename(
+                {'latitude_1': 'latitudeb'}), zone, mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t,
             value_t, new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
 
 
@@ -1454,8 +1465,8 @@ class V10MTS(HadCM3TS):
              mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
         print("__ Importing westward component of wind at 10m.")
         return self.get(
-            self.data.v_mm_10m.isel(ht=0).drop("ht").rename({'longitude_1': 'longitude'}).rename(
-                {'latitude_1': 'latitude'}), zone, mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t,
+            self.data.v_mm_10m.isel(ht=0).drop("ht").rename({'longitude_1': 'longitudeb'}).rename(
+                {'latitude_1': 'latitudeb'}), zone, mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t,
             value_t, new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
 
 
@@ -1539,8 +1550,8 @@ class Z500MTS(HadCM3TS):
              mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
         print("__ Importing geopotential height z500.")
         return self.get(
-            self.data.ht_mm_p.isel(p=0).rename({'longitude_1': 'longitude'}).rename({'latitude_1': 'latitude'}), zone,
-            mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t, value_t, new_start_year=new_start_year,
+            self.data.ht_mm_p.isel(p=0).rename({'longitude_1': 'longitudeb'}).rename({'latitude_1': 'latitudeb'}),
+            zone, mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t, value_t, new_start_year=new_start_year,
             new_end_year=new_end_year, new_month_list=new_month_list)
 
 
