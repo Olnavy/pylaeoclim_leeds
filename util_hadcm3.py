@@ -148,8 +148,21 @@ def z_to_index(z, target_z):
     return (np.abs(z - target_z)).argmin()
 
 
-def guess_bounds(coordinate, mode):
+def guess_bounds(coordinate):
+    if coordinate is not None:
+        if len(coordinate) <= 1:
+            coordinate_b = coordinate
+        else:
+            coordinate_b = [(coordinate[i] + coordinate[i + 1]) / 2 for i in range(len(coordinate))]
+            coordinate_b = np.append((3 * coordinate[0] - coordinate[1]) / 2, coordinate_b)
+        return coordinate_b
+    else:
+        raise ValueError("Empty coordinate.")
+    
+
+def guess_bounds_old(coordinate, mode):
     """
+    DEPRECATED
     """
     if mode == "lon":
         lon_b = []
