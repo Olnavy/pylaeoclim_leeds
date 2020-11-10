@@ -33,7 +33,8 @@ class HadCM3DS(proc.ModelDS):
         self.import_coordinates()
     
     @abc.abstractmethod
-    def transform(self, array_r):
+    @staticmethod
+    def transform(array_r):
         pass
     
     @abc.abstractmethod
@@ -174,7 +175,8 @@ class ATMUPMDS(HadCM3RDS):
         super(ATMUPMDS, self).__init__(experiment, start_year, end_year, file_name=file_name, month_list=month_list,
                                        verbose=verbose, logger=logger)
     
-    def transform(self, array_r):
+    @staticmethod
+    def transform(array_r):
         array = array_r
         if "longitude" in array.dims:
             array = xr.concat([array, array.isel(longitude=0)], dim="longitude")
@@ -223,7 +225,8 @@ class ATMSURFMDS(HadCM3RDS):
         super(ATMSURFMDS, self).__init__(experiment, start_year, end_year, file_name=file_name, month_list=month_list,
                                          verbose=verbose, logger=logger)
     
-    def transform(self, array_r):
+    @staticmethod
+    def transform(array_r):
         array = array_r
         if "longitude" in array.dims:
             array = xr.concat([array, array.isel(longitude=0)], dim="longitude")
@@ -272,7 +275,8 @@ class OCNMDS(HadCM3RDS):
         super(OCNMDS, self).__init__(experiment, start_year, end_year, file_name=file_name, month_list=month_list,
                                      verbose=verbose, logger=logger)
     
-    def transform(self, array_r):
+    @staticmethod
+    def transform(array_r):
         array = array_r
         if "longitude" in array.dims:
             array = xr.concat([array, array.isel(longitude=0)], dim="longitude")
@@ -390,7 +394,8 @@ class OCNYDS(HadCM3RDS):
         super(OCNYDS, self).__init__(experiment, start_year, end_year, file_name=file_name,
                                      verbose=verbose, logger=logger, month_list=None)
     
-    def transform(self, array_r):
+    @staticmethod
+    def transform(array_r):
         array = array_r
         if "longitude" in array.dims:
             array = xr.concat([array, array.isel(longitude=0)], dim="longitude")
@@ -1166,6 +1171,10 @@ class SATMTS(HadCM3TS):
         self.lat = self.data.latitude.values
         
         super(SATMTS, self).import_coordinates()
+    
+    @staticmethod
+    def transform(array_r):
+        return ATMSURFMDS.transform(array_r)
     
     def sat(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None, mode_t=None,
             value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
