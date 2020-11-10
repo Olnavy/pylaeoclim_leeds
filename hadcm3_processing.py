@@ -1191,10 +1191,18 @@ class SATMTS(HadCM3TS):
     
     def import_coordinates(self):
         self.lon = np.sort(self.data.longitude.values)
+        self.lonb = util.guess_bounds(self.lon)
+        self.lons = self.lonb[1:] - self.lonb[0:-1]
         self.lon_p = np.append(self.lon, self.lon[-1] + self.lons[-1])
-        
+        self.lonb_p = util.guess_bounds(self.lon_p)
+        self.lons_p = self.lonb_p[1:] - self.lonb_p[0:-1]
+
         self.lat = np.sort(self.data.latitude.values)
+        self.latb = util.guess_bounds(self.lat)
+        self.lats = self.latb[1:] - self.latb[0:-1]
         self.lat_p = self.lat
+        self.latb_p = util.guess_bounds(self.lat_p)
+        self.lats_p = self.latb_p[1:] - self.latb_p[0:-1]
         
         self.t = self.data.t.values
         
