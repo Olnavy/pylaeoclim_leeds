@@ -43,7 +43,6 @@ class HadCM3DS(proc.ModelDS):
     @abc.abstractmethod
     def import_coordinates(self):
         print("____ Coordinates imported in the HadCM3DS dataset.")
-        # self.guess_bounds()
     
     def get(self, data, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
             mode_z=None, value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None,
@@ -113,7 +112,7 @@ class HadCM3RDS(HadCM3DS):
     def import_data(self):
         print(f"__ Importing {type(self)}")
         print(f"____ Paths generated for {self.experiment} between years {self.start_year} and {self.end_year}.")
-
+        
         # ADD A METHOD TO CHECK THE VALID RANGE
         #
         # if min(self.data.t.values).year > self.start_year or max(self.data.t.values).year < self.end_year:
@@ -162,6 +161,7 @@ class HadCM3RDS(HadCM3DS):
                f"{util.print_coordinates('zs', self.zs)}; {util.print_coordinates('zs_p', self.zs_p)}\n" \
                f"{util.print_coordinates('t', self.t)}\n" \
                f"DATA: {self.sample_data}"
+
 
 class ATMUPMDS(HadCM3RDS):
     """
@@ -506,12 +506,26 @@ class HadCM3TS(HadCM3DS):
         self.file_name = file_name
         super(HadCM3TS, self).__init__(experiment, start_year, end_year, month_list, verbose, logger)
     
+    def __repr__(self):
+        return f"{util.print_coordinates('lon', self.lon)}; {util.print_coordinates('lon_p', self.lon_p)}\n" \
+               f"{util.print_coordinates('lonb', self.lonb)}; {util.print_coordinates('lonb_p', self.lonb_p)}\n" \
+               f"{util.print_coordinates('lons', self.lons)}; {util.print_coordinates('lons_p', self.lons_p)}\n" \
+               f"{util.print_coordinates('lat', self.lat)}; {util.print_coordinates('lat_p', self.lat_p)}\n" \
+               f"{util.print_coordinates('latb', self.latb)}; {util.print_coordinates('latb_p', self.latb_p)}\n" \
+               f"{util.print_coordinates('lats', self.lats)}; {util.print_coordinates('lats_p', self.lats_p)}\n" \
+               f"{util.print_coordinates('z', self.z)}; {util.print_coordinates('z_p', self.z_p)}\n" \
+               f"{util.print_coordinates('zb', self.zb)}; {util.print_coordinates('zb_p', self.zb_p)}\n" \
+               f"{util.print_coordinates('zs', self.zs)}; {util.print_coordinates('zs_p', self.zs_p)}\n" \
+               f"{util.print_coordinates('t', self.t)}\n" \
+               f"DATA: {self.data}"
+    
     def import_data(self):
         
         path = ""
         try:
             print(
-                f"__ Importation of {type(self)} : {self.experiment} between years {self.start_year} and {self.end_year}.")
+                f"__ Importation of {type(self)} : {self.experiment} between "
+                f"years {self.start_year} and {self.end_year}.")
             
             path = input_file[self.experiment][2]
             
@@ -997,9 +1011,9 @@ class EVAPMTS(HadCM3TS):
     
     def import_coordinates(self):
         self.lon = self.data.longitude.values
-        self.lon_b = self.data.longitude_1.values
+        self.lonb = self.data.longitude_1.values
         self.lat = self.data.latitude.values
-        self.lat_b = self.data.latitude_1.values
+        self.latb = self.data.latitude_1.values
         
         super(EVAPMTS, self).import_coordinates()
     
@@ -1103,8 +1117,14 @@ class ICECONCMTS(HadCM3TS):
                                          month_list=month_list, verbose=verbose, logger=logger)
     
     def import_coordinates(self):
-        self.lon = self.data.longitude.values
-        self.lat = self.data.latitude.values
+
+        self.lon = np.sort(self.data.longitude.values)
+        self.lon_p = np.append(self.lon, self.lon[-1] + self.lons[-1])
+
+        self.lat, self.latb = np.sort(self.data.latitude.values)
+        self.lat_p = np.append(self.lat, self.lat[-1] + self.lats[-1])
+
+        self.t = self.data.t.values
         
         super(ICECONCMTS, self).import_coordinates()
     
@@ -1122,6 +1142,10 @@ class ICEDEPTHMTS(HadCM3TS):
         self.data = None
         super(ICEDEPTHMTS, self).__init__(experiment, start_year, end_year, file_name="icedepth.monthly",
                                           month_list=month_list, verbose=verbose, logger=logger)
+    
+    @staticmethod
+    def transform(array_r):
+        return OCNMDS.transform(array_r)
     
     def import_coordinates(self):
         self.lon = self.data.longitude.values
@@ -1166,8 +1190,13 @@ class SATMTS(HadCM3TS):
                                      month_list=month_list, verbose=verbose, logger=logger)
     
     def import_coordinates(self):
-        self.lon = self.data.longitude.values
-        self.lat = self.data.latitude.values
+        self.lon = np.sort(self.data.longitude.values)
+        self.lon_p = np.append(self.lon, self.lon[-1] + self.lons[-1])
+        
+        self.lat = np.sort(self.data.latitude.values)
+        self.lat_p = self.lat
+        
+        self.t = self.data.t.values
         
         super(SATMTS, self).import_coordinates()
     
@@ -1182,7 +1211,8 @@ class SATMTS(HadCM3TS):
                         mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t, value_t,
                         new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
     
-    def kelvin_to_celsius(self, data_array):
+    @staticmethod
+    def kelvin_to_celsius(data_array):
         # Dirty!
         data_array.attrs['valid_min'] = data_array.attrs['valid_min'] - 273.15
         data_array.attrs['valid_max'] = data_array.attrs['valid_max'] - 273.15
