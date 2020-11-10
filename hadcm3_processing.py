@@ -1118,7 +1118,7 @@ class ICECONCMTS(HadCM3TS):
     
     @staticmethod
     def transform(array_r):
-        return OCNMDS.transform(array_r)
+        return ATMSURFMDS.transform(array_r)
     
     def import_coordinates(self):
         
@@ -1155,7 +1155,7 @@ class ICEDEPTHMTS(HadCM3TS):
     
     @staticmethod
     def transform(array_r):
-        return OCNMDS.transform(array_r)
+        return ATMSURFMDS.transform(array_r)
     
     def import_coordinates(self):
         
