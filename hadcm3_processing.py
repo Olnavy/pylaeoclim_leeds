@@ -1116,15 +1116,25 @@ class ICECONCMTS(HadCM3TS):
         super(ICECONCMTS, self).__init__(experiment, start_year, end_year, file_name="iceconc.monthly",
                                          month_list=month_list, verbose=verbose, logger=logger)
     
+    @staticmethod
+    def transform(array_r):
+        return OCNMDS.transform(array_r)
+    
     def import_coordinates(self):
-
+        
         self.lon = np.sort(self.data.longitude.values)
+        self.lonb = util.guess_bounds(self.lon)
+        self.lons = self.lonb[1:] - self.lonb[0:-1]
         self.lon_p = np.append(self.lon, self.lon[-1] + self.lons[-1])
+        self.lonb_p = util.guess_bounds(self.lon_p)
+        self.lons_p = self.lonb_p[1:] - self.lonb_p[0:-1]
 
-        self.lat, self.latb = np.sort(self.data.latitude.values)
-        self.lat_p = np.append(self.lat, self.lat[-1] + self.lats[-1])
-
-        self.t = self.data.t.values
+        self.lat = np.sort(self.data.latitude.values)
+        self.latb = util.guess_bounds(self.lat)
+        self.lats = self.latb[1:] - self.latb[0:-1]
+        self.lat_p = self.lat
+        self.latb_p = util.guess_bounds(self.lat_p)
+        self.lats_p = self.latb_p[1:] - self.latb_p[0:-1]
         
         super(ICECONCMTS, self).import_coordinates()
     
@@ -1148,9 +1158,21 @@ class ICEDEPTHMTS(HadCM3TS):
         return OCNMDS.transform(array_r)
     
     def import_coordinates(self):
-        self.lon = self.data.longitude.values
-        self.lat = self.data.latitude.values
         
+        self.lon = np.sort(self.data.longitude.values)
+        self.lonb = util.guess_bounds(self.lon)
+        self.lons = self.lonb[1:] - self.lonb[0:-1]
+        self.lon_p = np.append(self.lon, self.lon[-1] + self.lons[-1])
+        self.lonb_p = util.guess_bounds(self.lon_p)
+        self.lons_p = self.lonb_p[1:] - self.lonb_p[0:-1]
+    
+        self.lat = np.sort(self.data.latitude.values)
+        self.latb = util.guess_bounds(self.lat)
+        self.lats = self.latb[1:] - self.latb[0:-1]
+        self.lat_p = self.lat
+        self.latb_p = util.guess_bounds(self.lat_p)
+        self.lats_p = self.latb_p[1:] - self.latb_p[0:-1]
+    
         super(ICEDEPTHMTS, self).import_coordinates()
     
     def ice_depth(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None, mode_t=None,
@@ -1203,8 +1225,6 @@ class SATMTS(HadCM3TS):
         self.lat_p = self.lat
         self.latb_p = util.guess_bounds(self.lat_p)
         self.lats_p = self.latb_p[1:] - self.latb_p[0:-1]
-        
-        self.t = self.data.t.values
         
         super(SATMTS, self).import_coordinates()
     
