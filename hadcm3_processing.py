@@ -33,7 +33,7 @@ class HadCM3DS(proc.ModelDS):
         self.import_coordinates()
     
     @staticmethod
-    def transform(array_r):
+    def transform(array_r, proc_lon, proc_lat, proc_z):
         pass
     
     @abc.abstractmethod
@@ -72,8 +72,8 @@ class HadCM3DS(proc.ModelDS):
             if new_month_list is not None and self.months is None:
                 raise ValueError(f"**** The month cropping is not available with {type(self)}.")
             elif new_month_list is not None and \
-                not all(
-                    month in util.months_to_number(self.months) for month in util.months_to_number(new_month_list)):
+                    not all(
+                        month in util.months_to_number(self.months) for month in util.months_to_number(new_month_list)):
                 raise ValueError("**** The new month list includes months not yet imported.")
             elif new_month_list is not None:
                 geo_da.crop_months(new_month_list)
@@ -175,13 +175,13 @@ class ATMUPMDS(HadCM3RDS):
                                        verbose=verbose, logger=logger)
     
     @staticmethod
-    def transform(array_r):
+    def transform(array_r, proc_lon, proc_lat, proc_z):
         array = array_r
-        if "longitude" in array.dims:
+        if "longitude" in array.dims and proc_lon:
             array = xr.concat([array, array.isel(longitude=0)], dim="longitude")
-        if "longitudeb" in array.dims:
+        if "longitudeb" in array.dims and proc_lon:
             array = xr.concat([array, array.isel(longitudeb=0)], dim="longitudeb")
-        if "latitude" in array.dims:
+        if "latitude" in array.dims and proc_lat:
             array = xr.concat([array.isel(latitude=0), array, array.isel(latitude=-1)], dim="latitude")
         return array.transpose(*array_r.dims)
     
@@ -235,13 +235,13 @@ class ATMSURFMDS(HadCM3RDS):
                                          verbose=verbose, logger=logger)
     
     @staticmethod
-    def transform(array_r):
+    def transform(array_r, proc_lon, proc_lat, proc_z):
         array = array_r
-        if "longitude" in array.dims:
+        if "longitude" in array.dims and proc_lon:
             array = xr.concat([array, array.isel(longitude=0)], dim="longitude")
-        if "longitudeb" in array.dims:
+        if "longitudeb" in array.dims and proc_lon:
             array = xr.concat([array, array.isel(longitudeb=0)], dim="longitudeb")
-        if "latitudeb" in array.dims:
+        if "latitudeb" in array.dims and proc_lat:
             array.isel(latitudeb=-1).values = array.isel(latitudeb=-2).values
             array = xr.concat([array.isel(latitudeb=0), array, array.isel(latitudeb=-2)], dim="latitudeb")
         return array.transpose(*array_r.dims)
@@ -285,22 +285,22 @@ class OCNMDS(HadCM3RDS):
                                      verbose=verbose, logger=logger)
     
     @staticmethod
-    def transform(array_r):
+    def transform(array_r, proc_lon, proc_lat, proc_z):
         array = array_r
-        if "longitude" in array.dims:
+        if "longitude" in array.dims and proc_lon:
             array = xr.concat([array, array.isel(longitude=0)], dim="longitude")
-        if "longitudeb" in array.dims:
+        if "longitudeb" in array.dims and proc_lon:
             array = xr.concat([array, array.isel(longitudeb=0)], dim="longitudeb")
-        if "latitude" in array.dims:
+        if "latitude" in array.dims and proc_lat:
             array.isel(latitude=-1).values = array.isel(latitude=-2).values
             array = xr.concat([array.isel(latitude=np.arange(0, len(array.latitude) - 1, 1)), array.isel(latitude=-2),
                                array.isel(latitude=-2)], dim="latitude")
-        if "latitudeb" in array.dims:
+        if "latitudeb" in array.dims and proc_lat:
             array.isel(latitudeb=-1).values = array.isel(latitudeb=-2).values
             array = xr.concat(
                 [array.isel(latitudeb=0), array.isel(latitudeb=np.arange(0, len(array.latitudeb) - 1, 1)),
                  array.isel(latitudeb=-2), array.isel(latitudeb=-2)], dim="latitudeb")
-        if "zb" in array.dims:
+        if "zb" in array.dims and proc_z:
             array = xr.concat([array, array.isel(zb=-1)], dim="zb")
         return array.transpose(*array_r.dims)
     
@@ -410,22 +410,22 @@ class OCNYDS(HadCM3RDS):
                                      verbose=verbose, logger=logger, month_list=None)
     
     @staticmethod
-    def transform(array_r):
+    def transform(array_r, proc_lon, proc_lat, proc_z):
         array = array_r
-        if "longitude" in array.dims:
+        if "longitude" in array.dims and proc_lon:
             array = xr.concat([array, array.isel(longitude=0)], dim="longitude")
-        if "longitudeb" in array.dims:
+        if "longitudeb" in array.dims and proc_lon:
             array = xr.concat([array, array.isel(longitudeb=0)], dim="longitudeb")
-        if "latitude" in array.dims:
+        if "latitude" in array.dims and proc_lat:
             array.isel(latitude=-1).values = array.isel(latitude=-2).values
             array = xr.concat([array.isel(latitude=np.arange(0, len(array.latitude) - 1, 1)), array.isel(latitude=-2),
                                array.isel(latitude=-2)], dim="latitude")
-        if "latitudeb" in array.dims:
+        if "latitudeb" in array.dims and proc_lat:
             array.isel(latitudeb=-1).values = array.isel(latitudeb=-2).values
             array = xr.concat(
                 [array.isel(latitudeb=0), array.isel(latitudeb=np.arange(0, len(array.latitudeb) - 1, 1)),
                  array.isel(latitudeb=-2), array.isel(latitudeb=-2)], dim="latitudeb")
-        if "zb" in array.dims:
+        if "zb" in array.dims and proc_z:
             pass
         return array.transpose(*array_r.dims)
     
@@ -468,7 +468,7 @@ class OCNYDS(HadCM3RDS):
                         assign_coords(depth_1=-self.sample_data.depth_1).rename({'depth_1': 'zb'}),
                         zone, mode_lon, value_lon, mode_lat, value_lat, mode_z, value_z, mode_t, value_t,
                         new_start_year=new_start_year, new_end_year=new_end_year)
-        
+    
     def u_velocity(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
                    mode_z=None, value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None):
         print("__ Importing meridional (eastward) velocity.")
@@ -1143,8 +1143,8 @@ class ICECONCMTS(HadCM3TS):
                                          month_list=month_list, verbose=verbose, logger=logger)
     
     @staticmethod
-    def transform(array_r):
-        return ATMSURFMDS.transform(array_r)
+    def transform(array_r, proc_lon, proc_lat, proc_z):
+        return ATMSURFMDS.transform(array_r, proc_lon, proc_lat, proc_z)
     
     def import_coordinates(self):
         self.lon = np.sort(self.data.longitude.values)
@@ -1179,8 +1179,8 @@ class ICEDEPTHMTS(HadCM3TS):
                                           month_list=month_list, verbose=verbose, logger=logger)
     
     @staticmethod
-    def transform(array_r):
-        return ATMSURFMDS.transform(array_r)
+    def transform(array_r, proc_lon, proc_lat, proc_z):
+        return ATMSURFMDS.transform(array_r, proc_lon, proc_lat, proc_z)
     
     def import_coordinates(self):
         self.lon = np.sort(self.data.longitude.values)
@@ -1253,8 +1253,8 @@ class SATMTS(HadCM3TS):
         super(SATMTS, self).import_coordinates()
     
     @staticmethod
-    def transform(array_r):
-        return ATMSURFMDS.transform(array_r)
+    def transform(array_r, proc_lon, proc_lat, proc_z):
+        return ATMSURFMDS.transform(array_r, proc_lon, proc_lat, proc_z)
     
     def sat(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None, mode_t=None,
             value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):

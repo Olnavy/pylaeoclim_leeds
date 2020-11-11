@@ -116,14 +116,15 @@ class GeoDataArray:
         self.lon_p, self.lat_p, self.z_p = np.sort(ds.lon_p) if ds is not None and ds.lon_p is not None else None, \
                                            np.sort(ds.lat_p) if ds is not None and ds.lat_p is not None else None, \
                                            np.sort(ds.z_p) if ds is not None and ds.z_p is not None else None
-        self.lonb_p, self.latb_p, self.zb_p = np.sort(ds.lonb_p) if ds is not None and ds.lonb_p is not None else None,\
-                                              np.sort(ds.latb_p) if ds is not None and ds.latb_p is not None else None,\
+        self.lonb_p, self.latb_p, self.zb_p = np.sort(ds.lonb_p) if ds is not None and ds.lonb_p is not None else None, \
+                                              np.sort(ds.latb_p) if ds is not None and ds.latb_p is not None else None, \
                                               np.sort(ds.zb_p) if ds is not None and ds.zb_p is not None else None
-        self.lons_p, self.lats_p, self.zs_p = np.sort(ds.lons_p) if ds is not None and ds.lons_p is not None else None,\
-                                              np.sort(ds.lats_p) if ds is not None and ds.lats_p is not None else None,\
+        self.lons_p, self.lats_p, self.zs_p = np.sort(ds.lons_p) if ds is not None and ds.lons_p is not None else None, \
+                                              np.sort(ds.lats_p) if ds is not None and ds.lats_p is not None else None, \
                                               np.sort(ds.zs_p) if ds is not None and ds.zs_p is not None else None
         self.t = np.sort(ds.t) if ds is not None else None
         self.transform = transform
+        self.proc_lon, self.proc_lat, self.proc_z = True, True, True
         
         print("____ Coordinate imported in the GeoDataArray instance.")
     
@@ -141,8 +142,8 @@ class GeoDataArray:
                f"DATA: {self.data}"
     
     def values(self, processing=True):
-        return self.transform(self.data.where(self.data.values != 0)).values if processing \
-            else self.data.where(self.data.values != 0).values
+        return self.transform(self.data.where(self.data.values != 0), self.proc_lon, self.proc_lat,
+                              self.proc_z).values if processing else self.data.where(self.data.values != 0).values
     
     def sort_data(self):
         """

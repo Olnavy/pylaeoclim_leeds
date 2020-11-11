@@ -38,13 +38,13 @@ class Box(Zone):
         super(Box, self).__init__(verbose)
         
         # self.lon, self.lat, self.z = None, None, None
-        #self.lonb, self.latb, self.zb = None, None, None
-        #self.lons, self.lats, self.zs = None, None, None
-        #self.lon_p, self.lat_p, self.z_p = None, None, None
-        #self.lonb_p, self.latb_p, self.zb_p = None, None, None
-        #self.lons_p, self.lats_p, self.zs_p = None, None, None
+        # self.lonb, self.latb, self.zb = None, None, None
+        # self.lons, self.lats, self.zs = None, None, None
+        # self.lon_p, self.lat_p, self.z_p = None, None, None
+        # self.lonb_p, self.latb_p, self.zb_p = None, None, None
+        # self.lons_p, self.lats_p, self.zs_p = None, None, None
         
-        #self.import_coordinates(data_source, lon, lat, z)
+        # self.import_coordinates(data_source, lon, lat, z)
         
         # self.lon_min = np.min(self.lon) if lon_min is None and self.lon is not None else lon_min
         # self.lon_max = np.max(self.lon) if lon_max is None and self.lon is not None else lon_max
@@ -77,7 +77,6 @@ class Box(Zone):
                # f"{util.print_coordinates('zb', self.zb)}; {util.print_coordinates('zb_p', self.zb_p)}\n" \
                # f"{util.print_coordinates('zs', self.zs)}; {util.print_coordinates('zs_p', self.zs_p)}\n" \
                
-    
     def compact(self, geo_da):
         # Test lon etc.
         
@@ -110,7 +109,6 @@ class Box(Zone):
         # geo_da.fit_coordinates_to_data()
         return self.fit_coordinates_to_data(geo_da)
 
-    
     def fit_coordinates_to_data(self, geo_da):
         """
         A reprendre
@@ -128,6 +126,7 @@ class Box(Zone):
             lons_p = geo_da.lonb_p[1:] - geo_da.lonb_p[0:-1]
             geo_da.lon, geo_da.lonb, geo_da.lons = lon, lonb, lons
             geo_da.lon_p, geo_da.lonb_p, geo_da.lons_p = lon_p, lonb_p, lons_p
+            geo_da.proc_lon = False
         if self.lon_max is not None:
             condition = np.where(geo_da.lon <= self.lon_max)
             conditionb = np.where(geo_da.lonb <= self.lon_max)
@@ -139,6 +138,7 @@ class Box(Zone):
             lons_p = geo_da.lonb_p[1:] - geo_da.lonb_p[0:-1]
             geo_da.lon, geo_da.lonb, geo_da.lons = lon, lonb, lons
             geo_da.lon_p, geo_da.lonb_p, geo_da.lons_p = lon_p, lonb_p, lons_p
+            geo_da.proc_lon = False
         if self.lat_min is not None:
             condition = np.where(geo_da.lat >= self.lat_min)
             conditionb = np.where(geo_da.latb >= self.lat_min)
@@ -150,6 +150,7 @@ class Box(Zone):
             lats_p = geo_da.latb_p[1:] - geo_da.latb_p[0:-1]
             geo_da.lat, geo_da.latb, geo_da.lats = lat, latb, lats
             geo_da.lat_p, geo_da.latb_p, geo_da.lats_p = lat_p, latb_p, lats_p
+            geo_da.proc_lat = False
         if self.lat_max is not None:
             condition = np.where(geo_da.lat <= self.lat_max)
             conditionb = np.where(geo_da.latb <= self.lat_max)
@@ -161,6 +162,7 @@ class Box(Zone):
             lats_p = geo_da.latb_p[1:] - geo_da.latb_p[0:-1]
             geo_da.lat, geo_da.latb, geo_da.lats = lat, latb, lats
             geo_da.lat_p, geo_da.latb_p, geo_da.lats_p = lat_p, latb_p, lats_p
+            geo_da.proc_lat = False
         if self.z_min is not None:
             condition = np.where(geo_da.z >= self.z_min)
             conditionb = np.where(geo_da.zb >= self.z_min)
@@ -172,6 +174,7 @@ class Box(Zone):
             zs_p = geo_da.zb_p[1:] - geo_da.zb_p[0:-1]
             geo_da.z, geo_da.zb, geo_da.zs = z, zb, zs
             geo_da.z_p, geo_da.zb_p, geo_da.zs_p = z_p, zb_p, zs_p
+            geo_da.proc_z = False
         if self.z_max is not None:
             condition = np.where(geo_da.z <= self.z_max)
             conditionb = np.where(geo_da.zb <= self.z_max)
@@ -183,9 +186,12 @@ class Box(Zone):
             zs_p = geo_da.zb_p[1:] - geo_da.zb_p[0:-1]
             geo_da.z, geo_da.zb, geo_da.zs = z, zb, zs
             geo_da.z_p, geo_da.zb_p, geo_da.zs_p = z_p, zb_p, zs_p
+            geo_da.proc_z = False
         return geo_da
 
-    # def import_coordinates(self, data_source=None, lon=None, lat=None, z=None):
+    def import_coordinates(self, data_source=None, lon=None, lat=None, z=None):
+        pass
+    
     # TO RECREATE FOR get_indexes!!
     #     if data_source is not None:
     #         self.lon, self.lat, self.z = data_source.lon, data_source.lat, data_source.z
