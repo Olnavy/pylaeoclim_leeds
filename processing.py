@@ -116,11 +116,11 @@ class GeoDataArray:
         self.lon_p, self.lat_p, self.z_p = np.sort(ds.lon_p) if ds is not None and ds.lon_p is not None else None, \
                                            np.sort(ds.lat_p) if ds is not None and ds.lat_p is not None else None, \
                                            np.sort(ds.z_p) if ds is not None and ds.z_p is not None else None
-        self.lonb_p, self.latb_p, self.zb_p = np.sort(ds.lonb_p) if ds is not None and ds.lonb_p is not None else None, \
-                                              np.sort(ds.latb_p) if ds is not None and ds.latb_p is not None else None, \
+        self.lonb_p, self.latb_p, self.zb_p = np.sort(ds.lonb_p) if ds is not None and ds.lonb_p is not None else None,\
+                                              np.sort(ds.latb_p) if ds is not None and ds.latb_p is not None else None,\
                                               np.sort(ds.zb_p) if ds is not None and ds.zb_p is not None else None
-        self.lons_p, self.lats_p, self.zs_p = np.sort(ds.lons_p) if ds is not None and ds.lons_p is not None else None, \
-                                              np.sort(ds.lats_p) if ds is not None and ds.lats_p is not None else None, \
+        self.lons_p, self.lats_p, self.zs_p = np.sort(ds.lons_p) if ds is not None and ds.lons_p is not None else None,\
+                                              np.sort(ds.lats_p) if ds is not None and ds.lats_p is not None else None,\
                                               np.sort(ds.zs_p) if ds is not None and ds.zs_p is not None else None
         self.t = np.sort(ds.t) if ds is not None else None
         self.transform = transform
