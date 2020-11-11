@@ -88,7 +88,7 @@ class Box(Zone):
         if self.lat_min is not None:
             geo_da.data = geo_da.data.where(geo_da.data.latitude >= self.lat_min, drop=True)
         if self.lat_max is not None:
-            geo_da.data = geo_da.data.where(geo_da.data.latitude >= self.lat_max, drop=True)
+            geo_da.data = geo_da.data.where(geo_da.data.latitude <= self.lat_max, drop=True)
         if self.z_min is not None:
             geo_da.data = geo_da.data.where(geo_da.data.z >= self.z_min, drop=True)
         if self.z_max is not None:
