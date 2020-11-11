@@ -300,7 +300,10 @@ class OCNMDS(HadCM3RDS):
             array = xr.concat(
                 [array.isel(latitudeb=0), array.isel(latitudeb=np.arange(0, len(array.latitudeb) - 1, 1)),
                  array.isel(latitudeb=-2), array.isel(latitudeb=-2)], dim="latitudeb")
+        if 'z' in array.dims:
+            array = array.assign_coords(z=-array.z)
         if "zb" in array.dims:
+            array = array.assign_coords(zb=-array.zb)
             array = xr.concat([array, array.isel(zb=-1)], dim="zb")
         return array.transpose(*array_r.dims)
     
@@ -329,6 +332,9 @@ class OCNMDS(HadCM3RDS):
                   for month in util.months_to_number(self.months)]
         super(OCNMDS, self).import_coordinates()
     
+        self.data = self.data.assign_coords(depth=-self.data.depth)
+        self.z = self.data.depth.values
+
     def sst(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None, mode_t=None,
             value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
         print("__ Importing SST.")
@@ -419,6 +425,10 @@ class OCNYDS(HadCM3RDS):
             array = xr.concat(
                 [array.isel(latitudeb=0), array.isel(latitudeb=np.arange(0, len(array.latitudeb) - 1, 1)),
                  array.isel(latitudeb=-2), array.isel(latitudeb=-2)], dim="latitudeb")
+        if 'z' in array.dims:
+            array = array.assign_coords(z=-array.z)
+        if "zb" in array.dims:
+            array = array.assign_coords(zb=-array.zb)
         return array.transpose(*array_r.dims)
     
     def import_coordinates(self):
