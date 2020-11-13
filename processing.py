@@ -104,24 +104,24 @@ class GeoDataArray:
         self.sort_data()
         print("____ Data imported in the GeoDataArray instance.")
         
-        self.lon = np.sort(ds.lon) if ds is not None and ds.lon is not None else np.sort(self.data.longitude)
-        self.lat = np.sort(ds.lat) if ds is not None and ds.lat is not None else np.sort(self.data.latitude)
-        self.z = np.sort(ds.z) if ds is not None and ds.z is not None else None
-        self.lonb, self.latb, self.zb = np.sort(ds.lonb) if ds is not None and ds.lonb is not None else None, \
-                                        np.sort(ds.latb) if ds is not None and ds.latb is not None else None, \
-                                        np.sort(ds.zb) if ds is not None and ds.zb is not None else None
-        self.lons, self.lats, self.zs = np.sort(ds.lons) if ds is not None and ds.lons is not None else None, \
-                                        np.sort(ds.lats) if ds is not None and ds.lats is not None else None, \
-                                        np.sort(ds.zs) if ds is not None and ds.zs is not None else None
-        self.lon_p, self.lat_p, self.z_p = np.sort(ds.lon_p) if ds is not None and ds.lon_p is not None else None, \
-                                           np.sort(ds.lat_p) if ds is not None and ds.lat_p is not None else None, \
-                                           np.sort(ds.z_p) if ds is not None and ds.z_p is not None else None
-        self.lonb_p, self.latb_p, self.zb_p = np.sort(ds.lonb_p) if ds is not None and ds.lonb_p is not None else None, \
-                                              np.sort(ds.latb_p) if ds is not None and ds.latb_p is not None else None, \
-                                              np.sort(ds.zb_p) if ds is not None and ds.zb_p is not None else None
-        self.lons_p, self.lats_p, self.zs_p = np.sort(ds.lons_p) if ds is not None and ds.lons_p is not None else None, \
-                                              np.sort(ds.lats_p) if ds is not None and ds.lats_p is not None else None, \
-                                              np.sort(ds.zs_p) if ds is not None and ds.zs_p is not None else None
+        self.lon = ds.lon if ds is not None else np.sort(self.data.longitude)
+        self.lat = ds.lat if ds is not None else np.sort(self.data.latitude)
+        self.z = ds.z if ds is not None else None
+        self.lonb, self.latb, self.zb = ds.lonb if ds is not None else None, \
+                                        ds.latb if ds is not None else None, \
+                                        ds.zb if ds is not None else None
+        self.lons, self.lats, self.zs = ds.lons if ds is not None else None, \
+                                        ds.lats if ds is not None else None, \
+                                        ds.zs if ds is not None else None
+        self.lon_p, self.lat_p, self.z_p = ds.lon_p if ds is not None else None, \
+                                           ds.lat_p if ds is not None else None, \
+                                           ds.z_p if ds is not None else None
+        self.lonb_p, self.latb_p, self.zb_p = ds.lonb_p if ds is not None else None, \
+                                              ds.latb_p if ds is not None else None, \
+                                              ds.zb_p if ds is not None else None
+        self.lons_p, self.lats_p, self.zs_p = ds.lons_p if ds is not None else None, \
+                                              ds.lats_p if ds is not None else None, \
+                                              ds.zs_p if ds is not None else None
         self.t = np.sort(ds.t) if ds is not None else None
         self.transform = transform
         self.proc_lon, self.proc_lat, self.proc_z = True, True, True
@@ -457,6 +457,7 @@ class GeoDataArray:
                 self.data = self.data.sum(dim="t", skipna=True)
             else:
                 print("**** Mode wasn't recognited. The data_array was not changed.")
+            self.update_t(mode_t, value_t)
         except ValueError as error:
             print(error)
             print("____ The DataArray was not changed.")
@@ -465,6 +466,23 @@ class GeoDataArray:
             print("**** The t index was out of bound, the DataArray was not changed.")
         finally:
             return self
+
+    def update_t(self, mode_t, value_t):
+        if mode_t is None:
+            pass
+        elif mode_t == "index":
+            if value_t is None:
+                raise ValueError("**** To use the index mode, please indicate a value_t.")
+            self.t = self.t[int(value_t)]
+        elif mode_t == "value":
+            if value_t is None:
+                raise ValueError("**** To use the value mode, please indicate a value_t.")
+            new_t = self.t[util.t_to_index(self.t, value_t)]
+            self.z = new_t
+        elif mode_t in ["mean", "min", "max", "median", "sum"]:
+            self.t = None
+        else:
+            print("**** Mode wasn't recognized. The data_array was not changed.")
     
     def crop_months(self, new_month_list):
         condition = xr.zeros_like(self.data.t)

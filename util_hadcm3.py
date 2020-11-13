@@ -151,15 +151,25 @@ def z_to_index(z, target_z):
 def guess_bounds(coordinate):
     if coordinate is not None:
         if len(coordinate) <= 1:
-            coordinate_b = coordinate
+            coordinateb = coordinate
         else:
-            coordinate_b = [(coordinate[i] + coordinate[i + 1]) / 2 for i in range(len(coordinate)-1)]
-            coordinate_b = np.append((3 * coordinate[0] - coordinate[1]) / 2, coordinate_b)
-            coordinate_b = np.append(coordinate_b, (3 * coordinate[-1] - coordinate[-2]) / 2)
-        return coordinate_b
+            coordinateb = [(coordinate[i] + coordinate[i + 1]) / 2 for i in range(len(coordinate)-1)]
+            coordinateb = np.append((3 * coordinate[0] - coordinate[1]) / 2, coordinateb)
+            coordinateb = np.append(coordinateb, (3 * coordinate[-1] - coordinate[-2]) / 2)
+        return coordinateb
     else:
         raise ValueError("Empty coordinate.")
     
+    
+def guess_from_bounds(coordinateb):
+    if coordinateb is not None:
+        if len(coordinateb) <= 1:
+            coordinate = coordinateb
+        else:
+            coordinate = [(coordinateb[i] + coordinateb[i + 1]) / 2 for i in range(len(coordinateb)-1)]
+        return coordinate
+    else:
+        raise ValueError("Empty coordinate.")
 
 # def guess_bounds_old(coordinate, mode):
 #     """
@@ -261,7 +271,7 @@ def generate_input(path):
 
 # TIME
 
-def t_to_index(t: List[cftime.Datetime360Day], target_t: cftime.Datetime360Day):
+def t_to_index(t, target_t: cftime.Datetime360Day):
     return (abs(t - target_t)).argmin()
 
 
@@ -292,6 +302,7 @@ def cycle_lon(array):
 def cycle_box(lon_min,lon_max,lat_min,lat_max):
     return [[lon_min, lon_min, lon_max, lon_max, lon_min],
             [lat_min,lat_max, lat_max, lat_min, lat_min]]
+
 
 def print_coordinates(name, coordinate):
     if coordinate is None:

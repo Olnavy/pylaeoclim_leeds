@@ -52,9 +52,11 @@ class HadCM3DS(proc.ModelDS):
         # geo_da = zone.import_coordinates(geo_da).compact(geo_da)
         geo_da = zone.compact(geo_da)
         
-        if any([new_start_year is not None, new_end_year is not None, new_month_list is not None]):
+        if any([new_start_year is not None, new_end_year is not None, new_month_list is not None]) and mode_t is None:
             print("____ Truncation to new time coordinates.")
-        
+            self.t = [cftime.Datetime360Day(year, month, 1)
+                      for year in np.arange(int(new_start_year), int(new_end_year) + 1)
+                      for month in util.months_to_number(new_month_list)]
         try:
             if new_start_year is not None and new_start_year < self.start_year:
                 raise ValueError("**** The new start year is smaller than the imported one.")
@@ -269,6 +271,14 @@ class ATMSURFMDS(HadCM3RDS):
             mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
         print("__ Importing SAT.")
         return self.get(xr.open_mfdataset(self.paths, combine='by_coords').temp_mm_srf.isel(surface=0), zone,
+                        mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t, value_t,
+                        new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
+    
+    def u_wind(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
+               mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
+        print("__ Importing eastward component of wind at 100m.")
+        return self.get(xr.open_mfdataset(self.paths, combine='by_coords').u_mm_10m.isel(ht=0).drop('ht').
+                        rename({'longitude_1': 'longitudeb'}).rename({'latitude_1': 'latitudeb'}), zone,
                         mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t, value_t,
                         new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
 
@@ -599,11 +609,26 @@ class SAL01MTS(HadCM3TS):
         self.data = None
         super(SAL01MTS, self).__init__(experiment, start_year, end_year, file_name="oceansalipf01.monthly",
                                        month_list=month_list, verbose=verbose, logger=logger)
-    
+
+    @staticmethod
+    def transform(array_r, proc_lon, proc_lat, proc_z):
+        return OCNMDS.transform(array_r, proc_lon, proc_lat, proc_z)
+
     def import_coordinates(self):
-        self.lon = self.data.longitude.values
-        self.lat = self.data.latitude.values
-        
+        self.lon = np.sort(self.data.longitude.values)
+        self.lonb = util.guess_bounds(self.lon)
+        self.lons = self.lonb[1:] - self.lonb[0:-1]
+        self.lon_p = np.append(self.lon, self.lon[-1] + self.lons[-1])
+        self.lonb_p = util.guess_bounds(self.lon_p)
+        self.lons_p = self.lonb_p[1:] - self.lonb_p[0:-1]
+    
+        self.lat = np.sort(self.data.latitude.values)
+        self.latb = util.guess_bounds(self.lat)
+        self.lats = self.latb[1:] - self.latb[0:-1]
+        self.lat_p = np.append(self.lat, self.lat[-1] + self.lats[-1])
+        self.latb_p = util.guess_bounds(self.lat_p)
+        self.lats_p = self.latb_p[1:] - self.latb_p[0:-1]
+    
         super(SAL01MTS, self).import_coordinates()
     
     def salinity(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
@@ -620,10 +645,25 @@ class SAL01ATS(HadCM3TS):
         self.data = None
         super(SAL01ATS, self).__init__(experiment, start_year, end_year, file_name="oceansalipg01.annual",
                                        month_list=month_list, verbose=verbose, logger=logger)
-    
+
+    @staticmethod
+    def transform(array_r, proc_lon, proc_lat, proc_z):
+        return OCNYDS.transform(array_r, proc_lon, proc_lat, proc_z)
+
     def import_coordinates(self):
-        self.lon = self.data.longitude.values
-        self.lat = self.data.latitude.values
+        self.lon = np.sort(self.data.longitude.values)
+        self.lonb = util.guess_bounds(self.lon)
+        self.lons = self.lonb[1:] - self.lonb[0:-1]
+        self.lon_p = np.append(self.lon, self.lon[-1] + self.lons[-1])
+        self.lonb_p = util.guess_bounds(self.lon_p)
+        self.lons_p = self.lonb_p[1:] - self.lonb_p[0:-1]
+    
+        self.lat = np.sort(self.data.latitude.values)
+        self.latb = util.guess_bounds(self.lat)
+        self.lats = self.latb[1:] - self.latb[0:-1]
+        self.lat_p = np.append(self.lat, self.lat[-1] + self.lats[-1])
+        self.latb_p = util.guess_bounds(self.lat_p)
+        self.lats_p = self.latb_p[1:] - self.latb_p[0:-1]
         
         super(SAL01ATS, self).import_coordinates()
     
@@ -641,11 +681,26 @@ class SAL12ATS(HadCM3TS):
         self.data = None
         super(SAL12ATS, self).__init__(experiment, start_year, end_year, file_name="oceansalipg12.annual",
                                        month_list=month_list, verbose=verbose, logger=logger)
-    
+
+    @staticmethod
+    def transform(array_r, proc_lon, proc_lat, proc_z):
+        return OCNYDS.transform(array_r, proc_lon, proc_lat, proc_z)
+
     def import_coordinates(self):
-        self.lon = self.data.longitude.values
-        self.lat = self.data.latitude.values
-        
+        self.lon = np.sort(self.data.longitude.values)
+        self.lonb = util.guess_bounds(self.lon)
+        self.lons = self.lonb[1:] - self.lonb[0:-1]
+        self.lon_p = np.append(self.lon, self.lon[-1] + self.lons[-1])
+        self.lonb_p = util.guess_bounds(self.lon_p)
+        self.lons_p = self.lonb_p[1:] - self.lonb_p[0:-1]
+    
+        self.lat = np.sort(self.data.latitude.values)
+        self.latb = util.guess_bounds(self.lat)
+        self.lats = self.latb[1:] - self.latb[0:-1]
+        self.lat_p = np.append(self.lat, self.lat[-1] + self.lats[-1])
+        self.latb_p = util.guess_bounds(self.lat_p)
+        self.lats_p = self.latb_p[1:] - self.latb_p[0:-1]
+    
         super(SAL12ATS, self).import_coordinates()
     
     def salinity(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
@@ -662,11 +717,26 @@ class SAL16ATS(HadCM3TS):
         self.data = None
         super(SAL16ATS, self).__init__(experiment, start_year, end_year, file_name="oceansalipg16.annual",
                                        month_list=month_list, verbose=verbose, logger=logger)
-    
+
+    @staticmethod
+    def transform(array_r, proc_lon, proc_lat, proc_z):
+        return OCNYDS.transform(array_r, proc_lon, proc_lat, proc_z)
+
     def import_coordinates(self):
-        self.lon = self.data.longitude.values
-        self.lat = self.data.latitude.values
-        
+        self.lon = np.sort(self.data.longitude.values)
+        self.lonb = util.guess_bounds(self.lon)
+        self.lons = self.lonb[1:] - self.lonb[0:-1]
+        self.lon_p = np.append(self.lon, self.lon[-1] + self.lons[-1])
+        self.lonb_p = util.guess_bounds(self.lon_p)
+        self.lons_p = self.lonb_p[1:] - self.lonb_p[0:-1]
+    
+        self.lat = np.sort(self.data.latitude.values)
+        self.latb = util.guess_bounds(self.lat)
+        self.lats = self.latb[1:] - self.latb[0:-1]
+        self.lat_p = np.append(self.lat, self.lat[-1] + self.lats[-1])
+        self.latb_p = util.guess_bounds(self.lat_p)
+        self.lats_p = self.latb_p[1:] - self.latb_p[0:-1]
+    
         super(SAL16ATS, self).import_coordinates()
     
     def salinity(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
@@ -683,15 +753,36 @@ class SALATS(HadCM3TS):
         self.data = None
         super(SALATS, self).__init__(experiment, start_year, end_year, file_name="oceansalipg.annual",
                                      month_list=month_list, verbose=verbose, logger=logger)
-    
+
+    @staticmethod
+    def transform(array_r, proc_lon, proc_lat, proc_z):
+        return OCNYDS.transform(array_r, proc_lon, proc_lat, proc_z)
+
     def import_coordinates(self):
-        self.lon = self.data.longitude.values
-        self.lat = self.data.latitude.values
+        self.lon = np.sort(self.data.longitude.values)
+        self.lonb = util.guess_bounds(self.lon)
+        self.lons = self.lonb[1:] - self.lonb[0:-1]
+        self.lon_p = np.append(self.lon, self.lon[-1] + self.lons[-1])
+        self.lonb_p = util.guess_bounds(self.lon_p)
+        self.lons_p = self.lonb_p[1:] - self.lonb_p[0:-1]
+    
+        self.lat = np.sort(self.data.latitude.values)
+        self.latb = util.guess_bounds(self.lat)
+        self.lats = self.latb[1:] - self.latb[0:-1]
+        self.lat_p = np.append(self.lat, self.lat[-1] + self.lats[-1])
+        self.latb_p = util.guess_bounds(self.lat_p)
+        self.lats_p = self.latb_p[1:] - self.latb_p[0:-1]
+        
         self.data = self.data.assign_coords(depth_1=-self.data.depth_1)
-        self.z = self.data.depth_1.values
+        self.zb = self.data.depth_1.values
+        self.z = util.guess_from_bounds(self.zb)
+        self.zs = self.zb[1:] - self.zb[0:-1]
+        self.z_p = self.z
+        self.zb_p = self.zb
+        self.zs_p = self.zb_p[1:] - self.zb_p[0:-1]
         
         super(SALATS, self).import_coordinates()
-    
+
     def salinity(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None, mode_z=None,
                  value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
         print("__ Importing sea water salinity (annual).")
@@ -706,11 +797,26 @@ class SSTMTS(HadCM3TS):
         self.data = None
         super(SSTMTS, self).__init__(experiment, start_year, end_year, file_name="oceansurftemppf.monthly",
                                      month_list=month_list, verbose=verbose, logger=logger)
-    
+
+    @staticmethod
+    def transform(array_r, proc_lon, proc_lat, proc_z):
+        return OCNMDS.transform(array_r, proc_lon, proc_lat, proc_z)
+
     def import_coordinates(self):
-        self.lon = self.data.longitude.values
-        self.lat = self.data.latitude.values
-        
+        self.lon = np.sort(self.data.longitude.values)
+        self.lonb = util.guess_bounds(self.lon)
+        self.lons = self.lonb[1:] - self.lonb[0:-1]
+        self.lon_p = np.append(self.lon, self.lon[-1] + self.lons[-1])
+        self.lonb_p = util.guess_bounds(self.lon_p)
+        self.lons_p = self.lonb_p[1:] - self.lonb_p[0:-1]
+    
+        self.lat = np.sort(self.data.latitude.values)
+        self.latb = util.guess_bounds(self.lat)
+        self.lats = self.latb[1:] - self.latb[0:-1]
+        self.lat_p = np.append(self.lat, self.lat[-1] + self.lats[-1])
+        self.latb_p = util.guess_bounds(self.lat_p)
+        self.lats_p = self.latb_p[1:] - self.latb_p[0:-1]
+    
         super(SSTMTS, self).import_coordinates()
     
     def sst(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
@@ -727,11 +833,26 @@ class OCNT01MTS(HadCM3TS):
         self.data = None
         super(OCNT01MTS, self).__init__(experiment, start_year, end_year, file_name="oceantemppf01.monthly",
                                         month_list=month_list, verbose=verbose, logger=logger)
-    
+
+    @staticmethod
+    def transform(array_r, proc_lon, proc_lat, proc_z):
+        return OCNMDS.transform(array_r, proc_lon, proc_lat, proc_z)
+
     def import_coordinates(self):
-        self.lon = self.data.longitude.values
-        self.lat = self.data.latitude.values
-        
+        self.lon = np.sort(self.data.longitude.values)
+        self.lonb = util.guess_bounds(self.lon)
+        self.lons = self.lonb[1:] - self.lonb[0:-1]
+        self.lon_p = np.append(self.lon, self.lon[-1] + self.lons[-1])
+        self.lonb_p = util.guess_bounds(self.lon_p)
+        self.lons_p = self.lonb_p[1:] - self.lonb_p[0:-1]
+    
+        self.lat = np.sort(self.data.latitude.values)
+        self.latb = util.guess_bounds(self.lat)
+        self.lats = self.latb[1:] - self.latb[0:-1]
+        self.lat_p = np.append(self.lat, self.lat[-1] + self.lats[-1])
+        self.latb_p = util.guess_bounds(self.lat_p)
+        self.lats_p = self.latb_p[1:] - self.latb_p[0:-1]
+    
         super(OCNT01MTS, self).import_coordinates()
     
     def temperature(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
@@ -748,11 +869,26 @@ class OCNT01ATS(HadCM3TS):
         self.data = None
         super(OCNT01ATS, self).__init__(experiment, start_year, end_year, file_name="oceantemppg01.annual",
                                         month_list=month_list, verbose=verbose, logger=logger)
-    
+
+    @staticmethod
+    def transform(array_r, proc_lon, proc_lat, proc_z):
+        return OCNYDS.transform(array_r, proc_lon, proc_lat, proc_z)
+
     def import_coordinates(self):
-        self.lon = self.data.longitude.values
-        self.lat = self.data.latitude.values
-        
+        self.lon = np.sort(self.data.longitude.values)
+        self.lonb = util.guess_bounds(self.lon)
+        self.lons = self.lonb[1:] - self.lonb[0:-1]
+        self.lon_p = np.append(self.lon, self.lon[-1] + self.lons[-1])
+        self.lonb_p = util.guess_bounds(self.lon_p)
+        self.lons_p = self.lonb_p[1:] - self.lonb_p[0:-1]
+    
+        self.lat = np.sort(self.data.latitude.values)
+        self.latb = util.guess_bounds(self.lat)
+        self.lats = self.latb[1:] - self.latb[0:-1]
+        self.lat_p = np.append(self.lat, self.lat[-1] + self.lats[-1])
+        self.latb_p = util.guess_bounds(self.lat_p)
+        self.lats_p = self.latb_p[1:] - self.latb_p[0:-1]
+    
         super(OCNT01ATS, self).import_coordinates()
     
     def temperature(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
@@ -769,13 +905,28 @@ class OCNT12ATS(HadCM3TS):
         self.data = None
         super(OCNT12ATS, self).__init__(experiment, start_year, end_year, file_name="oceantemppg12.annual",
                                         month_list=month_list, verbose=verbose, logger=logger)
-    
+
+    @staticmethod
+    def transform(array_r, proc_lon, proc_lat, proc_z):
+        return OCNYDS.transform(array_r, proc_lon, proc_lat, proc_z)
+
     def import_coordinates(self):
-        self.lon = self.data.longitude.values
-        self.lat = self.data.latitude.values
-        
-        super(OCNT12ATS, self).import_coordinates()
+        self.lon = np.sort(self.data.longitude.values)
+        self.lonb = util.guess_bounds(self.lon)
+        self.lons = self.lonb[1:] - self.lonb[0:-1]
+        self.lon_p = np.append(self.lon, self.lon[-1] + self.lons[-1])
+        self.lonb_p = util.guess_bounds(self.lon_p)
+        self.lons_p = self.lonb_p[1:] - self.lonb_p[0:-1]
     
+        self.lat = np.sort(self.data.latitude.values)
+        self.latb = util.guess_bounds(self.lat)
+        self.lats = self.latb[1:] - self.latb[0:-1]
+        self.lat_p = np.append(self.lat, self.lat[-1] + self.lats[-1])
+        self.latb_p = util.guess_bounds(self.lat_p)
+        self.lats_p = self.latb_p[1:] - self.latb_p[0:-1]
+    
+        super(OCNT12ATS, self).import_coordinates()
+        
     def temperature(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
                     mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
         print("__ Importing sea water temperature at 666m (annual).")
@@ -790,13 +941,28 @@ class OCNT16ATS(HadCM3TS):
         self.data = None
         super(OCNT16ATS, self).__init__(experiment, start_year, end_year, file_name="oceantemppg16.annual",
                                         month_list=month_list, verbose=verbose, logger=logger)
-    
+
+    @staticmethod
+    def transform(array_r, proc_lon, proc_lat, proc_z):
+        return OCNYDS.transform(array_r, proc_lon, proc_lat, proc_z)
+
     def import_coordinates(self):
-        self.lon = self.data.longitude.values
-        self.lat = self.data.latitude.values
-        
-        super(OCNT16ATS, self).import_coordinates()
+        self.lon = np.sort(self.data.longitude.values)
+        self.lonb = util.guess_bounds(self.lon)
+        self.lons = self.lonb[1:] - self.lonb[0:-1]
+        self.lon_p = np.append(self.lon, self.lon[-1] + self.lons[-1])
+        self.lonb_p = util.guess_bounds(self.lon_p)
+        self.lons_p = self.lonb_p[1:] - self.lonb_p[0:-1]
     
+        self.lat = np.sort(self.data.latitude.values)
+        self.latb = util.guess_bounds(self.lat)
+        self.lats = self.latb[1:] - self.latb[0:-1]
+        self.lat_p = np.append(self.lat, self.lat[-1] + self.lats[-1])
+        self.latb_p = util.guess_bounds(self.lat_p)
+        self.lats_p = self.latb_p[1:] - self.latb_p[0:-1]
+    
+        super(OCNT16ATS, self).import_coordinates()
+
     def temperature(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
                     mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
         print("__ Importing sea water temperature at 2730m (annual).")
@@ -811,15 +977,36 @@ class OCNTATS(HadCM3TS):
         self.data = None
         super(OCNTATS, self).__init__(experiment, start_year, end_year, file_name="oceantemppg.annual",
                                       month_list=month_list, verbose=verbose, logger=logger)
-    
+
+    @staticmethod
+    def transform(array_r, proc_lon, proc_lat, proc_z):
+        return OCNYDS.transform(array_r, proc_lon, proc_lat, proc_z)
+
     def import_coordinates(self):
-        self.lon = self.data.longitude.values
-        self.lat = self.data.latitude.values
-        self.data = self.data.assign_coords(depth_1=-self.data.depth_1)
-        self.z = self.data.depth_1.values
-        
-        super(OCNTATS, self).import_coordinates()
+        self.lon = np.sort(self.data.longitude.values)
+        self.lonb = util.guess_bounds(self.lon)
+        self.lons = self.lonb[1:] - self.lonb[0:-1]
+        self.lon_p = np.append(self.lon, self.lon[-1] + self.lons[-1])
+        self.lonb_p = util.guess_bounds(self.lon_p)
+        self.lons_p = self.lonb_p[1:] - self.lonb_p[0:-1]
     
+        self.lat = np.sort(self.data.latitude.values)
+        self.latb = util.guess_bounds(self.lat)
+        self.lats = self.latb[1:] - self.latb[0:-1]
+        self.lat_p = np.append(self.lat, self.lat[-1] + self.lats[-1])
+        self.latb_p = util.guess_bounds(self.lat_p)
+        self.lats_p = self.latb_p[1:] - self.latb_p[0:-1]
+    
+        self.data = self.data.assign_coords(depth_1=-self.data.depth_1)
+        self.zb = self.data.depth_1.values
+        self.z = util.guess_from_bounds(self.zb)
+        self.zs = self.zb[1:] - self.zb[0:-1]
+        self.z_p = self.z
+        self.zb_p = self.zb
+        self.zs_p = self.zb_p[1:] - self.zb_p[0:-1]
+    
+        super(OCNTATS, self).import_coordinates()
+
     def temperature(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
                     mode_z=None,
                     value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None,
@@ -836,13 +1023,28 @@ class OCNUVEL01MTS(HadCM3TS):
         self.data = None
         super(OCNUVEL01MTS, self).__init__(experiment, start_year, end_year, file_name="oceanuvelpf01.monthly",
                                            month_list=month_list, verbose=verbose, logger=logger)
-    
+
+    @staticmethod
+    def transform(array_r, proc_lon, proc_lat, proc_z):
+        return OCNMDS.transform(array_r, proc_lon, proc_lat, proc_z)
+
     def import_coordinates(self):
-        self.lon = self.data.longitude_1.values
-        self.lat = self.data.latitude_1.values
-        
-        super(OCNUVEL01MTS, self).import_coordinates()
+        self.lonb = np.sort(self.data.longitude1.values)
+        self.lon = util.guess_from_bounds(self.lonb)
+        self.lons = self.lonb[1:] - self.lonb[0:-1]
+        self.lon_p = np.append(self.lon, self.lon[-1] + self.lons[-1])
+        self.lonb_p = util.guess_bounds(self.lon_p)
+        self.lons_p = self.lonb_p[1:] - self.lonb_p[0:-1]
     
+        self.latb = np.sort(self.data.latitude1.values)
+        self.lat = util.guess_from_bounds(self.latb)
+        self.lats = self.latb[1:] - self.latb[0:-1]
+        self.lat_p = np.append(self.lat, self.lat[-1] + self.lats[-1])
+        self.latb_p = util.guess_bounds(self.lat_p)
+        self.lats_p = self.latb_p[1:] - self.latb_p[0:-1]
+    
+        super(OCNUVEL01MTS, self).import_coordinates()
+ 
     def u_vel(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
               mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
         print("__ Importing eastward sea water velocity at 5m (monthly).")
@@ -857,20 +1059,41 @@ class OCNUVELATS(HadCM3TS):
         self.data = None
         super(OCNUVELATS, self).__init__(experiment, start_year, end_year, file_name="oceanuvelpg.annual",
                                          month_list=None, verbose=verbose, logger=logger)
-    
+
+    @staticmethod
+    def transform(array_r, proc_lon, proc_lat, proc_z):
+        return OCNYDS.transform(array_r, proc_lon, proc_lat, proc_z)
+
     def import_coordinates(self):
-        self.lon = self.data.longitude_1.values
-        self.lat = self.data.latitude_1.values
+        self.lonb = np.sort(self.data.longitude1.values)
+        self.lon = util.guess_from_bounds(self.lonb)
+        self.lons = self.lonb[1:] - self.lonb[0:-1]
+        self.lon_p = np.append(self.lon, self.lon[-1] + self.lons[-1])
+        self.lonb_p = util.guess_bounds(self.lon_p)
+        self.lons_p = self.lonb_p[1:] - self.lonb_p[0:-1]
+    
+        self.latb = np.sort(self.data.latitude1.values)
+        self.lat = util.guess_from_bounds(self.latb)
+        self.lats = self.latb[1:] - self.latb[0:-1]
+        self.lat_p = np.append(self.lat, self.lat[-1] + self.lats[-1])
+        self.latb_p = util.guess_bounds(self.lat_p)
+        self.lats_p = self.latb_p[1:] - self.latb_p[0:-1]
+    
         self.data = self.data.assign_coords(depth_1=-self.data.depth_1)
-        self.z = self.data.depth_1.values
-        
+        self.zb = self.data.depth_1.values
+        self.z = util.guess_from_bounds(self.zb)
+        self.zs = self.zb[1:] - self.zb[0:-1]
+        self.z_p = self.z
+        self.zb_p = self.zb
+        self.zs_p = self.zb_p[1:] - self.zb_p[0:-1]
+    
         super(OCNUVELATS, self).import_coordinates()
     
     def u_vel(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None, mode_z=None,
               value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
         print("__ Importing eastward sea water velocity (annual).")
         return self.get(
-            self.data.ucurrTot_mm_dpth.rename({'longitude_1': 'longitudeb'}).rename({'latitude_1': 'latitudeb'})
+            self.data.ucurrTot_ym_dpth.rename({'longitude_1': 'longitudeb'}).rename({'latitude_1': 'latitudeb'})
                 .rename({"depth_1": "z"}), zone,
             mode_lon, value_lon, mode_lat, value_lat, mode_z, value_z, mode_t, value_t,
             new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
@@ -882,11 +1105,26 @@ class OCNVVEL01MTS(HadCM3TS):
         self.data = None
         super(OCNVVEL01MTS, self).__init__(experiment, start_year, end_year, file_name="oceanuvelpf01.monthly",
                                            month_list=month_list, verbose=verbose, logger=logger)
-    
+
+    @staticmethod
+    def transform(array_r, proc_lon, proc_lat, proc_z):
+        return OCNMDS.transform(array_r, proc_lon, proc_lat, proc_z)
+
     def import_coordinates(self):
-        self.lon = self.data.longitude_1.values
-        self.lat = self.data.latitude_1.values
-        
+        self.lonb = np.sort(self.data.longitude1.values)
+        self.lon = util.guess_from_bounds(self.lonb)
+        self.lons = self.lonb[1:] - self.lonb[0:-1]
+        self.lon_p = np.append(self.lon, self.lon[-1] + self.lons[-1])
+        self.lonb_p = util.guess_bounds(self.lon_p)
+        self.lons_p = self.lonb_p[1:] - self.lonb_p[0:-1]
+    
+        self.latb = np.sort(self.data.latitude1.values)
+        self.lat = util.guess_from_bounds(self.latb)
+        self.lats = self.latb[1:] - self.latb[0:-1]
+        self.lat_p = np.append(self.lat, self.lat[-1] + self.lats[-1])
+        self.latb_p = util.guess_bounds(self.lat_p)
+        self.lats_p = self.latb_p[1:] - self.latb_p[0:-1]
+    
         super(OCNVVEL01MTS, self).import_coordinates()
     
     def v_vel(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
@@ -903,13 +1141,34 @@ class OCNVVELATS(HadCM3TS):
         self.data = None
         super(OCNVVELATS, self).__init__(experiment, start_year, end_year, file_name="oceanuvelpg.annual",
                                          month_list=month_list, verbose=verbose, logger=logger)
-    
+
+    @staticmethod
+    def transform(array_r, proc_lon, proc_lat, proc_z):
+        return OCNYDS.transform(array_r, proc_lon, proc_lat, proc_z)
+
     def import_coordinates(self):
-        self.lon = self.data.longitude_1.values
-        self.lat = self.data.latitude_1.values
+        self.lonb = np.sort(self.data.longitude1.values)
+        self.lon = util.guess_from_bounds(self.lonb)
+        self.lons = self.lonb[1:] - self.lonb[0:-1]
+        self.lon_p = np.append(self.lon, self.lon[-1] + self.lons[-1])
+        self.lonb_p = util.guess_bounds(self.lon_p)
+        self.lons_p = self.lonb_p[1:] - self.lonb_p[0:-1]
+    
+        self.latb = np.sort(self.data.latitude1.values)
+        self.lat = util.guess_from_bounds(self.latb)
+        self.lats = self.latb[1:] - self.latb[0:-1]
+        self.lat_p = np.append(self.lat, self.lat[-1] + self.lats[-1])
+        self.latb_p = util.guess_bounds(self.lat_p)
+        self.lats_p = self.latb_p[1:] - self.latb_p[0:-1]
+    
         self.data = self.data.assign_coords(depth_1=-self.data.depth_1)
-        self.z = self.data.depth_1.values
-        
+        self.zb = self.data.depth_1.values
+        self.z = util.guess_from_bounds(self.zb)
+        self.zs = self.zb[1:] - self.zb[0:-1]
+        self.z_p = self.z
+        self.zb_p = self.zb
+        self.zs_p = self.zb_p[1:] - self.zb_p[0:-1]
+    
         super(OCNVVELATS, self).import_coordinates()
     
     def v_vel(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None, mode_z=None,
@@ -928,11 +1187,26 @@ class MLDMTS(HadCM3TS):
         self.data = None
         super(MLDMTS, self).__init__(experiment, start_year, end_year, file_name="oceanmixedpf.monthly",
                                      month_list=month_list, verbose=verbose, logger=logger)
-    
+
+    @staticmethod
+    def transform(array_r, proc_lon, proc_lat, proc_z):
+        return OCNMDS.transform(array_r, proc_lon, proc_lat, proc_z)
+
     def import_coordinates(self):
-        self.lon = self.data.longitude.values
-        self.lat = self.data.latitude.values
-        
+        self.lon = np.sort(self.data.longitude.values)
+        self.lonb = util.guess_bounds(self.lon)
+        self.lons = self.lonb[1:] - self.lonb[0:-1]
+        self.lon_p = np.append(self.lon, self.lon[-1] + self.lons[-1])
+        self.lonb_p = util.guess_bounds(self.lon_p)
+        self.lons_p = self.lonb_p[1:] - self.lonb_p[0:-1]
+    
+        self.lat = np.sort(self.data.latitude.values)
+        self.latb = util.guess_bounds(self.lat)
+        self.lats = self.latb[1:] - self.latb[0:-1]
+        self.lat_p = np.append(self.lat, self.lat[-1] + self.lats[-1])
+        self.latb_p = util.guess_bounds(self.lat_p)
+        self.lats_p = self.latb_p[1:] - self.latb_p[0:-1]
+    
         super(MLDMTS, self).import_coordinates()
     
     def mld(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
@@ -949,12 +1223,28 @@ class MERIDATS(HadCM3TS):
         self.data = None
         super(MERIDATS, self).__init__(experiment, start_year, end_year, file_name="merid.annual",
                                        month_list=month_list, verbose=verbose, logger=logger)
-    
+
+    @staticmethod
+    def transform(array_r, proc_lon, proc_lat, proc_z):
+        return OCNYDS.transform(array_r, proc_lon, proc_lat, proc_z)
+
     def import_coordinates(self):
-        self.lat = self.data.latitude.values
+    
+        self.lat = np.sort(self.data.latitude.values)
+        self.latb = util.guess_bounds(self.lat)
+        self.lats = self.latb[1:] - self.latb[0:-1]
+        self.lat_p = np.append(self.lat, self.lat[-1] + self.lats[-1])
+        self.latb_p = util.guess_bounds(self.lat_p)
+        self.lats_p = self.latb_p[1:] - self.latb_p[0:-1]
+    
         self.data = self.data.assign_coords(depth=-self.data.depth)
         self.z = self.data.depth.values
-        
+        self.zb = util.guess_bounds(self.z)
+        self.zs = self.zb[1:] - self.zb[0:-1]
+        self.z_p = self.z
+        self.zb_p = self.zb
+        self.zs_p = self.zb_p[1:] - self.zb_p[0:-1]
+    
         super(MERIDATS, self).import_coordinates()
     
     def atlantic(self, zone=zones.NoZone(), mode_lat=None, value_lat=None, mode_z=None, value_z=None, mode_t=None,
@@ -992,13 +1282,28 @@ class OCNSTREAMMTS(HadCM3TS):
         self.data = None
         super(OCNSTREAMMTS, self).__init__(experiment, start_year, end_year, file_name="streamFnpf01.monthly",
                                            month_list=month_list, verbose=verbose, logger=logger)
-    
+
+    @staticmethod
+    def transform(array_r, proc_lon, proc_lat, proc_z):
+        return OCNMDS.transform(array_r, proc_lon, proc_lat, proc_z)
+
     def import_coordinates(self):
-        self.lon = self.data.longitude.values
-        self.lat = self.data.latitude.values
-        
-        super(OCNSTREAMMTS, self).import_coordinates()
+        self.lon = np.sort(self.data.longitude.values)
+        self.lonb = util.guess_bounds(self.lon)
+        self.lons = self.lonb[1:] - self.lonb[0:-1]
+        self.lon_p = np.append(self.lon, self.lon[-1] + self.lons[-1])
+        self.lonb_p = util.guess_bounds(self.lon_p)
+        self.lons_p = self.lonb_p[1:] - self.lonb_p[0:-1]
     
+        self.lat = np.sort(self.data.latitude.values)
+        self.latb = util.guess_bounds(self.lat)
+        self.lats = self.latb[1:] - self.latb[0:-1]
+        self.lat_p = np.append(self.lat, self.lat[-1] + self.lats[-1])
+        self.latb_p = util.guess_bounds(self.lat_p)
+        self.lats_p = self.latb_p[1:] - self.latb_p[0:-1]
+    
+        super(OCNSTREAMMTS, self).import_coordinates()
+
     def streamfunction(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
                        mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
         print("__ Importing ocean barotropic streamfunction.")
@@ -1013,11 +1318,26 @@ class PRECIPMTS(HadCM3TS):
         self.data = None
         super(PRECIPMTS, self).__init__(experiment, start_year, end_year, file_name="precip.monthly",
                                         month_list=month_list, verbose=verbose, logger=logger)
-    
+
+    @staticmethod
+    def transform(array_r, proc_lon, proc_lat, proc_z):
+        return ATMSURFMDS.transform(array_r, proc_lon, proc_lat, proc_z)
+
     def import_coordinates(self):
-        self.lon = self.data.longitude.values
-        self.lat = self.data.latitude.values
-        
+        self.lon = np.sort(self.data.longitude.values)
+        self.lonb = util.guess_bounds(self.lon)
+        self.lons = self.lonb[1:] - self.lonb[0:-1]
+        self.lon_p = np.append(self.lon, self.lon[-1] + self.lons[-1])
+        self.lonb_p = util.guess_bounds(self.lon_p)
+        self.lons_p = self.lonb_p[1:] - self.lonb_p[0:-1]
+    
+        self.lat = np.sort(self.data.latitude.values)
+        self.latb = util.guess_bounds(self.lat)
+        self.lats = self.latb[1:] - self.latb[0:-1]
+        self.lat_p = self.lat
+        self.latb_p = util.guess_bounds(self.lat_p)
+        self.lats_p = self.latb_p[1:] - self.latb_p[0:-1]
+    
         super(PRECIPMTS, self).import_coordinates()
     
     def precip(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
@@ -1035,11 +1355,22 @@ class EVAPMTS(HadCM3TS):
         super(EVAPMTS, self).__init__(experiment, start_year, end_year, file_name="evap2.monthly",
                                       month_list=month_list, verbose=verbose, logger=logger)
     
+    @staticmethod
+    def transform(array_r, proc_lon, proc_lat, proc_z):
+        return ATMSURFMDS.transform(array_r, proc_lon, proc_lat, proc_z)
+    
     def import_coordinates(self):
-        self.lon = self.data.longitude.values
-        self.lonb = self.data.longitude_1.values
-        self.lat = self.data.latitude.values
-        self.latb = self.data.latitude_1.values
+        self.lon, self.lonb = np.sort(self.data.longitude.values), np.sort(self.data.longitude_1.values)
+        self.lons = self.lonb[1:] - self.lonb[0:-1]
+        self.lon_p = np.append(self.lon, self.lon[-1] + self.lons[-1])
+        self.lonb_p = np.append(self.lonb, [2 * self.lonb[-1] - self.lonb[-2]])
+        self.lons_p = self.lonb_p[1:] - self.lonb_p[0:-1]
+    
+        self.lat, self.latb = np.sort(self.data.latitude.values), np.sort(self.data.latitude_1.values)
+        self.lats = self.latb[1:] - self.latb[0:-1]
+        self.lat_p = self.lat
+        self.latb_p = np.concatenate(([-90], self.latb, [2 * self.latb[-1] - self.latb[-2]]))
+        self.lats_p = self.latb_p[1:] - self.latb_p[0:-1]
         
         super(EVAPMTS, self).import_coordinates()
     
@@ -1057,10 +1388,25 @@ class Q2MMTS(HadCM3TS):
         self.data = None
         super(Q2MMTS, self).__init__(experiment, start_year, end_year, file_name="q2m.monthly",
                                      month_list=month_list, verbose=verbose, logger=logger)
+
+    @staticmethod
+    def transform(array_r, proc_lon, proc_lat, proc_z):
+        return ATMSURFMDS.transform(array_r, proc_lon, proc_lat, proc_z)
     
     def import_coordinates(self):
-        self.lon = self.data.longitude.values
-        self.lat = self.data.latitude.values
+        self.lon = np.sort(self.data.longitude.values)
+        self.lonb = util.guess_bounds(self.lon)
+        self.lons = self.lonb[1:] - self.lonb[0:-1]
+        self.lon_p = np.append(self.lon, self.lon[-1] + self.lons[-1])
+        self.lonb_p = util.guess_bounds(self.lon_p)
+        self.lons_p = self.lonb_p[1:] - self.lonb_p[0:-1]
+    
+        self.lat = np.sort(self.data.latitude.values)
+        self.latb = util.guess_bounds(self.lat)
+        self.lats = self.latb[1:] - self.latb[0:-1]
+        self.lat_p = self.lat
+        self.latb_p = util.guess_bounds(self.lat_p)
+        self.lats_p = self.latb_p[1:] - self.latb_p[0:-1]
         
         super(Q2MMTS, self).import_coordinates()
     
@@ -1078,10 +1424,25 @@ class RH2MMTS(HadCM3TS):
         self.data = None
         super(RH2MMTS, self).__init__(experiment, start_year, end_year, file_name="rh2m.monthly",
                                       month_list=month_list, verbose=verbose, logger=logger)
-    
+
+    @staticmethod
+    def transform(array_r, proc_lon, proc_lat, proc_z):
+        return ATMSURFMDS.transform(array_r, proc_lon, proc_lat, proc_z)
+
     def import_coordinates(self):
-        self.lon = self.data.longitude.values
-        self.lat = self.data.latitude.values
+        self.lon = np.sort(self.data.longitude.values)
+        self.lonb = util.guess_bounds(self.lon)
+        self.lons = self.lonb[1:] - self.lonb[0:-1]
+        self.lon_p = np.append(self.lon, self.lon[-1] + self.lons[-1])
+        self.lonb_p = util.guess_bounds(self.lon_p)
+        self.lons_p = self.lonb_p[1:] - self.lonb_p[0:-1]
+    
+        self.lat = np.sort(self.data.latitude.values)
+        self.latb = util.guess_bounds(self.lat)
+        self.lats = self.latb[1:] - self.latb[0:-1]
+        self.lat_p = self.lat
+        self.latb_p = util.guess_bounds(self.lat_p)
+        self.lats_p = self.latb_p[1:] - self.latb_p[0:-1]
         
         super(RH2MMTS, self).import_coordinates()
     
@@ -1099,10 +1460,25 @@ class SHMTS(HadCM3TS):
         self.data = None
         super(SHMTS, self).__init__(experiment, start_year, end_year, file_name="sh.monthly",
                                     month_list=month_list, verbose=verbose, logger=logger)
-    
+
+    @staticmethod
+    def transform(array_r, proc_lon, proc_lat, proc_z):
+        return ATMSURFMDS.transform(array_r, proc_lon, proc_lat, proc_z)
+
     def import_coordinates(self):
-        self.lon = self.data.longitude.values
-        self.lat = self.data.latitude.values
+        self.lon = np.sort(self.data.longitude.values)
+        self.lonb = util.guess_bounds(self.lon)
+        self.lons = self.lonb[1:] - self.lonb[0:-1]
+        self.lon_p = np.append(self.lon, self.lon[-1] + self.lons[-1])
+        self.lonb_p = util.guess_bounds(self.lon_p)
+        self.lons_p = self.lonb_p[1:] - self.lonb_p[0:-1]
+    
+        self.lat = np.sort(self.data.latitude.values)
+        self.latb = util.guess_bounds(self.lat)
+        self.lats = self.latb[1:] - self.latb[0:-1]
+        self.lat_p = self.lat
+        self.latb_p = util.guess_bounds(self.lat_p)
+        self.lats_p = self.latb_p[1:] - self.latb_p[0:-1]
         
         super(SHMTS, self).import_coordinates()
     
@@ -1120,10 +1496,25 @@ class LHMTS(HadCM3TS):
         self.data = None
         super(LHMTS, self).__init__(experiment, start_year, end_year, file_name="lh.monthly",
                                     month_list=month_list, verbose=verbose, logger=logger)
-    
+
+    @staticmethod
+    def transform(array_r, proc_lon, proc_lat, proc_z):
+        return ATMSURFMDS.transform(array_r, proc_lon, proc_lat, proc_z)
+
     def import_coordinates(self):
-        self.lon = self.data.longitude.values
-        self.lat = self.data.latitude.values
+        self.lon = np.sort(self.data.longitude.values)
+        self.lonb = util.guess_bounds(self.lon)
+        self.lons = self.lonb[1:] - self.lonb[0:-1]
+        self.lon_p = np.append(self.lon, self.lon[-1] + self.lons[-1])
+        self.lonb_p = util.guess_bounds(self.lon_p)
+        self.lons_p = self.lonb_p[1:] - self.lonb_p[0:-1]
+    
+        self.lat = np.sort(self.data.latitude.values)
+        self.latb = util.guess_bounds(self.lat)
+        self.lats = self.latb[1:] - self.latb[0:-1]
+        self.lat_p = self.lat
+        self.latb_p = util.guess_bounds(self.lat_p)
+        self.lats_p = self.latb_p[1:] - self.latb_p[0:-1]
         
         super(LHMTS, self).import_coordinates()
     
@@ -1213,10 +1604,25 @@ class SNOWMTS(HadCM3TS):
         self.data = None
         super(SNOWMTS, self).__init__(experiment, start_year, end_year, file_name="snowdepth.monthly",
                                       month_list=month_list, verbose=verbose, logger=logger)
-    
+
+    @staticmethod
+    def transform(array_r, proc_lon, proc_lat, proc_z):
+        return ATMSURFMDS.transform(array_r, proc_lon, proc_lat, proc_z)
+
     def import_coordinates(self):
-        self.lon = self.data.longitude.values
-        self.lat = self.data.latitude.values
+        self.lon = np.sort(self.data.longitude.values)
+        self.lonb = util.guess_bounds(self.lon)
+        self.lons = self.lonb[1:] - self.lonb[0:-1]
+        self.lon_p = np.append(self.lon, self.lon[-1] + self.lons[-1])
+        self.lonb_p = util.guess_bounds(self.lon_p)
+        self.lons_p = self.lonb_p[1:] - self.lonb_p[0:-1]
+    
+        self.lat = np.sort(self.data.latitude.values)
+        self.latb = util.guess_bounds(self.lat)
+        self.lats = self.latb[1:] - self.latb[0:-1]
+        self.lat_p = self.lat
+        self.latb_p = util.guess_bounds(self.lat_p)
+        self.lats_p = self.latb_p[1:] - self.latb_p[0:-1]
         
         super(SNOWMTS, self).import_coordinates()
     
@@ -1234,6 +1640,10 @@ class SATMTS(HadCM3TS):
         self.data = None
         super(SATMTS, self).__init__(experiment, start_year, end_year, file_name="tempsurf.monthly",
                                      month_list=month_list, verbose=verbose, logger=logger)
+
+    @staticmethod
+    def transform(array_r, proc_lon, proc_lat, proc_z):
+        return ATMSURFMDS.transform(array_r, proc_lon, proc_lat, proc_z)
     
     def import_coordinates(self):
         self.lon = np.sort(self.data.longitude.values)
@@ -1251,10 +1661,6 @@ class SATMTS(HadCM3TS):
         self.lats_p = self.latb_p[1:] - self.latb_p[0:-1]
         
         super(SATMTS, self).import_coordinates()
-    
-    @staticmethod
-    def transform(array_r, proc_lon, proc_lat, proc_z):
-        return ATMSURFMDS.transform(array_r, proc_lon, proc_lat, proc_z)
     
     def sat(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None, mode_t=None,
             value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
@@ -1278,10 +1684,25 @@ class ATMT2MMTS(HadCM3TS):
         self.data = None
         super(ATMT2MMTS, self).__init__(experiment, start_year, end_year, file_name="temp2m.monthly",
                                         month_list=month_list, verbose=verbose, logger=logger)
-    
+
+    @staticmethod
+    def transform(array_r, proc_lon, proc_lat, proc_z):
+        return ATMSURFMDS.transform(array_r, proc_lon, proc_lat, proc_z)
+
     def import_coordinates(self):
-        self.lon = self.data.longitude.values
-        self.lat = self.data.latitude.values
+        self.lon = np.sort(self.data.longitude.values)
+        self.lonb = util.guess_bounds(self.lon)
+        self.lons = self.lonb[1:] - self.lonb[0:-1]
+        self.lon_p = np.append(self.lon, self.lon[-1] + self.lons[-1])
+        self.lonb_p = util.guess_bounds(self.lon_p)
+        self.lons_p = self.lonb_p[1:] - self.lonb_p[0:-1]
+    
+        self.lat = np.sort(self.data.latitude.values)
+        self.latb = util.guess_bounds(self.lat)
+        self.lats = self.latb[1:] - self.latb[0:-1]
+        self.lat_p = self.lat
+        self.latb_p = util.guess_bounds(self.lat_p)
+        self.lats_p = self.latb_p[1:] - self.latb_p[0:-1]
         
         super(ATMT2MMTS, self).import_coordinates()
     
@@ -1299,10 +1720,25 @@ class SOLNETSURFMTS(HadCM3TS):
         self.data = None
         super(SOLNETSURFMTS, self).__init__(experiment, start_year, end_year, file_name="net_downsolar_surf.monthly",
                                             month_list=month_list, verbose=verbose, logger=logger)
-    
+
+    @staticmethod
+    def transform(array_r, proc_lon, proc_lat, proc_z):
+        return ATMSURFMDS.transform(array_r, proc_lon, proc_lat, proc_z)
+
     def import_coordinates(self):
-        self.lon = self.data.longitude.values
-        self.lat = self.data.latitude.values
+        self.lon = np.sort(self.data.longitude.values)
+        self.lonb = util.guess_bounds(self.lon)
+        self.lons = self.lonb[1:] - self.lonb[0:-1]
+        self.lon_p = np.append(self.lon, self.lon[-1] + self.lons[-1])
+        self.lonb_p = util.guess_bounds(self.lon_p)
+        self.lons_p = self.lonb_p[1:] - self.lonb_p[0:-1]
+    
+        self.lat = np.sort(self.data.latitude.values)
+        self.latb = util.guess_bounds(self.lat)
+        self.lats = self.latb[1:] - self.latb[0:-1]
+        self.lat_p = self.lat
+        self.latb_p = util.guess_bounds(self.lat_p)
+        self.lats_p = self.latb_p[1:] - self.latb_p[0:-1]
         
         super(SOLNETSURFMTS, self).import_coordinates()
     
@@ -1320,10 +1756,25 @@ class SOLTOTSMTS(HadCM3TS):
         self.data = None
         super(SOLTOTSMTS, self).__init__(experiment, start_year, end_year, file_name="total_downsolar_surf.monthly",
                                          month_list=month_list, verbose=verbose, logger=logger)
-    
+
+    @staticmethod
+    def transform(array_r, proc_lon, proc_lat, proc_z):
+        return ATMSURFMDS.transform(array_r, proc_lon, proc_lat, proc_z)
+
     def import_coordinates(self):
-        self.lon = self.data.longitude.values
-        self.lat = self.data.latitude.values
+        self.lon = np.sort(self.data.longitude.values)
+        self.lonb = util.guess_bounds(self.lon)
+        self.lons = self.lonb[1:] - self.lonb[0:-1]
+        self.lon_p = np.append(self.lon, self.lon[-1] + self.lons[-1])
+        self.lonb_p = util.guess_bounds(self.lon_p)
+        self.lons_p = self.lonb_p[1:] - self.lonb_p[0:-1]
+    
+        self.lat = np.sort(self.data.latitude.values)
+        self.latb = util.guess_bounds(self.lat)
+        self.lats = self.latb[1:] - self.latb[0:-1]
+        self.lat_p = self.lat
+        self.latb_p = util.guess_bounds(self.lat_p)
+        self.lats_p = self.latb_p[1:] - self.latb_p[0:-1]
         
         super(SOLTOTSMTS, self).import_coordinates()
     
@@ -1341,10 +1792,25 @@ class SOLTOAMTS(HadCM3TS):
         self.data = None
         super(SOLTOAMTS, self).__init__(experiment, start_year, end_year, file_name="downsolar_toa.monthly",
                                         month_list=month_list, verbose=verbose, logger=logger)
-    
+
+    @staticmethod
+    def transform(array_r, proc_lon, proc_lat, proc_z):
+        return ATMSURFMDS.transform(array_r, proc_lon, proc_lat, proc_z)
+
     def import_coordinates(self):
-        self.lon = self.data.longitude.values
-        self.lat = self.data.latitude.values
+        self.lon = np.sort(self.data.longitude.values)
+        self.lonb = util.guess_bounds(self.lon)
+        self.lons = self.lonb[1:] - self.lonb[0:-1]
+        self.lon_p = np.append(self.lon, self.lon[-1] + self.lons[-1])
+        self.lonb_p = util.guess_bounds(self.lon_p)
+        self.lons_p = self.lonb_p[1:] - self.lonb_p[0:-1]
+    
+        self.lat = np.sort(self.data.latitude.values)
+        self.latb = util.guess_bounds(self.lat)
+        self.lats = self.latb[1:] - self.latb[0:-1]
+        self.lat_p = self.lat
+        self.latb_p = util.guess_bounds(self.lat_p)
+        self.lats_p = self.latb_p[1:] - self.latb_p[0:-1]
         
         super(SOLTOAMTS, self).import_coordinates()
     
@@ -1362,10 +1828,25 @@ class SOLUPMTS(HadCM3TS):
         self.data = None
         super(SOLUPMTS, self).__init__(experiment, start_year, end_year, file_name="upsolar_toa.monthly",
                                        month_list=month_list, verbose=verbose, logger=logger)
-    
+
+    @staticmethod
+    def transform(array_r, proc_lon, proc_lat, proc_z):
+        return ATMSURFMDS.transform(array_r, proc_lon, proc_lat, proc_z)
+
     def import_coordinates(self):
-        self.lon = self.data.longitude.values
-        self.lat = self.data.latitude.values
+        self.lon = np.sort(self.data.longitude.values)
+        self.lonb = util.guess_bounds(self.lon)
+        self.lons = self.lonb[1:] - self.lonb[0:-1]
+        self.lon_p = np.append(self.lon, self.lon[-1] + self.lons[-1])
+        self.lonb_p = util.guess_bounds(self.lon_p)
+        self.lons_p = self.lonb_p[1:] - self.lonb_p[0:-1]
+    
+        self.lat = np.sort(self.data.latitude.values)
+        self.latb = util.guess_bounds(self.lat)
+        self.lats = self.latb[1:] - self.latb[0:-1]
+        self.lat_p = self.lat
+        self.latb_p = util.guess_bounds(self.lat_p)
+        self.lats_p = self.latb_p[1:] - self.latb_p[0:-1]
         
         super(SOLUPMTS, self).import_coordinates()
     
@@ -1383,10 +1864,25 @@ class OLRMTS(HadCM3TS):
         self.data = None
         super(OLRMTS, self).__init__(experiment, start_year, end_year, file_name="olr.monthly",
                                      month_list=month_list, verbose=verbose, logger=logger)
-    
+
+    @staticmethod
+    def transform(array_r, proc_lon, proc_lat, proc_z):
+        return ATMSURFMDS.transform(array_r, proc_lon, proc_lat, proc_z)
+
     def import_coordinates(self):
-        self.lon = self.data.longitude.values
-        self.lat = self.data.latitude.values
+        self.lon = np.sort(self.data.longitude.values)
+        self.lonb = util.guess_bounds(self.lon)
+        self.lons = self.lonb[1:] - self.lonb[0:-1]
+        self.lon_p = np.append(self.lon, self.lon[-1] + self.lons[-1])
+        self.lonb_p = util.guess_bounds(self.lon_p)
+        self.lons_p = self.lonb_p[1:] - self.lonb_p[0:-1]
+    
+        self.lat = np.sort(self.data.latitude.values)
+        self.latb = util.guess_bounds(self.lat)
+        self.lats = self.latb[1:] - self.latb[0:-1]
+        self.lat_p = self.lat
+        self.latb_p = util.guess_bounds(self.lat_p)
+        self.lats_p = self.latb_p[1:] - self.latb_p[0:-1]
         
         super(OLRMTS, self).import_coordinates()
     
@@ -1404,14 +1900,29 @@ class U10MTS(HadCM3TS):
         self.data = None
         super(U10MTS, self).__init__(experiment, start_year, end_year, file_name="u10m.monthly",
                                      month_list=month_list, verbose=verbose, logger=logger)
-    
+
+    @staticmethod
+    def transform(array_r, proc_lon, proc_lat, proc_z):
+        return ATMSURFMDS.transform(array_r, proc_lon, proc_lat, proc_z)
+
     def import_coordinates(self):
-        self.lon = self.data.longitude_1.values
-        self.lat = self.data.latitude_1.values
+        self.lonb = np.sort(self.data.longitude_1.values)
+        self.lon = util.guess_from_bounds(self.lonb)
+        self.lons = self.lonb[1:] - self.lonb[0:-1]
+        self.lon_p = np.append(self.lon, self.lon[-1] + self.lons[-1])
+        self.lonb_p = util.guess_bounds(self.lon_p)
+        self.lons_p = self.lonb_p[1:] - self.lonb_p[0:-1]
+    
+        self.latb = np.sort(self.data.latitude_1.values)
+        self.lat = util.guess_from_bounds(self.latb)
+        self.lats = self.latb[1:] - self.latb[0:-1]
+        self.lat_p = self.lat
+        self.latb_p = util.guess_bounds(self.lat_p)
+        self.lats_p = self.latb_p[1:] - self.latb_p[0:-1]
         
         super(U10MTS, self).import_coordinates()
     
-    def wind(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
+    def u_wind(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
              mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
         print("__ Importing eastward component of wind at 10m.")
         return self.get(
@@ -1426,17 +1937,32 @@ class U200MTS(HadCM3TS):
         self.data = None
         super(U200MTS, self).__init__(experiment, start_year, end_year, file_name="u200.monthly",
                                       month_list=month_list, verbose=verbose, logger=logger)
-    
+
+    @staticmethod
+    def transform(array_r, proc_lon, proc_lat, proc_z):
+        return ATMUPMDS.transform(array_r, proc_lon, proc_lat, proc_z)
+
     def import_coordinates(self):
-        self.lon = self.data.longitude.values
-        self.lat = self.data.latitude.values
+        self.lon = np.sort(self.data.longitude.values)
+        self.lonb = util.guess_bounds(self.lon)
+        self.lons = self.lonb[1:] - self.lonb[0:-1]
+        self.lon_p = np.append(self.lon, self.lon[-1] + self.lons[-1])
+        self.lonb_p = util.guess_bounds(self.lon_p)
+        self.lons_p = self.lonb_p[1:] - self.lonb_p[0:-1]
+    
+        self.lat = np.sort(self.data.latitude.values)
+        self.latb = util.guess_bounds(self.lat)
+        self.lats = self.latb[1:] - self.latb[0:-1]
+        self.lat_p = np.concatenate(([-90], self.lat, [90]))
+        self.latb_p = util.guess_bounds(self.lat_p)
+        self.lats_p = self.latb_p[1:] - self.latb_p[0:-1]
         
         super(U200MTS, self).import_coordinates()
     
-    def wind(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
+    def u_wind(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
              mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
         print("__ Importing eastward component of wind at 200m.")
-        return self.get(self.data.u_mm_p.isel(p=0), zone, mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t,
+        return self.get(self.data.u_mm_p.isel(p=9), zone, mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t,
                         value_t, new_start_year=new_start_year, new_end_year=new_end_year,
                         new_month_list=new_month_list)
 
@@ -1447,17 +1973,32 @@ class U850MTS(HadCM3TS):
         self.data = None
         super(U850MTS, self).__init__(experiment, start_year, end_year, file_name="u850.monthly",
                                       month_list=month_list, verbose=verbose, logger=logger)
-    
+
+    @staticmethod
+    def transform(array_r, proc_lon, proc_lat, proc_z):
+        return ATMUPMDS.transform(array_r, proc_lon, proc_lat, proc_z)
+
     def import_coordinates(self):
-        self.lon = self.data.longitude.values
-        self.lat = self.data.latitude.values
+        self.lon = np.sort(self.data.longitude.values)
+        self.lonb = util.guess_bounds(self.lon)
+        self.lons = self.lonb[1:] - self.lonb[0:-1]
+        self.lon_p = np.append(self.lon, self.lon[-1] + self.lons[-1])
+        self.lonb_p = util.guess_bounds(self.lon_p)
+        self.lons_p = self.lonb_p[1:] - self.lonb_p[0:-1]
+    
+        self.lat = np.sort(self.data.latitude.values)
+        self.latb = util.guess_bounds(self.lat)
+        self.lats = self.latb[1:] - self.latb[0:-1]
+        self.lat_p = np.concatenate(([-90], self.lat, [90]))
+        self.latb_p = util.guess_bounds(self.lat_p)
+        self.lats_p = self.latb_p[1:] - self.latb_p[0:-1]
         
         super(U850MTS, self).import_coordinates()
     
-    def wind(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
+    def u_wind(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
              mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
         print("__ Importing eastward component of wind at 850m.")
-        return self.get(self.data.u_mm_p.isel(p=0), zone, mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t,
+        return self.get(self.data.u_mm_p.isel(p=2), zone, mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t,
                         value_t, new_start_year=new_start_year, new_end_year=new_end_year,
                         new_month_list=new_month_list)
 
@@ -1468,14 +2009,29 @@ class V10MTS(HadCM3TS):
         self.data = None
         super(V10MTS, self).__init__(experiment, start_year, end_year, file_name="v10m.monthly",
                                      month_list=month_list, verbose=verbose, logger=logger)
-    
+
+    @staticmethod
+    def transform(array_r, proc_lon, proc_lat, proc_z):
+        return ATMSURFMDS.transform(array_r, proc_lon, proc_lat, proc_z)
+
     def import_coordinates(self):
-        self.lon = self.data.longitude_1.values
-        self.lat = self.data.latitude_1.values
+        self.lonb = np.sort(self.data.longitude_1.values)
+        self.lon = util.guess_from_bounds(self.lonb)
+        self.lons = self.lonb[1:] - self.lonb[0:-1]
+        self.lon_p = np.append(self.lon, self.lon[-1] + self.lons[-1])
+        self.lonb_p = util.guess_bounds(self.lon_p)
+        self.lons_p = self.lonb_p[1:] - self.lonb_p[0:-1]
+    
+        self.latb = np.sort(self.data.latitude_1.values)
+        self.lat = util.guess_from_bounds(self.latb)
+        self.lats = self.latb[1:] - self.latb[0:-1]
+        self.lat_p = self.lat
+        self.latb_p = util.guess_bounds(self.lat_p)
+        self.lats_p = self.latb_p[1:] - self.latb_p[0:-1]
         
         super(V10MTS, self).import_coordinates()
     
-    def wind(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
+    def v_wind(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
              mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
         print("__ Importing westward component of wind at 10m.")
         return self.get(
@@ -1490,17 +2046,32 @@ class V200MTS(HadCM3TS):
         self.data = None
         super(V200MTS, self).__init__(experiment, start_year, end_year, file_name="v200.monthly",
                                       month_list=month_list, verbose=verbose, logger=logger)
-    
+
+    @staticmethod
+    def transform(array_r, proc_lon, proc_lat, proc_z):
+        return ATMUPMDS.transform(array_r, proc_lon, proc_lat, proc_z)
+
     def import_coordinates(self):
-        self.lon = self.data.longitude.values
-        self.lat = self.data.latitude.values
+        self.lon = np.sort(self.data.longitude.values)
+        self.lonb = util.guess_bounds(self.lon)
+        self.lons = self.lonb[1:] - self.lonb[0:-1]
+        self.lon_p = np.append(self.lon, self.lon[-1] + self.lons[-1])
+        self.lonb_p = util.guess_bounds(self.lon_p)
+        self.lons_p = self.lonb_p[1:] - self.lonb_p[0:-1]
+    
+        self.lat = np.sort(self.data.latitude.values)
+        self.latb = util.guess_bounds(self.lat)
+        self.lats = self.latb[1:] - self.latb[0:-1]
+        self.lat_p = np.concatenate(([-90], self.lat, [90]))
+        self.latb_p = util.guess_bounds(self.lat_p)
+        self.lats_p = self.latb_p[1:] - self.latb_p[0:-1]
         
         super(V200MTS, self).import_coordinates()
     
-    def wind(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
+    def v_wind(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
              mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
         print("__ Importing westward component of wind at 200m.")
-        return self.get(self.data.v_mm_p.isel(p=0), zone, mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t,
+        return self.get(self.data.v_mm_p.isel(p=9), zone, mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t,
                         value_t, new_start_year=new_start_year, new_end_year=new_end_year,
                         new_month_list=new_month_list)
 
@@ -1511,17 +2082,32 @@ class V850MTS(HadCM3TS):
         self.data = None
         super(V850MTS, self).__init__(experiment, start_year, end_year, file_name="v850.monthly",
                                       month_list=month_list, verbose=verbose, logger=logger)
-    
+
+    @staticmethod
+    def transform(array_r, proc_lon, proc_lat, proc_z):
+        return ATMUPMDS.transform(array_r, proc_lon, proc_lat, proc_z)
+
     def import_coordinates(self):
-        self.lon = self.data.longitude.values
-        self.lat = self.data.latitude.values
+        self.lon = np.sort(self.data.longitude.values)
+        self.lonb = util.guess_bounds(self.lon)
+        self.lons = self.lonb[1:] - self.lonb[0:-1]
+        self.lon_p = np.append(self.lon, self.lon[-1] + self.lons[-1])
+        self.lonb_p = util.guess_bounds(self.lon_p)
+        self.lons_p = self.lonb_p[1:] - self.lonb_p[0:-1]
+    
+        self.lat = np.sort(self.data.latitude.values)
+        self.latb = util.guess_bounds(self.lat)
+        self.lats = self.latb[1:] - self.latb[0:-1]
+        self.lat_p = np.concatenate(([-90], self.lat, [90]))
+        self.latb_p = util.guess_bounds(self.lat_p)
+        self.lats_p = self.latb_p[1:] - self.latb_p[0:-1]
         
         super(V850MTS, self).import_coordinates()
     
-    def wind(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
+    def v_wind(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
              mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
         print("__ Importing westward component of wind at 850m.")
-        return self.get(self.data.v_mm_p.isel(p=0), zone, mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t,
+        return self.get(self.data.v_mm_p.isel(p=2), zone, mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t,
                         value_t, new_start_year=new_start_year, new_end_year=new_end_year,
                         new_month_list=new_month_list)
 
@@ -1532,10 +2118,25 @@ class MSLPMTS(HadCM3TS):
         self.data = None
         super(MSLPMTS, self).__init__(experiment, start_year, end_year, file_name="mslp.monthly",
                                       month_list=month_list, verbose=verbose, logger=logger)
-    
+
+    @staticmethod
+    def transform(array_r, proc_lon, proc_lat, proc_z):
+        return ATMSURFMDS.transform(array_r, proc_lon, proc_lat, proc_z)
+
     def import_coordinates(self):
-        self.lon = self.data.longitude.values
-        self.lat = self.data.latitude.values
+        self.lon = np.sort(self.data.longitude.values)
+        self.lonb = util.guess_bounds(self.lon)
+        self.lons = self.lonb[1:] - self.lonb[0:-1]
+        self.lon_p = np.append(self.lon, self.lon[-1] + self.lons[-1])
+        self.lonb_p = util.guess_bounds(self.lon_p)
+        self.lons_p = self.lonb_p[1:] - self.lonb_p[0:-1]
+    
+        self.lat = np.sort(self.data.latitude.values)
+        self.latb = util.guess_bounds(self.lat)
+        self.lats = self.latb[1:] - self.latb[0:-1]
+        self.lat_p = self.lat
+        self.latb_p = util.guess_bounds(self.lat_p)
+        self.lats_p = self.latb_p[1:] - self.latb_p[0:-1]
         
         super(MSLPMTS, self).import_coordinates()
     
@@ -1553,10 +2154,25 @@ class Z500MTS(HadCM3TS):
         self.data = None
         super(Z500MTS, self).__init__(experiment, start_year, end_year, file_name="z500.monthly",
                                       month_list=month_list, verbose=verbose, logger=logger)
-    
+
+    @staticmethod
+    def transform(array_r, proc_lon, proc_lat, proc_z):
+        return ATMUPMDS.transform(array_r, proc_lon, proc_lat, proc_z)
+
     def import_coordinates(self):
-        self.lon = self.data.longitude_1.values
-        self.lat = self.data.latitude_1.values
+        self.lonb = np.sort(self.data.longitude_1.values)
+        self.lon = util.guess_from_bounds(self.lonb)
+        self.lons = self.lonb[1:] - self.lonb[0:-1]
+        self.lon_p = np.append(self.lon, self.lon[-1] + self.lons[-1])
+        self.lonb_p = util.guess_bounds(self.lon_p)
+        self.lons_p = self.lonb_p[1:] - self.lonb_p[0:-1]
+    
+        self.latb = np.sort(self.data.latitude_1.values)
+        self.lat = util.guess_from_bounds(self.latb)
+        self.lats = self.latb[1:] - self.latb[0:-1]
+        self.lat_p = np.concatenate(([-90], self.lat, [90]))
+        self.latb_p = util.guess_bounds(self.lat_p)
+        self.lats_p = self.latb_p[1:] - self.latb_p[0:-1]
         
         super(Z500MTS, self).import_coordinates()
     
@@ -1570,7 +2186,9 @@ class Z500MTS(HadCM3TS):
 
 
 class SMMTS(HadCM3TS):
-    
+    """
+    NOT IMPLEMENTED YET!!
+    """
     def __init__(self, experiment, start_year=None, end_year=None, month_list="full", verbose=False, logger="print"):
         self.data = None
         super(SMMTS, self).__init__(experiment, start_year, end_year, file_name="sm.monthly",
@@ -1592,7 +2210,9 @@ class SMMTS(HadCM3TS):
 
 
 class SOILTMTS(HadCM3TS):
-    
+    """
+    NOT IMPLEMENTED YET!!
+    """
     def __init__(self, experiment, start_year=None, end_year=None, month_list="full", verbose=False, logger="print"):
         self.data = None
         super(SOILTMTS, self).__init__(experiment, start_year, end_year, file_name="soiltemp.monthly",
