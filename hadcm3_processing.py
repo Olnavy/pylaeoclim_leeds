@@ -564,7 +564,9 @@ class HadCM3TS(HadCM3DS):
             path = input_file[self.experiment][2]
             
             start = time.time()
+            print(f"TEST 0 : {path}{self.experiment}.{self.file_name}.nc")
             self.data = xr.open_dataset(f"{path}{self.experiment}.{self.file_name}.nc")
+            print(f"TEST 1 {np.nansum(self.data.Merid_Atlantic.values[:11] - xr.open_dataset('/nfs/see-fs-01_users/eeymr/database/xosfb/time_series/xosfb.merid.annual.nc').Merid_Atlantic.values[:11])}")
             print(f"Time elapsed for open_dataset : {time.time() - start}")
             
             if min(self.data.t.values).year > self.start_year or max(self.data.t.values).year < self.end_year:
@@ -572,6 +574,9 @@ class HadCM3TS(HadCM3DS):
                                  f"Valid range : start_year = {min(self.data.t.values).year}, "
                                  f"end_year = {max(self.data.t.values).year}")
             
+            print(f"TEST 2 {np.nansum(self.data.Merid_Atlantic.values[:11] - xr.open_dataset('/nfs/see-fs-01_users/eeymr/database/xosfb/time_series/xosfb.merid.annual.nc').Merid_Atlantic.values[:11])}")
+    
+
             # The where+lamda structure is not working (GitHub?) so each steps are done individually
             # .where(lambda x: x.t >= cftime.Datetime360Day(self.start_year, 1, 1), drop=True) \
             # .where(lambda x: x.t >= cftime.Datetime360Day(self.end_year, 12, 30), drop=True)
@@ -579,11 +584,14 @@ class HadCM3TS(HadCM3DS):
             start = time.time()
             self.data = self.data.where(self.data.t >= cftime.Datetime360Day(self.start_year, 1, 1), drop=True)
             print(f"Time elapsed for crop start year : {time.time() - start}")
+            print(f"TEST 3 {np.nansum(self.data.Merid_Atlantic.values[:10] - xr.open_dataset('/nfs/see-fs-01_users/eeymr/database/xosfb/time_series/xosfb.merid.annual.nc').Merid_Atlantic.values[:10])}")
             self.data = self.data.where(self.data.t <= cftime.Datetime360Day(self.end_year, 12, 30), drop=True)
             print(f"Time elapsed for crop start and end years : {time.time() - start}")
+            print(f"TEST 4 {np.nansum(self.data.Merid_Atlantic.values[:10] - xr.open_dataset('/nfs/see-fs-01_users/eeymr/database/xosfb/time_series/xosfb.merid.annual.nc').Merid_Atlantic.values[:10])}")
             self.data = proc.filter_months(self.data, self.months)
             print(f"Time elapsed for crop start and end years and months : {time.time() - start}")
-            
+            print(f"TEST 5 {np.nansum(self.data.Merid_Atlantic.values[:10] - xr.open_dataset('/nfs/see-fs-01_users/eeymr/database/xosfb/time_series/xosfb.merid.annual.nc').Merid_Atlantic.values[:10])}")
+
             # data is a xarray.Dataset -> not possible to use xarray.GeoDataArray methods. How to change that?
             
             print("____ Import succeeded.")
@@ -1237,7 +1245,7 @@ class MERIDATS(HadCM3TS):
         self.latb_p = util.guess_bounds(self.lat_p)
         self.lats_p = self.latb_p[1:] - self.latb_p[0:-1]
     
-        self.data = self.data.assign_coords(depth=-self.data.depth)
+        #self.data = self.data.assign_coords(depth=-self.data.depth)
         self.z = self.data.depth.values
         self.zb = util.guess_bounds(self.z)
         self.zs = self.zb[1:] - self.zb[0:-1]
