@@ -305,16 +305,26 @@ def cycle_box(lon_min,lon_max,lat_min,lat_max):
 
 
 def print_coordinates(name, coordinate):
+    coordinate = np.array(coordinate)
     if coordinate is None:
         return f"{name}: None"
-    elif isinstance(coordinate, np.float32) or isinstance(coordinate, float):
-        return f"{name}: [{coordinate}; 1]"
-    elif len(coordinate) >= 2:
-        return f"{name}: [{coordinate[0]}; {coordinate[1]}; ...; {coordinate[-2]}; {coordinate[-1]}; {len(coordinate)}]"
-    elif len(coordinate) == 1:
-        return f"{name}: [{coordinate[0]}; {len(coordinate)}]"
-    else:
-        return f"{name}: Null"
-
+    if len(coordinate.shape) == 1:
+        if isinstance(coordinate, np.float32) or isinstance(coordinate, float):
+            return f"{name}: [{coordinate}; 1]"
+        elif len(coordinate) >= 2:
+            return f"{name}: [{coordinate[0]}; {coordinate[1]}; ...; {coordinate[-2]}; {coordinate[-1]}; {len(coordinate)}]"
+        elif len(coordinate) == 1:
+            return f"{name}: [{coordinate[0]}; {len(coordinate)}]"
+        else:
+            return f"{name}: Null"
+    elif len(coordinate.shape) == 2:
+        if isinstance(coordinate, np.float32) or isinstance(coordinate, float):
+            return f"{name}: [{coordinate}; 1]"
+        elif len(coordinate[0]) >= 2:
+            return f"{name}: [{coordinate[0,0]}; {coordinate[0,1]}; ...; {coordinate[-1,-2]}; {coordinate[-1,-1]}; {coordinate.shape}]"
+        elif len(coordinate) == 1:
+            return f"{name}: [{coordinate[0,0]}; {coordinate.shape}]"
+        else:
+            return f"{name}: Null"
 # Generate
 # path2lsm = generate_filepath(str(pathlib.Path(__file__).parent.absolute()) + "/resources/path2lsm")

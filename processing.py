@@ -94,7 +94,7 @@ def filter_months(data_array, month_list):
 class GeoDataArray:
     
     def __init__(self, data_input, ds=None, coords=None, dims=None, name=None, attrs=None, indexes=None,
-                 fastpath=False, transform=None):
+                 fastpath=False, process=None):
         if isinstance(data_input, xr.DataArray):
             self.data = xr.DataArray(data_input.values, dims=data_input.dims, name=data_input.name,
                                      attrs=data_input.attrs, coords=[data_input[dim].values for dim in data_input.dims])
@@ -123,7 +123,7 @@ class GeoDataArray:
                                               ds.lats_p if ds is not None else None, \
                                               ds.zs_p if ds is not None else None
         self.t = np.sort(ds.t) if ds is not None else None
-        self.transform = transform
+        self.process = process
         self.proc_lon, self.proc_lat, self.proc_z = True, True, True
         
         print("____ Coordinate imported in the GeoDataArray instance.")
@@ -142,7 +142,7 @@ class GeoDataArray:
                f"DATA: {self.data}"
     
     def values(self, processing=True):
-        return self.transform(self.data.where(self.data.values != 0), self.proc_lon, self.proc_lat,
+        return self.process(self.data.where(self.data.values != 0), self.proc_lon, self.proc_lat,
                               self.proc_z).values if processing else self.data.where(self.data.values != 0).values
     
     def sort_data(self):
@@ -153,7 +153,7 @@ class GeoDataArray:
         for dim in self.data.dims:
             self.data = self.data.sortby(dim, ascending=True)
     
-    def get_lon(self, mode_lon, value_lon):
+    def get_lon(self, mode_lon, value_lon, offset_lon=1):
         
         try:
             if mode_lon is None:
@@ -211,7 +211,16 @@ class GeoDataArray:
                 else:
                     print("**** Mode wasn't recognized. The data_array was not changed.")
                 self.update_lon(mode_lon, value_lon)
-        
+                
+            elif 'row_index' in self.data.dims:
+                print("**** Impossible to use get_lon method for the moment. The data_array was not changed.")
+                if mode_lon == "value":
+                    if value_lon is None:
+                        raise ValueError("**** To use the value mode, please indicate a value_lon.")
+                    print(f"____ New longitude value : {value_lon}")
+                    self.data.where(value_lon - offset_lon <= self.lon <= value_lon + offset_lon)
+                    
+                
         except ValueError as error:
             print(error)
             print("____ The DataArray was not changed.")
@@ -245,7 +254,7 @@ class GeoDataArray:
         else:
             print("**** Mode wasn't recognized. The data_array was not changed.")
     
-    def get_lat(self, mode_lat, value_lat):
+    def get_lat(self, mode_lat, value_lat, latitude=None):
         try:
             if mode_lat is None:
                 pass
@@ -302,7 +311,10 @@ class GeoDataArray:
                 else:
                     print("**** Mode wasn't recognized. The data_array was not changed.")
                 self.update_lat(mode_lat, value_lat)
-        
+                
+            elif 'col_index' in self.data.dims or latitude is None:
+                print("**** Impossible to use get_lat method for the moment. The data_array was not changed.")
+
         except ValueError as error:
             print(error)
             print("____ The DataArray was not changed.")

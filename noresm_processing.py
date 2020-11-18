@@ -17,12 +17,7 @@ class NorESMDS(proc.ModelDS):
     
     def __init__(self, experiment, start_year, end_year, month_list, verbose, logger):
         super(NorESMDS, self).__init__(verbose, logger)
-        self.lon = None
-        self.lat = None
-        self.z = None
-        self.lon_b = None
-        self.lat_b = None
-        self.z_b = None
+
         self.t = None
         self.lsm = None
         self.start_year = start_year
@@ -34,8 +29,13 @@ class NorESMDS(proc.ModelDS):
             self.months = util.months_to_number(self.MONTHS)
         else:
             self.months = util.months_to_number(month_list)
+            
         self.import_data()
         self.import_coordinates()
+
+    @staticmethod
+    def process(array_r, proc_lon, proc_lat, proc_z):
+        pass
     
     @abc.abstractmethod
     def import_data(self):
@@ -44,17 +44,16 @@ class NorESMDS(proc.ModelDS):
     @abc.abstractmethod
     def import_coordinates(self):
         print("____ Coordinates imported in the NorESMDS instance.")
-        self.guess_bounds()
     
     def get(self, data, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
             mode_z=None, value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None,
             new_month_list=None):
+        """
+        TO FACTORISE
+        """
         
-        # if type(data_array) is not proc.GeoDataArray:
-        #   convert_to_GeoDataArray(data_array)
-        
-        geo_da = proc.GeoDataArray(data, ds=self)  # add the GeoDataArray wrapper
-        geo_da = zone.import_coordinates_from_data_array(geo_da.data).compact(geo_da)
+        geo_da = proc.GeoDataArray(data, ds=self, process=self.process)  # add the GeoDataArray wrapper
+        geo_da = zone.compact(geo_da)
         
         if any([new_start_year is not None, new_end_year is not None, new_month_list is not None]):
             print("____ Truncation to new time coordinates.")
@@ -92,7 +91,6 @@ class NorESMDS(proc.ModelDS):
         geo_da.get_lat(mode_lat, value_lat)
         geo_da.get_z(mode_z, value_z)
         geo_da.get_t(mode_t, value_t)
-        # geo_da.fit_coordinates_to_data() Is it still useful?
         
         return geo_da
 
@@ -108,6 +106,8 @@ class NorESMRDS(NorESMDS):
         self.buffer_array = None
         self.file_name = file_name
         self.paths = []
+        self.transform_matrix = None
+        self.sample_data = None
         super(NorESMRDS, self).__init__(experiment, start_year, end_year, month_list, verbose, logger)
         
         try:
@@ -134,10 +134,31 @@ class NorESMRDS(NorESMDS):
         except KeyError as error:
             print("**** This experiment was not found in \"Experiment_to_filename\". Data import aborted.")
             raise error
+        
+        try:
+            self.sample_data = xr.open_dataset(self.paths[0])
+        except IndexError as error:
+            print("No dataset to import. Please check again the import options.")
+            raise error
+        except FileNotFoundError as error:
+            print("The file was not found. Data importation aborted.")
+            raise error
     
     def import_coordinates(self):
         super(NorESMRDS, self).import_coordinates()
-        self.t = None
+
+    def __repr__(self):
+        return f"{util.print_coordinates('lon', self.lon)}; {util.print_coordinates('lon_p', self.lon_p)}\n" \
+               f"{util.print_coordinates('lonb', self.lonb)}; {util.print_coordinates('lonb_p', self.lonb_p)}\n" \
+               f"{util.print_coordinates('lons', self.lons)}; {util.print_coordinates('lons_p', self.lons_p)}\n" \
+               f"{util.print_coordinates('lat', self.lat)}; {util.print_coordinates('lat_p', self.lat_p)}\n" \
+               f"{util.print_coordinates('latb', self.latb)}; {util.print_coordinates('latb_p', self.latb_p)}\n" \
+               f"{util.print_coordinates('lats', self.lats)}; {util.print_coordinates('lats_p', self.lats_p)}\n" \
+               f"{util.print_coordinates('z', self.z)}; {util.print_coordinates('z_p', self.z_p)}\n" \
+               f"{util.print_coordinates('zb', self.zb)}; {util.print_coordinates('zb_p', self.zb_p)}\n" \
+               f"{util.print_coordinates('zs', self.zs)}; {util.print_coordinates('zs_p', self.zs_p)}\n" \
+               f"{util.print_coordinates('t', self.t)}\n" \
+               f"DATA: {self.sample_data}"
 
 
 class OCNMDS(NorESMRDS):
@@ -151,18 +172,40 @@ class OCNMDS(NorESMRDS):
         self.grid = xr.open_dataset(input_file[experiment][2])
         super(OCNMDS, self).__init__(experiment, start_year, end_year, file_name=file_name, month_list=month_list,
                                      verbose=verbose, logger=logger)
+
+    def transform(self, xarray):
+        """
+        HOW TO DO THAT PROPERLY??
+        :param xarray:
+        :return:
+        """
+        if 'y' in xarray.dims and 'x' in xarray:
+        n_x, n_y = xarray.data.shape
+        out_array = np.zeros((n_x, n_y))
+        for i in range(n_x):
+            for j in range(n_y):
+                out_array[i, j] = array_r[i, self.transform_matrix[i, j]]
+        return out_array
     
     def import_coordinates(self):
         self.lon, self.lat = sort_coordinates(self.grid.plon.values, self.grid.plat.values)
         self.lon_p, self.lat_p = cycle_coordinates(self.lon, self.lat)
         self.transform_matrix = get_transform_matrix(self.grid.plon.values)
+        
+        self.z = np.sort(self.sample_data.depth.values)
+        self.z_p = self.z
+
+        self.t = [cftime.Datetime360Day(year, month, 1)
+                  for year in np.arange(int(self.start_year), int(self.end_year) + 1)
+                  for month in util.months_to_number(self.months)]
+
         super(OCNMDS, self).import_coordinates()
     
     def sst(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None, mode_t=None,
             value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
         print("__ Importing SST.")
-        return self.get(xr.open_mfdataset(self.paths, combine='by_coords').sst.rename({'time': 't'}), zone,
-                        mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t, value_t,
+        return self.get(self.transform(xr.open_mfdataset(self.paths, combine='by_coords').sst.rename({'time': 't'})),
+                        zone, mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t, value_t,
                         new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
 
 

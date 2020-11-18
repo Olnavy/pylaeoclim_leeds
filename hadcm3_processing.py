@@ -33,7 +33,7 @@ class HadCM3DS(proc.ModelDS):
         self.import_coordinates()
     
     @staticmethod
-    def transform(array_r, proc_lon, proc_lat, proc_z):
+    def process(array_r, proc_lon, proc_lat, proc_z):
         pass
     
     @abc.abstractmethod
@@ -47,9 +47,11 @@ class HadCM3DS(proc.ModelDS):
     def get(self, data, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
             mode_z=None, value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None,
             new_month_list=None):
+        """
+        TO FACTORISE
+        """
         
-        geo_da = proc.GeoDataArray(data, ds=self, transform=self.transform)  # add the GeoDataArray wrapper
-        # geo_da = zone.import_coordinates(geo_da).compact(geo_da)
+        geo_da = proc.GeoDataArray(data, ds=self, process=self.process)  # add the GeoDataArray wrapper
         geo_da = zone.compact(geo_da)
         
         if any([new_start_year is not None, new_end_year is not None, new_month_list is not None]) and mode_t is None:
@@ -177,7 +179,7 @@ class ATMUPMDS(HadCM3RDS):
                                        verbose=verbose, logger=logger)
     
     @staticmethod
-    def transform(array_r, proc_lon, proc_lat, proc_z):
+    def process(array_r, proc_lon, proc_lat, proc_z):
         array = array_r
         if "longitude" in array.dims and proc_lon:
             array = xr.concat([array, array.isel(longitude=0)], dim="longitude")
@@ -237,7 +239,7 @@ class ATMSURFMDS(HadCM3RDS):
                                          verbose=verbose, logger=logger)
     
     @staticmethod
-    def transform(array_r, proc_lon, proc_lat, proc_z):
+    def process(array_r, proc_lon, proc_lat, proc_z):
         array = array_r
         if "longitude" in array.dims and proc_lon:
             array = xr.concat([array, array.isel(longitude=0)], dim="longitude")
@@ -295,7 +297,7 @@ class OCNMDS(HadCM3RDS):
                                      verbose=verbose, logger=logger)
     
     @staticmethod
-    def transform(array_r, proc_lon, proc_lat, proc_z):
+    def process(array_r, proc_lon, proc_lat, proc_z):
         array = array_r
         if "longitude" in array.dims and proc_lon:
             array = xr.concat([array, array.isel(longitude=0)], dim="longitude")
@@ -420,7 +422,7 @@ class OCNYDS(HadCM3RDS):
                                      verbose=verbose, logger=logger, month_list=None)
     
     @staticmethod
-    def transform(array_r, proc_lon, proc_lat, proc_z):
+    def process(array_r, proc_lon, proc_lat, proc_z):
         array = array_r
         if "longitude" in array.dims and proc_lon:
             array = xr.concat([array, array.isel(longitude=0)], dim="longitude")
@@ -619,8 +621,8 @@ class SAL01MTS(HadCM3TS):
                                        month_list=month_list, verbose=verbose, logger=logger)
 
     @staticmethod
-    def transform(array_r, proc_lon, proc_lat, proc_z):
-        return OCNMDS.transform(array_r, proc_lon, proc_lat, proc_z)
+    def process(array_r, proc_lon, proc_lat, proc_z):
+        return OCNMDS.process(array_r, proc_lon, proc_lat, proc_z)
 
     def import_coordinates(self):
         self.lon = np.sort(self.data.longitude.values)
@@ -655,8 +657,8 @@ class SAL01ATS(HadCM3TS):
                                        month_list=month_list, verbose=verbose, logger=logger)
 
     @staticmethod
-    def transform(array_r, proc_lon, proc_lat, proc_z):
-        return OCNYDS.transform(array_r, proc_lon, proc_lat, proc_z)
+    def process(array_r, proc_lon, proc_lat, proc_z):
+        return OCNYDS.process(array_r, proc_lon, proc_lat, proc_z)
 
     def import_coordinates(self):
         self.lon = np.sort(self.data.longitude.values)
@@ -691,8 +693,8 @@ class SAL12ATS(HadCM3TS):
                                        month_list=month_list, verbose=verbose, logger=logger)
 
     @staticmethod
-    def transform(array_r, proc_lon, proc_lat, proc_z):
-        return OCNYDS.transform(array_r, proc_lon, proc_lat, proc_z)
+    def process(array_r, proc_lon, proc_lat, proc_z):
+        return OCNYDS.process(array_r, proc_lon, proc_lat, proc_z)
 
     def import_coordinates(self):
         self.lon = np.sort(self.data.longitude.values)
@@ -727,8 +729,8 @@ class SAL16ATS(HadCM3TS):
                                        month_list=month_list, verbose=verbose, logger=logger)
 
     @staticmethod
-    def transform(array_r, proc_lon, proc_lat, proc_z):
-        return OCNYDS.transform(array_r, proc_lon, proc_lat, proc_z)
+    def process(array_r, proc_lon, proc_lat, proc_z):
+        return OCNYDS.process(array_r, proc_lon, proc_lat, proc_z)
 
     def import_coordinates(self):
         self.lon = np.sort(self.data.longitude.values)
@@ -763,8 +765,8 @@ class SALATS(HadCM3TS):
                                      month_list=month_list, verbose=verbose, logger=logger)
 
     @staticmethod
-    def transform(array_r, proc_lon, proc_lat, proc_z):
-        return OCNYDS.transform(array_r, proc_lon, proc_lat, proc_z)
+    def process(array_r, proc_lon, proc_lat, proc_z):
+        return OCNYDS.process(array_r, proc_lon, proc_lat, proc_z)
 
     def import_coordinates(self):
         self.lon = np.sort(self.data.longitude.values)
@@ -807,8 +809,8 @@ class SSTMTS(HadCM3TS):
                                      month_list=month_list, verbose=verbose, logger=logger)
 
     @staticmethod
-    def transform(array_r, proc_lon, proc_lat, proc_z):
-        return OCNMDS.transform(array_r, proc_lon, proc_lat, proc_z)
+    def process(array_r, proc_lon, proc_lat, proc_z):
+        return OCNMDS.process(array_r, proc_lon, proc_lat, proc_z)
 
     def import_coordinates(self):
         self.lon = np.sort(self.data.longitude.values)
@@ -843,8 +845,8 @@ class OCNT01MTS(HadCM3TS):
                                         month_list=month_list, verbose=verbose, logger=logger)
 
     @staticmethod
-    def transform(array_r, proc_lon, proc_lat, proc_z):
-        return OCNMDS.transform(array_r, proc_lon, proc_lat, proc_z)
+    def process(array_r, proc_lon, proc_lat, proc_z):
+        return OCNMDS.process(array_r, proc_lon, proc_lat, proc_z)
 
     def import_coordinates(self):
         self.lon = np.sort(self.data.longitude.values)
@@ -879,8 +881,8 @@ class OCNT01ATS(HadCM3TS):
                                         month_list=month_list, verbose=verbose, logger=logger)
 
     @staticmethod
-    def transform(array_r, proc_lon, proc_lat, proc_z):
-        return OCNYDS.transform(array_r, proc_lon, proc_lat, proc_z)
+    def process(array_r, proc_lon, proc_lat, proc_z):
+        return OCNYDS.process(array_r, proc_lon, proc_lat, proc_z)
 
     def import_coordinates(self):
         self.lon = np.sort(self.data.longitude.values)
@@ -915,8 +917,8 @@ class OCNT12ATS(HadCM3TS):
                                         month_list=month_list, verbose=verbose, logger=logger)
 
     @staticmethod
-    def transform(array_r, proc_lon, proc_lat, proc_z):
-        return OCNYDS.transform(array_r, proc_lon, proc_lat, proc_z)
+    def process(array_r, proc_lon, proc_lat, proc_z):
+        return OCNYDS.process(array_r, proc_lon, proc_lat, proc_z)
 
     def import_coordinates(self):
         self.lon = np.sort(self.data.longitude.values)
@@ -951,8 +953,8 @@ class OCNT16ATS(HadCM3TS):
                                         month_list=month_list, verbose=verbose, logger=logger)
 
     @staticmethod
-    def transform(array_r, proc_lon, proc_lat, proc_z):
-        return OCNYDS.transform(array_r, proc_lon, proc_lat, proc_z)
+    def process(array_r, proc_lon, proc_lat, proc_z):
+        return OCNYDS.process(array_r, proc_lon, proc_lat, proc_z)
 
     def import_coordinates(self):
         self.lon = np.sort(self.data.longitude.values)
@@ -987,8 +989,8 @@ class OCNTATS(HadCM3TS):
                                       month_list=month_list, verbose=verbose, logger=logger)
 
     @staticmethod
-    def transform(array_r, proc_lon, proc_lat, proc_z):
-        return OCNYDS.transform(array_r, proc_lon, proc_lat, proc_z)
+    def process(array_r, proc_lon, proc_lat, proc_z):
+        return OCNYDS.process(array_r, proc_lon, proc_lat, proc_z)
 
     def import_coordinates(self):
         self.lon = np.sort(self.data.longitude.values)
@@ -1033,8 +1035,8 @@ class OCNUVEL01MTS(HadCM3TS):
                                            month_list=month_list, verbose=verbose, logger=logger)
 
     @staticmethod
-    def transform(array_r, proc_lon, proc_lat, proc_z):
-        return OCNMDS.transform(array_r, proc_lon, proc_lat, proc_z)
+    def process(array_r, proc_lon, proc_lat, proc_z):
+        return OCNMDS.process(array_r, proc_lon, proc_lat, proc_z)
 
     def import_coordinates(self):
         self.lonb = np.sort(self.data.longitude1.values)
@@ -1069,8 +1071,8 @@ class OCNUVELATS(HadCM3TS):
                                          month_list=None, verbose=verbose, logger=logger)
 
     @staticmethod
-    def transform(array_r, proc_lon, proc_lat, proc_z):
-        return OCNYDS.transform(array_r, proc_lon, proc_lat, proc_z)
+    def process(array_r, proc_lon, proc_lat, proc_z):
+        return OCNYDS.process(array_r, proc_lon, proc_lat, proc_z)
 
     def import_coordinates(self):
         self.lonb = np.sort(self.data.longitude1.values)
@@ -1115,8 +1117,8 @@ class OCNVVEL01MTS(HadCM3TS):
                                            month_list=month_list, verbose=verbose, logger=logger)
 
     @staticmethod
-    def transform(array_r, proc_lon, proc_lat, proc_z):
-        return OCNMDS.transform(array_r, proc_lon, proc_lat, proc_z)
+    def process(array_r, proc_lon, proc_lat, proc_z):
+        return OCNMDS.process(array_r, proc_lon, proc_lat, proc_z)
 
     def import_coordinates(self):
         self.lonb = np.sort(self.data.longitude1.values)
@@ -1151,8 +1153,8 @@ class OCNVVELATS(HadCM3TS):
                                          month_list=month_list, verbose=verbose, logger=logger)
 
     @staticmethod
-    def transform(array_r, proc_lon, proc_lat, proc_z):
-        return OCNYDS.transform(array_r, proc_lon, proc_lat, proc_z)
+    def process(array_r, proc_lon, proc_lat, proc_z):
+        return OCNYDS.process(array_r, proc_lon, proc_lat, proc_z)
 
     def import_coordinates(self):
         self.lonb = np.sort(self.data.longitude1.values)
@@ -1197,8 +1199,8 @@ class MLDMTS(HadCM3TS):
                                      month_list=month_list, verbose=verbose, logger=logger)
 
     @staticmethod
-    def transform(array_r, proc_lon, proc_lat, proc_z):
-        return OCNMDS.transform(array_r, proc_lon, proc_lat, proc_z)
+    def process(array_r, proc_lon, proc_lat, proc_z):
+        return OCNMDS.process(array_r, proc_lon, proc_lat, proc_z)
 
     def import_coordinates(self):
         self.lon = np.sort(self.data.longitude.values)
@@ -1233,8 +1235,8 @@ class MERIDATS(HadCM3TS):
                                        month_list=month_list, verbose=verbose, logger=logger)
 
     @staticmethod
-    def transform(array_r, proc_lon, proc_lat, proc_z):
-        return OCNYDS.transform(array_r, proc_lon, proc_lat, proc_z)
+    def process(array_r, proc_lon, proc_lat, proc_z):
+        return OCNYDS.process(array_r, proc_lon, proc_lat, proc_z)
 
     def import_coordinates(self):
     
@@ -1292,8 +1294,8 @@ class OCNSTREAMMTS(HadCM3TS):
                                            month_list=month_list, verbose=verbose, logger=logger)
 
     @staticmethod
-    def transform(array_r, proc_lon, proc_lat, proc_z):
-        return OCNMDS.transform(array_r, proc_lon, proc_lat, proc_z)
+    def process(array_r, proc_lon, proc_lat, proc_z):
+        return OCNMDS.process(array_r, proc_lon, proc_lat, proc_z)
 
     def import_coordinates(self):
         self.lon = np.sort(self.data.longitude.values)
@@ -1328,8 +1330,8 @@ class PRECIPMTS(HadCM3TS):
                                         month_list=month_list, verbose=verbose, logger=logger)
 
     @staticmethod
-    def transform(array_r, proc_lon, proc_lat, proc_z):
-        return ATMSURFMDS.transform(array_r, proc_lon, proc_lat, proc_z)
+    def process(array_r, proc_lon, proc_lat, proc_z):
+        return ATMSURFMDS.process(array_r, proc_lon, proc_lat, proc_z)
 
     def import_coordinates(self):
         self.lon = np.sort(self.data.longitude.values)
@@ -1364,8 +1366,8 @@ class EVAPMTS(HadCM3TS):
                                       month_list=month_list, verbose=verbose, logger=logger)
     
     @staticmethod
-    def transform(array_r, proc_lon, proc_lat, proc_z):
-        return ATMSURFMDS.transform(array_r, proc_lon, proc_lat, proc_z)
+    def process(array_r, proc_lon, proc_lat, proc_z):
+        return ATMSURFMDS.process(array_r, proc_lon, proc_lat, proc_z)
     
     def import_coordinates(self):
         self.lon, self.lonb = np.sort(self.data.longitude.values), np.sort(self.data.longitude_1.values)
@@ -1398,8 +1400,8 @@ class Q2MMTS(HadCM3TS):
                                      month_list=month_list, verbose=verbose, logger=logger)
 
     @staticmethod
-    def transform(array_r, proc_lon, proc_lat, proc_z):
-        return ATMSURFMDS.transform(array_r, proc_lon, proc_lat, proc_z)
+    def process(array_r, proc_lon, proc_lat, proc_z):
+        return ATMSURFMDS.process(array_r, proc_lon, proc_lat, proc_z)
     
     def import_coordinates(self):
         self.lon = np.sort(self.data.longitude.values)
@@ -1434,8 +1436,8 @@ class RH2MMTS(HadCM3TS):
                                       month_list=month_list, verbose=verbose, logger=logger)
 
     @staticmethod
-    def transform(array_r, proc_lon, proc_lat, proc_z):
-        return ATMSURFMDS.transform(array_r, proc_lon, proc_lat, proc_z)
+    def process(array_r, proc_lon, proc_lat, proc_z):
+        return ATMSURFMDS.process(array_r, proc_lon, proc_lat, proc_z)
 
     def import_coordinates(self):
         self.lon = np.sort(self.data.longitude.values)
@@ -1470,8 +1472,8 @@ class SHMTS(HadCM3TS):
                                     month_list=month_list, verbose=verbose, logger=logger)
 
     @staticmethod
-    def transform(array_r, proc_lon, proc_lat, proc_z):
-        return ATMSURFMDS.transform(array_r, proc_lon, proc_lat, proc_z)
+    def process(array_r, proc_lon, proc_lat, proc_z):
+        return ATMSURFMDS.process(array_r, proc_lon, proc_lat, proc_z)
 
     def import_coordinates(self):
         self.lon = np.sort(self.data.longitude.values)
@@ -1506,8 +1508,8 @@ class LHMTS(HadCM3TS):
                                     month_list=month_list, verbose=verbose, logger=logger)
 
     @staticmethod
-    def transform(array_r, proc_lon, proc_lat, proc_z):
-        return ATMSURFMDS.transform(array_r, proc_lon, proc_lat, proc_z)
+    def process(array_r, proc_lon, proc_lat, proc_z):
+        return ATMSURFMDS.process(array_r, proc_lon, proc_lat, proc_z)
 
     def import_coordinates(self):
         self.lon = np.sort(self.data.longitude.values)
@@ -1542,8 +1544,8 @@ class ICECONCMTS(HadCM3TS):
                                          month_list=month_list, verbose=verbose, logger=logger)
     
     @staticmethod
-    def transform(array_r, proc_lon, proc_lat, proc_z):
-        return ATMSURFMDS.transform(array_r, proc_lon, proc_lat, proc_z)
+    def process(array_r, proc_lon, proc_lat, proc_z):
+        return ATMSURFMDS.process(array_r, proc_lon, proc_lat, proc_z)
     
     def import_coordinates(self):
         self.lon = np.sort(self.data.longitude.values)
@@ -1578,8 +1580,8 @@ class ICEDEPTHMTS(HadCM3TS):
                                           month_list=month_list, verbose=verbose, logger=logger)
     
     @staticmethod
-    def transform(array_r, proc_lon, proc_lat, proc_z):
-        return ATMSURFMDS.transform(array_r, proc_lon, proc_lat, proc_z)
+    def process(array_r, proc_lon, proc_lat, proc_z):
+        return ATMSURFMDS.process(array_r, proc_lon, proc_lat, proc_z)
     
     def import_coordinates(self):
         self.lon = np.sort(self.data.longitude.values)
@@ -1614,8 +1616,8 @@ class SNOWMTS(HadCM3TS):
                                       month_list=month_list, verbose=verbose, logger=logger)
 
     @staticmethod
-    def transform(array_r, proc_lon, proc_lat, proc_z):
-        return ATMSURFMDS.transform(array_r, proc_lon, proc_lat, proc_z)
+    def process(array_r, proc_lon, proc_lat, proc_z):
+        return ATMSURFMDS.process(array_r, proc_lon, proc_lat, proc_z)
 
     def import_coordinates(self):
         self.lon = np.sort(self.data.longitude.values)
@@ -1650,8 +1652,8 @@ class SATMTS(HadCM3TS):
                                      month_list=month_list, verbose=verbose, logger=logger)
 
     @staticmethod
-    def transform(array_r, proc_lon, proc_lat, proc_z):
-        return ATMSURFMDS.transform(array_r, proc_lon, proc_lat, proc_z)
+    def process(array_r, proc_lon, proc_lat, proc_z):
+        return ATMSURFMDS.process(array_r, proc_lon, proc_lat, proc_z)
     
     def import_coordinates(self):
         self.lon = np.sort(self.data.longitude.values)
@@ -1694,8 +1696,8 @@ class ATMT2MMTS(HadCM3TS):
                                         month_list=month_list, verbose=verbose, logger=logger)
 
     @staticmethod
-    def transform(array_r, proc_lon, proc_lat, proc_z):
-        return ATMSURFMDS.transform(array_r, proc_lon, proc_lat, proc_z)
+    def process(array_r, proc_lon, proc_lat, proc_z):
+        return ATMSURFMDS.process(array_r, proc_lon, proc_lat, proc_z)
 
     def import_coordinates(self):
         self.lon = np.sort(self.data.longitude.values)
@@ -1730,8 +1732,8 @@ class SOLNETSURFMTS(HadCM3TS):
                                             month_list=month_list, verbose=verbose, logger=logger)
 
     @staticmethod
-    def transform(array_r, proc_lon, proc_lat, proc_z):
-        return ATMSURFMDS.transform(array_r, proc_lon, proc_lat, proc_z)
+    def process(array_r, proc_lon, proc_lat, proc_z):
+        return ATMSURFMDS.process(array_r, proc_lon, proc_lat, proc_z)
 
     def import_coordinates(self):
         self.lon = np.sort(self.data.longitude.values)
@@ -1766,8 +1768,8 @@ class SOLTOTSMTS(HadCM3TS):
                                          month_list=month_list, verbose=verbose, logger=logger)
 
     @staticmethod
-    def transform(array_r, proc_lon, proc_lat, proc_z):
-        return ATMSURFMDS.transform(array_r, proc_lon, proc_lat, proc_z)
+    def process(array_r, proc_lon, proc_lat, proc_z):
+        return ATMSURFMDS.process(array_r, proc_lon, proc_lat, proc_z)
 
     def import_coordinates(self):
         self.lon = np.sort(self.data.longitude.values)
@@ -1802,8 +1804,8 @@ class SOLTOAMTS(HadCM3TS):
                                         month_list=month_list, verbose=verbose, logger=logger)
 
     @staticmethod
-    def transform(array_r, proc_lon, proc_lat, proc_z):
-        return ATMSURFMDS.transform(array_r, proc_lon, proc_lat, proc_z)
+    def process(array_r, proc_lon, proc_lat, proc_z):
+        return ATMSURFMDS.process(array_r, proc_lon, proc_lat, proc_z)
 
     def import_coordinates(self):
         self.lon = np.sort(self.data.longitude.values)
@@ -1838,8 +1840,8 @@ class SOLUPMTS(HadCM3TS):
                                        month_list=month_list, verbose=verbose, logger=logger)
 
     @staticmethod
-    def transform(array_r, proc_lon, proc_lat, proc_z):
-        return ATMSURFMDS.transform(array_r, proc_lon, proc_lat, proc_z)
+    def process(array_r, proc_lon, proc_lat, proc_z):
+        return ATMSURFMDS.process(array_r, proc_lon, proc_lat, proc_z)
 
     def import_coordinates(self):
         self.lon = np.sort(self.data.longitude.values)
@@ -1874,8 +1876,8 @@ class OLRMTS(HadCM3TS):
                                      month_list=month_list, verbose=verbose, logger=logger)
 
     @staticmethod
-    def transform(array_r, proc_lon, proc_lat, proc_z):
-        return ATMSURFMDS.transform(array_r, proc_lon, proc_lat, proc_z)
+    def process(array_r, proc_lon, proc_lat, proc_z):
+        return ATMSURFMDS.process(array_r, proc_lon, proc_lat, proc_z)
 
     def import_coordinates(self):
         self.lon = np.sort(self.data.longitude.values)
@@ -1910,8 +1912,8 @@ class U10MTS(HadCM3TS):
                                      month_list=month_list, verbose=verbose, logger=logger)
 
     @staticmethod
-    def transform(array_r, proc_lon, proc_lat, proc_z):
-        return ATMSURFMDS.transform(array_r, proc_lon, proc_lat, proc_z)
+    def process(array_r, proc_lon, proc_lat, proc_z):
+        return ATMSURFMDS.process(array_r, proc_lon, proc_lat, proc_z)
 
     def import_coordinates(self):
         self.lonb = np.sort(self.data.longitude_1.values)
@@ -1947,8 +1949,8 @@ class U200MTS(HadCM3TS):
                                       month_list=month_list, verbose=verbose, logger=logger)
 
     @staticmethod
-    def transform(array_r, proc_lon, proc_lat, proc_z):
-        return ATMUPMDS.transform(array_r, proc_lon, proc_lat, proc_z)
+    def process(array_r, proc_lon, proc_lat, proc_z):
+        return ATMUPMDS.process(array_r, proc_lon, proc_lat, proc_z)
 
     def import_coordinates(self):
         self.lon = np.sort(self.data.longitude.values)
@@ -1983,8 +1985,8 @@ class U850MTS(HadCM3TS):
                                       month_list=month_list, verbose=verbose, logger=logger)
 
     @staticmethod
-    def transform(array_r, proc_lon, proc_lat, proc_z):
-        return ATMUPMDS.transform(array_r, proc_lon, proc_lat, proc_z)
+    def process(array_r, proc_lon, proc_lat, proc_z):
+        return ATMUPMDS.process(array_r, proc_lon, proc_lat, proc_z)
 
     def import_coordinates(self):
         self.lon = np.sort(self.data.longitude.values)
@@ -2019,8 +2021,8 @@ class V10MTS(HadCM3TS):
                                      month_list=month_list, verbose=verbose, logger=logger)
 
     @staticmethod
-    def transform(array_r, proc_lon, proc_lat, proc_z):
-        return ATMSURFMDS.transform(array_r, proc_lon, proc_lat, proc_z)
+    def process(array_r, proc_lon, proc_lat, proc_z):
+        return ATMSURFMDS.process(array_r, proc_lon, proc_lat, proc_z)
 
     def import_coordinates(self):
         self.lonb = np.sort(self.data.longitude_1.values)
@@ -2056,8 +2058,8 @@ class V200MTS(HadCM3TS):
                                       month_list=month_list, verbose=verbose, logger=logger)
 
     @staticmethod
-    def transform(array_r, proc_lon, proc_lat, proc_z):
-        return ATMUPMDS.transform(array_r, proc_lon, proc_lat, proc_z)
+    def process(array_r, proc_lon, proc_lat, proc_z):
+        return ATMUPMDS.process(array_r, proc_lon, proc_lat, proc_z)
 
     def import_coordinates(self):
         self.lon = np.sort(self.data.longitude.values)
@@ -2092,8 +2094,8 @@ class V850MTS(HadCM3TS):
                                       month_list=month_list, verbose=verbose, logger=logger)
 
     @staticmethod
-    def transform(array_r, proc_lon, proc_lat, proc_z):
-        return ATMUPMDS.transform(array_r, proc_lon, proc_lat, proc_z)
+    def process(array_r, proc_lon, proc_lat, proc_z):
+        return ATMUPMDS.process(array_r, proc_lon, proc_lat, proc_z)
 
     def import_coordinates(self):
         self.lon = np.sort(self.data.longitude.values)
@@ -2128,8 +2130,8 @@ class MSLPMTS(HadCM3TS):
                                       month_list=month_list, verbose=verbose, logger=logger)
 
     @staticmethod
-    def transform(array_r, proc_lon, proc_lat, proc_z):
-        return ATMSURFMDS.transform(array_r, proc_lon, proc_lat, proc_z)
+    def process(array_r, proc_lon, proc_lat, proc_z):
+        return ATMSURFMDS.process(array_r, proc_lon, proc_lat, proc_z)
 
     def import_coordinates(self):
         self.lon = np.sort(self.data.longitude.values)
@@ -2164,8 +2166,8 @@ class Z500MTS(HadCM3TS):
                                       month_list=month_list, verbose=verbose, logger=logger)
 
     @staticmethod
-    def transform(array_r, proc_lon, proc_lat, proc_z):
-        return ATMUPMDS.transform(array_r, proc_lon, proc_lat, proc_z)
+    def process(array_r, proc_lon, proc_lat, proc_z):
+        return ATMUPMDS.process(array_r, proc_lon, proc_lat, proc_z)
 
     def import_coordinates(self):
         self.lonb = np.sort(self.data.longitude_1.values)
