@@ -101,9 +101,10 @@ class GeoDataArray:
         else:
             self.data = xr.DataArray(data_input, coords=coords, dims=dims, name=name, attrs=attrs,
                                      indexes=indexes, fastpath=fastpath)
+
         self.sort_data()
-        print("____ Data imported in the GeoDataArray instance.")
         
+        # Weird tests
         self.lon = ds.lon if ds is not None else np.sort(self.data.longitude)
         self.lat = ds.lat if ds is not None else np.sort(self.data.latitude)
         self.z = ds.z if ds is not None else None
@@ -125,7 +126,7 @@ class GeoDataArray:
         self.t = np.sort(ds.t) if ds is not None else None
         self.process = process
         self.proc_lon, self.proc_lat, self.proc_z = True, True, True
-        
+
         print("____ Coordinate imported in the GeoDataArray instance.")
     
     def __repr__(self):
