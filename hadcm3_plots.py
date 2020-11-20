@@ -1,9 +1,9 @@
 import numpy as np
-import paleoclim_leeds.hadcm3_processing as hcm3
-import paleoclim_leeds.zones as zones
+import pylaeoclim_leeds.hadcm3_processing as hcm3
+import pylaeoclim_leeds.zones as zones
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
-import paleoclim_leeds.plots as plots
+import pylaeoclim_leeds.plots as plots
 
 
 class OcnTtz(plots.PlotTemplate):
