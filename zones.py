@@ -1,7 +1,7 @@
 import numpy as np
 # import numpy.ma as ma
 import abc
-# import paleoclim_leeds.util_hadcm3 as util
+# import pylaeoclim_leeds.util_hadcm3 as util
 
 
 class Zone:

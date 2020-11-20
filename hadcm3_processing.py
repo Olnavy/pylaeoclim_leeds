@@ -1,8 +1,8 @@
-import paleoclim_leeds.processing as proc
-import paleoclim_leeds.zones as zones
+import pylaeoclim_leeds.processing as proc
+import pylaeoclim_leeds.zones as zones
 import numpy as np
 import xarray as xr
-import paleoclim_leeds.util_hadcm3 as util
+import pylaeoclim_leeds.util_hadcm3 as util
 import abc
 import cftime
 import os

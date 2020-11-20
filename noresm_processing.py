@@ -1,8 +1,8 @@
-import paleoclim_leeds.processing as proc
-import paleoclim_leeds.zones as zones
+import pylaeoclim_leeds.processing as proc
+import pylaeoclim_leeds.zones as zones
 import numpy as np
 import xarray as xr
-import paleoclim_leeds.util_hadcm3 as util
+import pylaeoclim_leeds.util_hadcm3 as util
 import abc
 import cftime
 import os
@@ -180,12 +180,12 @@ class OCNMDS(NorESMRDS):
         :return:
         """
         if 'y' in xarray.dims and 'x' in xarray:
-        n_x, n_y = xarray.data.shape
-        out_array = np.zeros((n_x, n_y))
-        for i in range(n_x):
-            for j in range(n_y):
-                out_array[i, j] = array_r[i, self.transform_matrix[i, j]]
-        return out_array
+            n_x, n_y = xarray.data.shape
+            out_array = np.zeros((n_x, n_y))
+            for i in range(n_x):
+                for j in range(n_y):
+                    out_array[i, j] = xarray.data[i, self.transform_matrix[i, j]]
+            return out_array
     
     def import_coordinates(self):
         self.lon, self.lat = sort_coordinates(self.grid.plon.values, self.grid.plat.values)
