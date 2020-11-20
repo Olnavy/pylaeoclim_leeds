@@ -52,8 +52,8 @@ class ModelDS(GeoDS):
         self.lon_p, self.lat_p, self.z_p = None, None, None
         self.lonb_p, self.latb_p, self.zb_p = None, None, None
         self.lons_p, self.lats_p, self.zs_p = None, None, None
-        self.start_year = None
-        self.end_year = None
+        self.start_year, self.end_year = None, None
+        self.t = None
     
     @abc.abstractmethod
     def import_data(self):
