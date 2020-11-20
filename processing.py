@@ -75,20 +75,20 @@ class ModelDS(GeoDS):
         
         pass
     
+    @staticmethod
+    def filter_months(data_array, month_list):
+        # To define in GeoDataArray !!!!and GeoDS!!!!
+        if month_list is not None:
+            condition = xr.zeros_like(data_array.t)
+            for i in range(len(data_array.t)):
+                condition[i] = data_array.t[i].values[()].month in util.months_to_number(month_list)
+            data_array = data_array.where(condition, drop=True)
+        return data_array
+    
     def guess_bounds(self):
         self.lonb = util.guess_bounds(self.lon)
         self.latb = util.guess_bounds(self.lat)
         self.zb = util.guess_bounds(self.z)
-
-
-def filter_months(data_array, month_list):
-    # To define in GeoDataArray !!!!and GeoDS!!!!
-    if month_list is not None:
-        condition = xr.zeros_like(data_array.t)
-        for i in range(len(data_array.t)):
-            condition[i] = data_array.t[i].values[()].month in util.months_to_number(month_list)
-        data_array = data_array.where(condition, drop=True)
-    return data_array
 
 
 class GeoDataArray:
@@ -101,7 +101,7 @@ class GeoDataArray:
         else:
             self.data = xr.DataArray(data_input, coords=coords, dims=dims, name=name, attrs=attrs,
                                      indexes=indexes, fastpath=fastpath)
-
+        
         self.sort_data()
         
         # Weird tests
@@ -123,9 +123,12 @@ class GeoDataArray:
         self.lons_p, self.lats_p, self.zs_p = ds.lons_p if ds is not None else None, \
                                               ds.lats_p if ds is not None else None, \
                                               ds.zs_p if ds is not None else None
-        self.t = np.sort(ds.t) if ds is not None else None
+        self.t = ds.t if ds is not None else None
         self.process = process
         self.proc_lon, self.proc_lat, self.proc_z = True, True, True
+        self.start_year = ds.start_year if ds is not None else None
+        self.end_year = ds.end_year if ds is not None else None
+        self.months = ds.months if ds is not None else None
 
         print("____ Coordinate imported in the GeoDataArray instance.")
     
@@ -144,8 +147,22 @@ class GeoDataArray:
     
     def values(self, processing=True):
         return self.process(self.data.where(self.data.values != 0), self.proc_lon, self.proc_lat,
-                              self.proc_z).values if processing else self.data.where(self.data.values != 0).values
+                            self.proc_z).values if processing else self.data.where(self.data.values != 0).values
     
+    def processed_time(self, new_start_year=None):
+        return np.linspace(0, self.end_year-self.start_year, len(self.t)) + \
+               (new_start_year if new_start_year is not None else self.start_year)
+
+    @staticmethod
+    def filter_months(data_array, month_list):
+        # To define in GeoDataArray !!!!and GeoDS!!!!
+        if month_list is not None:
+            condition = xr.zeros_like(data_array.t)
+            for i in range(len(data_array.t)):
+                condition[i] = data_array.t[i].values[()].month in util.months_to_number(month_list)
+            data_array = data_array.where(condition, drop=True)
+        return data_array
+
     def sort_data(self):
         """
         Sort all dimensions of the data.
@@ -212,7 +229,7 @@ class GeoDataArray:
                 else:
                     print("**** Mode wasn't recognized. The data_array was not changed.")
                 self.update_lon(mode_lon, value_lon)
-                
+            
             elif 'row_index' in self.data.dims:
                 print("**** Impossible to use get_lon method for the moment. The data_array was not changed.")
                 if mode_lon == "value":
@@ -220,8 +237,7 @@ class GeoDataArray:
                         raise ValueError("**** To use the value mode, please indicate a value_lon.")
                     print(f"____ New longitude value : {value_lon}")
                     self.data.where(value_lon - offset_lon <= self.lon <= value_lon + offset_lon)
-                    
-                
+        
         except ValueError as error:
             print(error)
             print("____ The DataArray was not changed.")
@@ -312,10 +328,10 @@ class GeoDataArray:
                 else:
                     print("**** Mode wasn't recognized. The data_array was not changed.")
                 self.update_lat(mode_lat, value_lat)
-                
+            
             elif 'col_index' in self.data.dims or latitude is None:
                 print("**** Impossible to use get_lat method for the moment. The data_array was not changed.")
-
+        
         except ValueError as error:
             print(error)
             print("____ The DataArray was not changed.")
@@ -479,7 +495,7 @@ class GeoDataArray:
             print("**** The t index was out of bound, the DataArray was not changed.")
         finally:
             return self
-
+    
     def update_t(self, mode_t, value_t):
         if mode_t is None:
             pass
@@ -502,6 +518,7 @@ class GeoDataArray:
         for i in range(len(self.data.t)):
             condition[i] = self.data.t[i].values[()].month in util.months_to_number(new_month_list)
         self.data = self.data.where(condition, drop=True)
+        self.months = new_month_list
         print("____ Data cropped to the new month list.")
         return self
     
@@ -509,9 +526,11 @@ class GeoDataArray:
         if new_start_year is not None:
             self.data = self.data.where(self.data.t >= cftime.Datetime360Day(new_start_year, 1, 1),
                                         drop=True)
+            self.start_year = new_start_year
         if new_end_year is not None:
             self.data = self.data.where(self.data.t <= cftime.Datetime360Day(new_end_year, 12, 30),
                                         drop=True)
+            self.end_year = new_end_year
         print("____ Data cropped to the new start and end years.")
         return self
     

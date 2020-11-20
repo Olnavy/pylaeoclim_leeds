@@ -1,7 +1,7 @@
 import numpy as np
 # import numpy.ma as ma
 import abc
-import paleoclim_leeds.util_hadcm3 as util
+# import paleoclim_leeds.util_hadcm3 as util
 
 
 class Zone:
@@ -65,18 +65,18 @@ class Box(Zone):
         #     self.lsm = lsm
     
     def __repr__(self):
-        return f"lon_min: {self.lon_min}, lon_max: {self.lon_max}, lat_min: {self.lat_min}, lat_max: {self.lat_max}"\
-               f"z_min: {self.z_min}, z_max: {self.z_max}\n"\
-               # f"{util.print_coordinates('lon', self.lon)}; {util.print_coordinates('lon_p', self.lon_p)}\n" \
-               # f"{util.print_coordinates('lonb', self.lonb)}; {util.print_coordinates('lonb_p', self.lonb_p)}\n" \
-               # f"{util.print_coordinates('lons', self.lons)}; {util.print_coordinates('lons_p', self.lons_p)}\n" \
-               # f"{util.print_coordinates('lat', self.lat)}; {util.print_coordinates('lat_p', self.lat_p)}\n" \
-               # f"{util.print_coordinates('latb', self.latb)}; {util.print_coordinates('latb_p', self.latb_p)}\n" \
-               # f"{util.print_coordinates('lats', self.lats)}; {util.print_coordinates('lats_p', self.lats_p)}\n" \
-               # f"{util.print_coordinates('z', self.z)}; {util.print_coordinates('z_p', self.z_p)}\n" \
-               # f"{util.print_coordinates('zb', self.zb)}; {util.print_coordinates('zb_p', self.zb_p)}\n" \
-               # f"{util.print_coordinates('zs', self.zs)}; {util.print_coordinates('zs_p', self.zs_p)}\n" \
-               
+        return f"lon_min: {self.lon_min}, lon_max: {self.lon_max}, lat_min: {self.lat_min}, lat_max: {self.lat_max}" \
+               f"z_min: {self.z_min}, z_max: {self.z_max}\n" \
+            # f"{util.print_coordinates('lon', self.lon)}; {util.print_coordinates('lon_p', self.lon_p)}\n" \
+        # f"{util.print_coordinates('lonb', self.lonb)}; {util.print_coordinates('lonb_p', self.lonb_p)}\n" \
+        # f"{util.print_coordinates('lons', self.lons)}; {util.print_coordinates('lons_p', self.lons_p)}\n" \
+        # f"{util.print_coordinates('lat', self.lat)}; {util.print_coordinates('lat_p', self.lat_p)}\n" \
+        # f"{util.print_coordinates('latb', self.latb)}; {util.print_coordinates('latb_p', self.latb_p)}\n" \
+        # f"{util.print_coordinates('lats', self.lats)}; {util.print_coordinates('lats_p', self.lats_p)}\n" \
+        # f"{util.print_coordinates('z', self.z)}; {util.print_coordinates('z_p', self.z_p)}\n" \
+        # f"{util.print_coordinates('zb', self.zb)}; {util.print_coordinates('zb_p', self.zb_p)}\n" \
+        # f"{util.print_coordinates('zs', self.zs)}; {util.print_coordinates('zs_p', self.zs_p)}\n" \
+    
     def compact(self, geo_da):
         # Test lon etc.
         
@@ -104,11 +104,11 @@ class Box(Zone):
             geo_da.data = geo_da.data.where(geo_da.data.z <= self.z_max, drop=True)
         if self.z_max is not None and 'zb' in geo_da.data.dims:
             geo_da.data = geo_da.data.where(geo_da.data.zb <= self.z_max, drop=True)
-            
+        
         print("____ Data compacted to the zone.")
         # geo_da.fit_coordinates_to_data()
         return self.fit_coordinates_to_data(geo_da)
-
+    
     def fit_coordinates_to_data(self, geo_da):
         """
         A reprendre
@@ -188,7 +188,7 @@ class Box(Zone):
             geo_da.z_p, geo_da.zb_p, geo_da.zs_p = z_p, zb_p, zs_p
             geo_da.proc_z = False
         return geo_da
-
+    
     def import_coordinates(self, data_source=None, lon=None, lat=None, z=None):
         pass
     
@@ -208,19 +208,19 @@ class Box(Zone):
     #     # self.update()
     #     print(data_source)
     #     return self
-
-    def get_indexes(self, lon, lat, z):
     
+    def get_indexes(self, lon, lat, z):
+        
         if any([lon is None, lat is None, z is None]):
             print("Caution : Please import coordinates first")
             raise KeyError("Caution : Please import coordinates first")
-    
+        
         else:
             ilon_box = np.where(self.lon_min <= lon <= self.lon_max)
             ilat_box = np.where(self.lat_min <= lat <= self.lat_max)
             iz_box = np.where(self.z_min <= z <= self.z_max)
             return ilon_box, ilat_box, iz_box
-
+    
     # def update(self):
     #     # A SUPPRIMER?
     #     if self.lon is not None and self.lon_min is None:

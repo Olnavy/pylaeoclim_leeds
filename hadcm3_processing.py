@@ -36,6 +36,10 @@ class HadCM3DS(proc.ModelDS):
     def process(array_r, proc_lon, proc_lat, proc_z):
         pass
     
+    def processed_time(self, new_start_year=None):
+        return np.linspace(0, self.end_year-self.start_year, len(self.t)) + \
+               (new_start_year if new_start_year is not None else self.start_year)
+    
     @abc.abstractmethod
     def import_data(self):
         pass
@@ -92,7 +96,6 @@ class HadCM3DS(proc.ModelDS):
         geo_da.get_lat(mode_lat, value_lat)
         geo_da.get_z(mode_z, value_z)
         geo_da.get_t(mode_t, value_t)
-        # geo_da.fit_coordinates_to_data() Is it still useful?
         
         return geo_da
     
@@ -583,7 +586,7 @@ class HadCM3TS(HadCM3DS):
             print(f"Time elapsed for crop start year : {time.time() - start}")
             self.data = self.data.where(self.data.t <= cftime.Datetime360Day(self.end_year, 12, 30), drop=True)
             print(f"Time elapsed for crop start and end years : {time.time() - start}")
-            self.data = proc.filter_months(self.data, self.months)
+            self.data = self.filter_months(self.data, self.months)
             print(f"Time elapsed for crop start and end years and months : {time.time() - start}")
             
             # data is a xarray.Dataset -> not possible to use xarray.GeoDataArray methods. How to change that?
@@ -2241,32 +2244,32 @@ class SOILTMTS(HadCM3TS):
 # LAND-SEA MASK
 # *************
 
-class HadCM3LSM(proc.LSM):
-    
-    def __init__(self):
-        super(HadCM3LSM, self).__init__()
-    
-    def get_lsm(self, lsm_name):
-        ds_lsm = xr.open_dataset(util.path2lsm[lsm_name])
-        self.lon = ds_lsm.longitude.values
-        self.lat = ds_lsm.latitude.values
-        self.depth = ds_lsm.depthdepth.values
-        self.level = ds_lsm.depthlevel.values
-        self.lsm2d = ds_lsm.lsm.values
-        self.mask2d = (self.lsm2d - 1) * -1
-    
-    def fit_lsm_ds(self, ds):
-        # Should check if longitudes are equal
-        if self.depth is None:
-            print("The lsm haven't been imported yet. Calling ls_from_ds instead")
-            self.lsm_from_ds(ds)
-        else:
-            self.lon, self.lat, self.z = ds.longitude.values, ds.latitude.values, ds.depth.values
-            lsm3d = np.zeros((len(self.lon), len(self.lat), len(self.z)))
-            for i in range(len(self.z)):
-                lsm3d[:, :, i] = np.ma.masked_less(self.depth, self.z[i])
-            self.lsm3d = lsm3d
-            self.mask3d = (lsm3d - 1) * -1
-    
-    def lsm_from_ds(self, ds):
-        pass
+# class HadCM3LSM(proc.LSM):
+#
+#     def __init__(self):
+#         super(HadCM3LSM, self).__init__()
+#
+#     def get_lsm(self, lsm_name):
+#         ds_lsm = xr.open_dataset(util.path2lsm[lsm_name])
+#         self.lon = ds_lsm.longitude.values
+#         self.lat = ds_lsm.latitude.values
+#         self.depth = ds_lsm.depthdepth.values
+#         self.level = ds_lsm.depthlevel.values
+#         self.lsm2d = ds_lsm.lsm.values
+#         self.mask2d = (self.lsm2d - 1) * -1
+#
+#     def fit_lsm_ds(self, ds):
+#         # Should check if longitudes are equal
+#         if self.depth is None:
+#             print("The lsm haven't been imported yet. Calling ls_from_ds instead")
+#             self.lsm_from_ds(ds)
+#         else:
+#             self.lon, self.lat, self.z = ds.longitude.values, ds.latitude.values, ds.depth.values
+#             lsm3d = np.zeros((len(self.lon), len(self.lat), len(self.z)))
+#             for i in range(len(self.z)):
+#                 lsm3d[:, :, i] = np.ma.masked_less(self.depth, self.z[i])
+#             self.lsm3d = lsm3d
+#             self.mask3d = (lsm3d - 1) * -1
+#
+#     def lsm_from_ds(self, ds):
+#         pass
