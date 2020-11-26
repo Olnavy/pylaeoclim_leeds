@@ -191,6 +191,9 @@ class GeoDataArray:
                     self.data = self.data.isel(longitude=util.lon_to_index(self.lon, value_lon))
                 elif mode_lon == "mean":
                     self.data = self.data.mean(dim="longitude", skipna=True)
+                elif mode_lon == "weigthed_mean":
+                    # No weights for longitude.
+                    self.data = self.data.mean(dim="longitude", skipna=True)
                 elif mode_lon == "min":
                     self.data = self.data.min(dim="longitude", skipna=True)
                 elif mode_lon == "max":
@@ -217,6 +220,9 @@ class GeoDataArray:
                         f"____ New longitude value : {new_lon}")
                     self.data = self.data.isel(longitudeb=util.lon_to_index(self.lonb, value_lon))
                 elif mode_lon == "mean":
+                    self.data = self.data.mean(dim="longitudeb", skipna=True)
+                elif mode_lon == "weigthed_mean":
+                    # No weights for longitude.
                     self.data = self.data.mean(dim="longitudeb", skipna=True)
                 elif mode_lon == "min":
                     self.data = self.data.min(dim="longitudeb", skipna=True)
@@ -290,6 +296,11 @@ class GeoDataArray:
                     self.data = self.data.isel(latitude=util.lat_to_index(self.lat, value_lat))
                 elif mode_lat == "mean":
                     self.data = self.data.mean(dim="latitude", skipna=True)
+                elif mode_lat == "weigthed_mean":
+                    # proportionnal to cosinus
+                    lat_weights = np.cos(np.deg2rad(self.data.latitude))
+                    weights = self.data.weighted(lat_weights)
+                    self.data = weights.mean("latitude")
                 elif mode_lat == "min":
                     self.data = self.data.min(dim="latitude", skipna=True)
                 elif mode_lat == "max":
@@ -312,11 +323,15 @@ class GeoDataArray:
                     if value_lat is None:
                         raise ValueError("**** To use the value mode, please indicate a value_lat.")
                     new_lat = self.latb[util.lat_to_index(self.latb, value_lat)]
-                    print(
-                        f"____ New latitude value : {new_lat}")
+                    print(f"____ New latitude value : {new_lat}")
                     self.data = self.data.isel(latitudeb=util.lat_to_index(self.latb, value_lat))
                 elif mode_lat == "mean":
                     self.data = self.data.mean(dim="latitudeb", skipna=True)
+                elif mode_lat == "weigthed_mean":
+                    # proportionnal to cosinus
+                    lat_weights = np.cos(np.deg2rad(self.data.latitudeb))
+                    weights = self.data.weighted(lat_weights)
+                    self.data = weights.mean("latitudeb")
                 elif mode_lat == "min":
                     self.data = self.data.min(dim="latitudeb", skipna=True)
                 elif mode_lat == "max":
@@ -386,6 +401,11 @@ class GeoDataArray:
                     self.data = self.data.isel(z=util.z_to_index(self.z, value_z))
                 elif mode_z == "mean":
                     self.data = self.data.mean(dim="z", skipna=True)
+                elif mode_z == "weigthed_mean":
+                    # proportionnal to cosinus
+                    z_weights = xr.DataArray(self.zs, dims=["z"])
+                    weights = self.data.weighted(z_weights)
+                    self.data = weights.mean("z")
                 elif mode_z == "min":
                     self.data = self.data.min(dim="z", skipna=True)
                 elif mode_z == "max":
@@ -413,6 +433,11 @@ class GeoDataArray:
                     self.data = self.data.isel(zb=util.z_to_index(self.zb, value_z))
                 elif mode_z == "mean":
                     self.data = self.data.mean(dim="zb", skipna=True)
+                elif mode_z == "weigthed_mean":
+                    # proportionnal to steps. !!!!! Not sure if I can use zs???
+                    z_weights = xr.DataArray(self.zs, dims=["zb"])
+                    weights = self.data.weighted(z_weights)
+                    self.data = weights.mean("zb")
                 elif mode_z == "min":
                     self.data = self.data.min(dim="zb", skipna=True)
                 elif mode_z == "max":
