@@ -191,7 +191,7 @@ class GeoDataArray:
                     self.data = self.data.isel(longitude=util.lon_to_index(self.lon, value_lon))
                 elif mode_lon == "mean":
                     self.data = self.data.mean(dim="longitude", skipna=True)
-                elif mode_lon == "weigthed_mean":
+                elif mode_lon == "weighted_mean":
                     # No weights for longitude.
                     self.data = self.data.mean(dim="longitude", skipna=True)
                 elif mode_lon == "min":
@@ -221,7 +221,7 @@ class GeoDataArray:
                     self.data = self.data.isel(longitudeb=util.lon_to_index(self.lonb, value_lon))
                 elif mode_lon == "mean":
                     self.data = self.data.mean(dim="longitudeb", skipna=True)
-                elif mode_lon == "weigthed_mean":
+                elif mode_lon == "weighted_mean":
                     # No weights for longitude.
                     self.data = self.data.mean(dim="longitudeb", skipna=True)
                 elif mode_lon == "min":
@@ -296,7 +296,7 @@ class GeoDataArray:
                     self.data = self.data.isel(latitude=util.lat_to_index(self.lat, value_lat))
                 elif mode_lat == "mean":
                     self.data = self.data.mean(dim="latitude", skipna=True)
-                elif mode_lat == "weigthed_mean":
+                elif mode_lat == "weighted_mean":
                     # proportionnal to cosinus
                     lat_weights = np.cos(np.deg2rad(self.data.latitude))
                     weights = self.data.weighted(lat_weights)
@@ -327,7 +327,7 @@ class GeoDataArray:
                     self.data = self.data.isel(latitudeb=util.lat_to_index(self.latb, value_lat))
                 elif mode_lat == "mean":
                     self.data = self.data.mean(dim="latitudeb", skipna=True)
-                elif mode_lat == "weigthed_mean":
+                elif mode_lat == "weighted_mean":
                     # proportionnal to cosinus
                     lat_weights = np.cos(np.deg2rad(self.data.latitudeb))
                     weights = self.data.weighted(lat_weights)
@@ -401,7 +401,7 @@ class GeoDataArray:
                     self.data = self.data.isel(z=util.z_to_index(self.z, value_z))
                 elif mode_z == "mean":
                     self.data = self.data.mean(dim="z", skipna=True)
-                elif mode_z == "weigthed_mean":
+                elif mode_z == "weighted_mean":
                     # proportionnal to cosinus
                     z_weights = xr.DataArray(self.zs, dims=["z"])
                     weights = self.data.weighted(z_weights)
@@ -433,7 +433,7 @@ class GeoDataArray:
                     self.data = self.data.isel(zb=util.z_to_index(self.zb, value_z))
                 elif mode_z == "mean":
                     self.data = self.data.mean(dim="zb", skipna=True)
-                elif mode_z == "weigthed_mean":
+                elif mode_z == "weighted_mean":
                     # proportionnal to steps. !!!!! Not sure if I can use zs???
                     z_weights = xr.DataArray(self.zs, dims=["zb"])
                     weights = self.data.weighted(z_weights)
