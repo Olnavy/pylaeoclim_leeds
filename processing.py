@@ -190,18 +190,23 @@ class GeoDataArray:
                         f"____ New longitude value : {new_lon}")
                     self.data = self.data.isel(longitude=util.lon_to_index(self.lon, value_lon))
                 elif mode_lon == "mean":
+                    print("____ Processing longitude: mean")
                     self.data = self.data.mean(dim="longitude", skipna=True)
                 elif mode_lon == "weighted_mean":
                     # No weights for longitude.
                     print("____ Processing longitude: weighted_mean")
                     self.data = self.data.mean(dim="longitude", skipna=True)
                 elif mode_lon == "min":
+                    print("____ Processing longitude: min")
                     self.data = self.data.min(dim="longitude", skipna=True)
                 elif mode_lon == "max":
+                    print("____ Processing longitude: max")
                     self.data = self.data.max(dim="longitude", skipna=True)
                 elif mode_lon == "median":
+                    print("____ Processing longitude: median")
                     self.data = self.data.median(dim="longitude", skipna=True)
                 elif mode_lon == "sum":
+                    print("____ Processing longitude: sum")
                     self.data = self.data.sum(dim="longitude", skipna=True)
                 else:
                     print("**** Mode wasn't recognized. The data_array was not changed.")
@@ -211,28 +216,33 @@ class GeoDataArray:
                 if mode_lon == "index":
                     if value_lon is None:
                         raise ValueError("**** To use the index mode, please indicate a value_lon.")
-                    print(f"____ New longitude value : {self.lonb[int(value_lon)]}")
+                    print(f"____ New longitudeb value : {self.lonb[int(value_lon)]}")
                     self.data = self.data.isel(longitudeb=value_lon)
                 elif mode_lon == "value":
                     if value_lon is None:
                         raise ValueError("**** To use the value mode, please indicate a value_lon.")
                     new_lon = self.lonb[util.lon_to_index(self.lonb, value_lon)]
                     print(
-                        f"____ New longitude value : {new_lon}")
+                        f"____ New longitudeb value : {new_lon}")
                     self.data = self.data.isel(longitudeb=util.lon_to_index(self.lonb, value_lon))
                 elif mode_lon == "mean":
+                    print("____ Processing longitudeb: mean")
                     self.data = self.data.mean(dim="longitudeb", skipna=True)
                 elif mode_lon == "weighted_mean":
                     # No weights for longitude.
                     print("____ Processing longitudeb: weighted_mean")
                     self.data = self.data.mean(dim="longitudeb", skipna=True)
                 elif mode_lon == "min":
+                    print("____ Processing longitudeb: min")
                     self.data = self.data.min(dim="longitudeb", skipna=True)
                 elif mode_lon == "max":
+                    print("____ Processing longitudeb: max")
                     self.data = self.data.max(dim="longitudeb", skipna=True)
                 elif mode_lon == "median":
+                    print("____ Processing longitudeb: median")
                     self.data = self.data.median(dim="longitudeb", skipna=True)
                 elif mode_lon == "sum":
+                    print("____ Processing longitude: sum")
                     self.data = self.data.sum(dim="longitudeb", skipna=True)
                 else:
                     print("**** Mode wasn't recognized. The data_array was not changed.")
@@ -297,6 +307,7 @@ class GeoDataArray:
                         f"____ New latitude value : {new_lat}")
                     self.data = self.data.isel(latitude=util.lat_to_index(self.lat, value_lat))
                 elif mode_lat == "mean":
+                    print("____ Processing latitude: mean")
                     self.data = self.data.mean(dim="latitude", skipna=True)
                 elif mode_lat == "weighted_mean":
                     # proportionnal to cosinus
@@ -305,12 +316,16 @@ class GeoDataArray:
                     weights = self.data.weighted(lat_weights)
                     self.data = weights.mean("latitude")
                 elif mode_lat == "min":
+                    print("____ Processing latitude: min")
                     self.data = self.data.min(dim="latitude", skipna=True)
                 elif mode_lat == "max":
+                    print("____ Processing latitude: max")
                     self.data = self.data.max(dim="latitude", skipna=True)
                 elif mode_lat == "median":
+                    print("____ Processing latitude: median")
                     self.data = self.data.median(dim="latitude", skipna=True)
                 elif mode_lat == "sum":
+                    print("____ Processing latitude: sum")
                     self.data = self.data.sum(dim="latitude", skipna=True)
                 else:
                     print("**** Mode wasn't recognized. The data_array was not changed.")
@@ -320,15 +335,16 @@ class GeoDataArray:
                 if mode_lat == "index":
                     if value_lat is None:
                         raise ValueError("**** To use the index mode, please indicate a value_lat.")
-                    print(f"____ New latitude value : {self.latb[int(value_lat)]}")
+                    print(f"____ New latitudeb value : {self.latb[int(value_lat)]}")
                     self.data = self.data.isel(latitudeb=value_lat)
                 elif mode_lat == "value":
                     if value_lat is None:
                         raise ValueError("**** To use the value mode, please indicate a value_lat.")
                     new_lat = self.latb[util.lat_to_index(self.latb, value_lat)]
-                    print(f"____ New latitude value : {new_lat}")
+                    print(f"____ New latitudeb value : {new_lat}")
                     self.data = self.data.isel(latitudeb=util.lat_to_index(self.latb, value_lat))
                 elif mode_lat == "mean":
+                    print("____ Processing latitudeb: mean")
                     self.data = self.data.mean(dim="latitudeb", skipna=True)
                 elif mode_lat == "weighted_mean":
                     # proportionnal to cosinus
@@ -337,12 +353,16 @@ class GeoDataArray:
                     weights = self.data.weighted(lat_weights)
                     self.data = weights.mean("latitudeb")
                 elif mode_lat == "min":
+                    print("____ Processing latitudeb: min")
                     self.data = self.data.min(dim="latitudeb", skipna=True)
                 elif mode_lat == "max":
+                    print("____ Processing latitudeb: max")
                     self.data = self.data.max(dim="latitudeb", skipna=True)
                 elif mode_lat == "median":
+                    print("____ Processing latitudeb: median")
                     self.data = self.data.median(dim="latitudeb", skipna=True)
                 elif mode_lat == "sum":
+                    print("____ Processing latitudeb: sum")
                     self.data = self.data.sum(dim="latitudeb", skipna=True)
                 else:
                     print("**** Mode wasn't recognized. The data_array was not changed.")
@@ -404,20 +424,27 @@ class GeoDataArray:
                         f"New z value : {new_z}")
                     self.data = self.data.isel(z=util.z_to_index(self.z, value_z))
                 elif mode_z == "mean":
+                    print("____ Processing z: mean")
                     self.data = self.data.mean(dim="z", skipna=True)
                 elif mode_z == "weighted_mean":
-                    # proportionnal to steps.!!!!! Not sure if I can use zs???
+                    # proportionnal to steps.
                     print("____ Processing z: weighted_mean")
-                    z_weights = xr.DataArray(self.zs, dims=["z"])
-                    weights = self.data.weighted(z_weights)
-                    self.data = weights.mean("z")
+                    if len(self.zs) == len(self.z):
+                        self.data = self.data.weighted(xr.DataArray(self.zs, dims=["z"])).mean("z")
+                    else:
+                        zs = util.compute_steps(util.guess_bounds(self.z))
+                        self.data = self.data.weighted(xr.DataArray(zs, dims=["z"])).mean("z")
                 elif mode_z == "min":
+                    print("____ Processing z: min")
                     self.data = self.data.min(dim="z", skipna=True)
                 elif mode_z == "max":
+                    print("____ Processing z: max")
                     self.data = self.data.max(dim="z", skipna=True)
                 elif mode_z == "median":
+                    print("____ Processing z: median")
                     self.data = self.data.median(dim="z", skipna=True)
                 elif mode_z == "sum":
+                    print("____ Processing z: sum")
                     self.data = self.data.sum(dim="z", skipna=True)
                 else:
                     print("**** Mode wasn't recognized. The data_array was not changed.")
@@ -427,30 +454,37 @@ class GeoDataArray:
                 if mode_z == "index":
                     if value_z is None:
                         raise ValueError("**** To use the index mode, please indicate a value_z.")
-                    print(f"____ New z value : {self.zb[int(value_z)]}")
+                    print(f"____ New zb value : {self.zb[int(value_z)]}")
                     self.data = self.data.isel(zb=value_z)
                 elif mode_z == "value":
                     if value_z is None:
                         raise ValueError("**** To use the value mode, please indicate a value_z.")
                     new_z = self.zb[util.z_to_index(self.zb, value_z)]
                     print(
-                        f"New z value : {new_z}")
+                        f"New zb value : {new_z}")
                     self.data = self.data.isel(zb=util.z_to_index(self.zb, value_z))
                 elif mode_z == "mean":
+                    print("____ Processing zb: mean")
                     self.data = self.data.mean(dim="zb", skipna=True)
                 elif mode_z == "weighted_mean":
                     # proportionnal to steps. !!!!! Not sure if I can use zs???
                     print("____ Processing zb: weighted_mean")
-                    z_weights = xr.DataArray(self.zs, dims=["zb"])
-                    weights = self.data.weighted(z_weights)
-                    self.data = weights.mean("zb")
+                    if len(self.zs) == len(self.zb):
+                        self.data = self.data.weighted(xr.DataArray(self.zs, dims=["zb"])).mean("zb")
+                    else:
+                        zs = util.compute_steps(util.guess_bounds(self.zb))
+                        self.data = self.data.weighted(xr.DataArray(zs, dims=["zb"])).mean("zb")
                 elif mode_z == "min":
+                    print("____ Processing zb: mean")
                     self.data = self.data.min(dim="zb", skipna=True)
                 elif mode_z == "max":
+                    print("____ Processing zb: mean")
                     self.data = self.data.max(dim="zb", skipna=True)
                 elif mode_z == "median":
+                    print("____ Processing zb: mean")
                     self.data = self.data.median(dim="zb", skipna=True)
                 elif mode_z == "sum":
+                    print("____ Processing zb: mean")
                     self.data = self.data.sum(dim="zb", skipna=True)
                 else:
                     print("**** Mode wasn't recognized. The data_array was not changed.")
