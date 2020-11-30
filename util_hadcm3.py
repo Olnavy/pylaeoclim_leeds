@@ -170,6 +170,16 @@ def guess_from_bounds(coordinateb):
         return coordinate
     else:
         raise ValueError("Empty coordinate.")
+    
+def compute_steps(coordinate):
+    if coordinate is not None:
+        if len(coordinate) <= 1:
+            coordinates = 0
+        else:
+            coordinates = [(coordinate[i] - coordinate[i + 1]) for i in range(len(coordinate)-1)]
+        return coordinates
+    else:
+        raise ValueError("Empty coordinate.")
 
 # def guess_bounds_old(coordinate, mode):
 #     """
