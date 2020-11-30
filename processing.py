@@ -193,6 +193,7 @@ class GeoDataArray:
                     self.data = self.data.mean(dim="longitude", skipna=True)
                 elif mode_lon == "weighted_mean":
                     # No weights for longitude.
+                    print("____ Processing longitude: weighted_mean")
                     self.data = self.data.mean(dim="longitude", skipna=True)
                 elif mode_lon == "min":
                     self.data = self.data.min(dim="longitude", skipna=True)
@@ -223,6 +224,7 @@ class GeoDataArray:
                     self.data = self.data.mean(dim="longitudeb", skipna=True)
                 elif mode_lon == "weighted_mean":
                     # No weights for longitude.
+                    print("____ Processing longitudeb: weighted_mean")
                     self.data = self.data.mean(dim="longitudeb", skipna=True)
                 elif mode_lon == "min":
                     self.data = self.data.min(dim="longitudeb", skipna=True)
@@ -271,7 +273,7 @@ class GeoDataArray:
             self.lon = new_lon
             self.lonb, self.lons = self.lon, None
             self.lon_p, self.lonb_p, self.lons_p = self.lon, self.lon, None
-        elif mode_lon in ["mean", "min", "max", "median", "sum"]:
+        elif mode_lon in ["weighted_mean", "mean", "min", "max", "median", "sum"]:
             self.lon, self.lonb, self.lons = None, None, None
             self.lon_p, self.lonb_p, self.lons_p = None, None, None
         else:
@@ -298,6 +300,7 @@ class GeoDataArray:
                     self.data = self.data.mean(dim="latitude", skipna=True)
                 elif mode_lat == "weighted_mean":
                     # proportionnal to cosinus
+                    print("____ Processing latitude: weighted_mean")
                     lat_weights = np.cos(np.deg2rad(self.data.latitude))
                     weights = self.data.weighted(lat_weights)
                     self.data = weights.mean("latitude")
@@ -329,6 +332,7 @@ class GeoDataArray:
                     self.data = self.data.mean(dim="latitudeb", skipna=True)
                 elif mode_lat == "weighted_mean":
                     # proportionnal to cosinus
+                    print("____ Processing latitudeb: weighted_mean")
                     lat_weights = np.cos(np.deg2rad(self.data.latitudeb))
                     weights = self.data.weighted(lat_weights)
                     self.data = weights.mean("latitudeb")
@@ -375,7 +379,7 @@ class GeoDataArray:
             self.lat = new_lat
             self.latb, self.lats = self.lat, None
             self.lat_p, self.latb_p, self.lats_p = self.lat, self.lat, None
-        elif mode_lat in ["mean", "min", "max", "median", "sum"]:
+        elif mode_lat in ["weighted_mean", "mean", "min", "max", "median", "sum"]:
             self.lat, self.latb, self.lats = None, None, None
             self.lat_p, self.latb_p, self.lats_p = None, None, None
         else:
@@ -402,7 +406,8 @@ class GeoDataArray:
                 elif mode_z == "mean":
                     self.data = self.data.mean(dim="z", skipna=True)
                 elif mode_z == "weighted_mean":
-                    # proportionnal to cosinus
+                    # proportionnal to steps.!!!!! Not sure if I can use zs???
+                    print("____ Processing z: weighted_mean")
                     z_weights = xr.DataArray(self.zs, dims=["z"])
                     weights = self.data.weighted(z_weights)
                     self.data = weights.mean("z")
@@ -435,6 +440,7 @@ class GeoDataArray:
                     self.data = self.data.mean(dim="zb", skipna=True)
                 elif mode_z == "weighted_mean":
                     # proportionnal to steps. !!!!! Not sure if I can use zs???
+                    print("____ Processing zb: weighted_mean")
                     z_weights = xr.DataArray(self.zs, dims=["zb"])
                     weights = self.data.weighted(z_weights)
                     self.data = weights.mean("zb")
@@ -477,7 +483,7 @@ class GeoDataArray:
             self.z = new_z
             self.zb, self.zs = self.z, None
             self.z_p, self.zb_p, self.zs_p = self.z, self.z, None
-        elif mode_z in ["mean", "min", "max", "median", "sum"]:
+        elif mode_z in ["weighted_mean", "mean", "min", "max", "median", "sum"]:
             self.z, self.zb, self.zs = None, None, None
             self.z_p, self.zb_p, self.zs_p = None, None, None
         else:
