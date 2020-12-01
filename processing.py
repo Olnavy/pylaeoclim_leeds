@@ -467,7 +467,7 @@ class GeoDataArray:
                     print("____ Processing zb: mean")
                     self.data = self.data.mean(dim="zb", skipna=True)
                 elif mode_z == "weighted_mean":
-                    # proportionnal to steps. !!!!! Not sure if I can use zs???
+                    # proportionnal to steps.
                     print("____ Processing zb: weighted_mean")
                     if len(self.zs) == len(self.zb):
                         self.data = self.data.weighted(xr.DataArray(self.zs, dims=["zb"])).mean("zb")
