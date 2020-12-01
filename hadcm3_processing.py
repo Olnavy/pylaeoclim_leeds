@@ -806,7 +806,7 @@ class SALATS(HadCM3TS):
     def salinity(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None, mode_z=None,
                  value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
         print("__ Importing sea water salinity (annual).")
-        return self.get(self.data.salinity_ym_dpth.rename({"depth_1": "z"}), zone, mode_lon, value_lon, mode_lat,
+        return self.get(self.data.salinity_ym_dpth.rename({"depth_1": "zb"}), zone, mode_lon, value_lon, mode_lat,
                         value_lat, mode_z, value_z, mode_t, value_t, new_start_year=new_start_year,
                         new_end_year=new_end_year, new_month_list=new_month_list)
 
@@ -1028,7 +1028,7 @@ class OCNTATS(HadCM3TS):
                     value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None,
                     new_month_list=None):
         print("__ Importing sea water temperature (annual).")
-        return self.get(self.data.temp_ym_dpth.rename({"depth_1": "z"}), zone, mode_lon, value_lon, mode_lat, value_lat,
+        return self.get(self.data.temp_ym_dpth.rename({"depth_1": "zb"}), zone, mode_lon, value_lon, mode_lat, value_lat,
                         mode_z, value_z, mode_t, value_t, new_start_year=new_start_year, new_end_year=new_end_year,
                         new_month_list=new_month_list)
 
@@ -1109,7 +1109,7 @@ class OCNUVELATS(HadCM3TS):
         print("__ Importing eastward sea water velocity (annual).")
         return self.get(
             self.data.ucurrTot_ym_dpth.rename({'longitude_1': 'longitudeb'}).rename({'latitude_1': 'latitudeb'})
-                .rename({"depth_1": "z"}), zone,
+                .rename({"depth_1": "zb"}), zone,
             mode_lon, value_lon, mode_lat, value_lat, mode_z, value_z, mode_t, value_t,
             new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
 
@@ -1190,7 +1190,7 @@ class OCNVVELATS(HadCM3TS):
         print("__ Importing westward sea water velocity (annual).")
         return self.get(
             self.data.vcurrTot_mm_dpth.rename({'longitude_1': 'longitudeb'}).rename(
-                {'latitude_1': 'latitudeb'}).rename({"depth_1": "z"}), zone, mode_lon, value_lon, mode_lat, value_lat,
+                {'latitude_1': 'latitudeb'}).rename({"depth_1": "zb"}), zone, mode_lon, value_lon, mode_lat, value_lat,
             mode_z, value_z, mode_t, value_t,
             new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
 
