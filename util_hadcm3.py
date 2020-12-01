@@ -156,7 +156,7 @@ def guess_bounds(coordinate):
             coordinateb = [(coordinate[i] + coordinate[i + 1]) / 2 for i in range(len(coordinate)-1)]
             coordinateb = np.append((3 * coordinate[0] - coordinate[1]) / 2, coordinateb)
             coordinateb = np.append(coordinateb, (3 * coordinate[-1] - coordinate[-2]) / 2)
-        return coordinateb
+        return np.array(coordinateb)
     else:
         raise ValueError("Empty coordinate.")
     
@@ -167,7 +167,7 @@ def guess_from_bounds(coordinateb):
             coordinate = coordinateb
         else:
             coordinate = [(coordinateb[i] + coordinateb[i + 1]) / 2 for i in range(len(coordinateb)-1)]
-        return coordinate
+        return np.array(coordinate)
     else:
         raise ValueError("Empty coordinate.")
     
@@ -177,7 +177,7 @@ def compute_steps(coordinate):
             coordinates = 0
         else:
             coordinates = [(coordinate[i] - coordinate[i + 1]) for i in range(len(coordinate)-1)]
-        return coordinates
+        return np.array(coordinates)
     else:
         raise ValueError("Empty coordinate.")
 
