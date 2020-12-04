@@ -598,31 +598,6 @@ class GeoDataArray:
             self.end_year = new_end_year
         print("____ Data cropped to the new start and end years.")
         return self
-    
-    # def fit_coordinates_to_data(self):
-    # DEPRECATED
-    #     try:
-    #         self.lon = self.data.longitude.values
-    #     except AttributeError:
-    #         self.lon = None
-    #     try:
-    #         self.lat = self.data.latitude.values
-    #     except AttributeError:
-    #         self.lat = None
-    #     try:
-    #         self.z = self.data.z.values
-    #     except AttributeError:
-    #         self.z = None
-    #     try:
-    #         self.t = self.data.t.values
-    #     except AttributeError:
-    #         self.t = None
-    #     self.lonb = util.guess_bounds(self.lon, "lon")
-    #     self.latb = util.guess_bounds(self.lat, "lat")
-    #     self.zb = util.guess_bounds(self.z, "z")
-    #
-    #     print("____ Coordinates cropped to the new data.")
-
 
 class LSM:
     

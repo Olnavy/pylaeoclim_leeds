@@ -8,6 +8,7 @@ import cftime
 import os
 import time
 import pathlib
+import netCDF4
 
 input_file = util.generate_input(str(pathlib.Path(__file__).parent.absolute()) + "/resources/hadcm3_input")
 
@@ -35,7 +36,7 @@ class HadCM3DS(proc.ModelDS):
             First year of the dataset.
         end_year: int
             Last year of the dataset.
-        month_list: list
+        month_list:
             Months to be implemented in the dataset.
         verbose: bool
             Not implemented yet.
@@ -47,7 +48,7 @@ class HadCM3DS(proc.ModelDS):
         self.exp_name = exp_name
         self.start_year, self.end_year = start_year, end_year
         self.months = month_list
-
+        
         # Import data or sample data.
         self.import_data()
         # Import available coordinates and compute the others
@@ -61,7 +62,7 @@ class HadCM3DS(proc.ModelDS):
         pass
     
     def processed_time(self, new_start_year=None):
-        return np.linspace(0, self.end_year-self.start_year, len(self.t)) + \
+        return np.linspace(0, self.end_year - self.start_year, len(self.t)) + \
                (new_start_year if new_start_year is not None else self.start_year)
     
     @abc.abstractmethod
@@ -118,8 +119,10 @@ class HadCM3DS(proc.ModelDS):
         geo_da.get_z(mode_z, value_z)
         geo_da.get_t(mode_t, value_t)
         
+        # Should I recombine the data here?
+        
         return geo_da
-    
+
 
 # ************
 # RAW DATASETS
@@ -127,10 +130,11 @@ class HadCM3DS(proc.ModelDS):
 
 class HadCM3RDS(HadCM3DS):
     
-    def __init__(self, exp_name, start_year, end_year, file_name, month_list, verbose, logger):
+    def __init__(self, exp_name, start_year, end_year, file_name, month_list, chunks, verbose, logger):
         self.sample_data = None
         self.file_name = file_name
         self.paths = []
+        self.chunks = chunks
         super(HadCM3RDS, self).__init__(exp_name, start_year, end_year, month_list, verbose, logger)
     
     def import_data(self):
@@ -139,10 +143,7 @@ class HadCM3RDS(HadCM3DS):
         
         # ADD A METHOD TO CHECK THE VALID RANGE
         #
-        # if min(self.data.t.values).year > self.start_year or max(self.data.t.values).year < self.end_year:
-        #     raise ValueError(f"Inavlid start_year or end_year. Please check that they fit the valid range\n"
-        #                      f"Valid range : start_year = {min(self.data.t.values).year}, "
-        #                      f"end_year = {max(self.data.t.values).year}")
+        #
         
         try:
             path = input_file[self.exp_name][1]
@@ -192,12 +193,12 @@ class ATMUPMDS(HadCM3RDS):
     PC
     """
     
-    def __init__(self, exp_name, start_year, end_year, month_list=None, verbose=False, logger="print"):
+    def __init__(self, exp_name, start_year, end_year, month_list=None, chunks=None, verbose=False, logger="print"):
         month_list = HadCM3DS.MONTHS if month_list is None else month_list  # To overcome mutable argument error
         expt_id = input_file[exp_name][0]
         file_name = f"pcpd/{expt_id}a#pc"
         super(ATMUPMDS, self).__init__(exp_name, start_year, end_year, file_name=file_name, month_list=month_list,
-                                       verbose=verbose, logger=logger)
+                                       chunks=chunks, verbose=verbose, logger=logger)
     
     @staticmethod
     def process(array_r, proc_lon, proc_lat, proc_z):
@@ -253,12 +254,12 @@ class ATMSURFMDS(HadCM3RDS):
     PD
     """
     
-    def __init__(self, exp_name, start_year, end_year, month_list=None, verbose=False, logger="print"):
+    def __init__(self, exp_name, start_year, end_year, month_list=None, chunks=None, verbose=False, logger="print"):
         month_list = HadCM3DS.MONTHS if month_list is None else month_list  # To overcome mutable argument error
         expt_id = input_file[exp_name][0]
         file_name = f"pcpd/{expt_id}a#pd"
         super(ATMSURFMDS, self).__init__(exp_name, start_year, end_year, file_name=file_name, month_list=month_list,
-                                         verbose=verbose, logger=logger)
+                                         chunks=chunks, verbose=verbose, logger=logger)
     
     @staticmethod
     def process(array_r, proc_lon, proc_lat, proc_z):
@@ -312,12 +313,12 @@ class OCNMDS(HadCM3RDS):
     PF
     """
     
-    def __init__(self, exp_name, start_year, end_year, month_list=None, verbose=False, logger="print"):
+    def __init__(self, exp_name, start_year, end_year, month_list=None, chunks=None, verbose=False, logger="print"):
         month_list = HadCM3DS.MONTHS if month_list is None else month_list  # To overcome mutable argument error
         expt_id = input_file[exp_name][0]
         file_name = f"pf/{expt_id}o#pf"
         super(OCNMDS, self).__init__(exp_name, start_year, end_year, file_name=file_name, month_list=month_list,
-                                     verbose=verbose, logger=logger)
+                                     chunks=chunks, verbose=verbose, logger=logger)
     
     @staticmethod
     def process(array_r, proc_lon, proc_lat, proc_z):
@@ -438,11 +439,11 @@ class OCNYDS(HadCM3RDS):
     PG
     """
     
-    def __init__(self, exp_name, start_year, end_year, verbose=False, logger="print"):
+    def __init__(self, exp_name, start_year, end_year, month_list=None, chunks=None, verbose=False, logger="print"):
         expt_id = input_file[exp_name][0]
         file_name = f"pg/{expt_id}o#pg"
-        super(OCNYDS, self).__init__(exp_name, start_year, end_year, file_name=file_name,
-                                     verbose=verbose, logger=logger, month_list=None)
+        super(OCNYDS, self).__init__(exp_name, start_year, end_year, file_name=file_name, month_list=month_list,
+                                     chunks=chunks, verbose=verbose, logger=logger)
     
     @staticmethod
     def process(array_r, proc_lon, proc_lat, proc_z):
@@ -534,14 +535,15 @@ class OCNYDS(HadCM3RDS):
              .rename({'longitude_1': 'longitudeb'}).rename({'latitude_1': 'latitudeb'})) ** 2),
             zone, mode_lon, value_lon, mode_lat, value_lat, mode_z, value_z, mode_t, value_t,
             new_start_year=new_start_year, new_end_year=new_end_year)
-
+    
     def stream(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
-                 mode_z=None, value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None):
+               mode_z=None, value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None):
         print("__ Importing salinity.")
         return self.get(xr.open_mfdataset(self.paths, combine='by_coords').streamFn_ym_uo.
                         isel(unspecified=0).drop("unspecified"),
                         zone, mode_lon, value_lon, mode_lat, value_lat, mode_z, value_z, mode_t, value_t,
                         new_start_year=new_start_year, new_end_year=new_end_year)
+
 
 class LNDMDS(HadCM3RDS):
     """
@@ -566,9 +568,12 @@ class LNDMDS(HadCM3RDS):
 
 class HadCM3TS(HadCM3DS):
     
-    def __init__(self, exp_name, start_year, end_year, file_name, month_list, verbose, logger):
+    def __init__(self, exp_name, start_year, end_year, file_name, month_list, chunks, verbose, logger):
         self.data = None
         self.file_name = file_name
+        start_year = self.get_start_year(exp_name, file_name) if start_year is None else start_year
+        end_year = self.get_end_year(exp_name, file_name) if end_year is None else end_year
+        self.chunks = chunks
         super(HadCM3TS, self).__init__(exp_name, start_year, end_year, month_list, verbose, logger)
     
     def __repr__(self):
@@ -584,6 +589,24 @@ class HadCM3TS(HadCM3DS):
                f"{util.print_coordinates('t', self.t)}\n" \
                f"DATA: {self.data}"
     
+    def get_start_year(self, exp_name=None, file_name=None):
+        
+        exp_name = exp_name if exp_name is not None else self.exp_name
+        file_name = file_name if file_name is not None else self.file_name
+        
+        path = input_file[exp_name][2]
+        times = netCDF4.Dataset(f"{path}{exp_name}.{file_name}.nc").variables['t']
+        return netCDF4.num2date(times[:], units=times.units, calendar=times.calendar)[0].year
+    
+    def get_end_year(self, exp_name=None, file_name=None):
+        
+        exp_name = exp_name if exp_name is not None else self.exp_name
+        file_name = file_name if file_name is not None else self.file_name
+        
+        path = input_file[exp_name][2]
+        times = netCDF4.Dataset(f"{path}{exp_name}.{file_name}.nc").variables['t']
+        return netCDF4.num2date(times[:], units=times.units, calendar=times.calendar)[-1].year
+    
     def import_data(self):
         
         path = ""
@@ -595,7 +618,10 @@ class HadCM3TS(HadCM3DS):
             path = input_file[self.exp_name][2]
             
             start = time.time()
-            self.data = xr.open_dataset(f"{path}{self.exp_name}.{self.file_name}.nc")
+            if self.chunks is not None:
+                self.data = xr.open_dataset(f"{path}{self.exp_name}.{self.file_name}.nc", chunks={"t": self.chunks})
+            else:
+                self.data = xr.open_dataset(f"{path}{self.exp_name}.{self.file_name}.nc")
             print(f"Time elapsed for open_dataset : {time.time() - start}")
             
             if min(self.data.t.values).year > self.start_year or max(self.data.t.values).year < self.end_year:
@@ -603,19 +629,17 @@ class HadCM3TS(HadCM3DS):
                                  f"Valid range : start_year = {min(self.data.t.values).year}, "
                                  f"end_year = {max(self.data.t.values).year}")
             
-            # The where+lamda structure is not working (GitHub?) so each steps are done individually
-            # .where(lambda x: x.t >= cftime.Datetime360Day(self.start_year, 1, 1), drop=True) \
-            # .where(lambda x: x.t >= cftime.Datetime360Day(self.end_year, 12, 30), drop=True)
-            # .where(lambda x: x.t.month in util.months_to_number(self.months), drop=True)
             start = time.time()
-            self.data = self.data.where(self.data.t >= cftime.Datetime360Day(self.start_year, 1, 1), drop=True)
+            if self.start_year != self.get_start_year():
+                self.data = self.data.where(self.data.t >= cftime.Datetime360Day(self.start_year, 1, 1), drop=True)
             print(f"Time elapsed for crop start year : {time.time() - start}")
-            self.data = self.data.where(self.data.t <= cftime.Datetime360Day(self.end_year, 12, 30), drop=True)
+            if self.end_year != self.get_end_year():
+                self.data = self.data.where(self.data.t <= cftime.Datetime360Day(self.end_year, 12, 30), drop=True)
             print(f"Time elapsed for crop start and end years : {time.time() - start}")
-            self.data = self.filter_months(self.data, self.months)
+            if self.months is not self.MONTHS and self.months is not None:
+                print("in")
+                self.data = self.filter_months(self.data, self.months)
             print(f"Time elapsed for crop start and end years and months : {time.time() - start}")
-            
-            # data is a xarray.Dataset -> not possible to use xarray.GeoDataArray methods. How to change that?
             
             print("____ Import succeeded.")
         
@@ -636,10 +660,11 @@ class HadCM3TS(HadCM3DS):
 
 class SAL01MTS(HadCM3TS):
     
-    def __init__(self, exp_name, start_year, end_year, month_list=None, verbose=False, logger="print"):
+    def __init__(self, exp_name, start_year=None, end_year=None, month_list=None, chunks=None, verbose=False,
+                 logger="print"):
         month_list = HadCM3DS.MONTHS if month_list is None else month_list  # To overcome mutable argument error
         super(SAL01MTS, self).__init__(exp_name, start_year, end_year, file_name="oceansalipf01.monthly",
-                                       month_list=month_list, verbose=verbose, logger=logger)
+                                       month_list=month_list, chunks=chunks, verbose=verbose, logger=logger)
     
     @staticmethod
     def process(array_r, proc_lon, proc_lat, proc_z):
@@ -672,9 +697,9 @@ class SAL01MTS(HadCM3TS):
 
 class SAL01ATS(HadCM3TS):
     
-    def __init__(self, exp_name, start_year, end_year, month_list=None, verbose=False, logger="print"):
+    def __init__(self, exp_name, start_year=None, end_year=None, chunks=None, verbose=False, logger="print"):
         super(SAL01ATS, self).__init__(exp_name, start_year, end_year, file_name="oceansalipg01.annual",
-                                       month_list=month_list, verbose=verbose, logger=logger)
+                                       month_list=None, chunks=chunks, verbose=verbose, logger=logger)
     
     @staticmethod
     def process(array_r, proc_lon, proc_lat, proc_z):
@@ -707,9 +732,9 @@ class SAL01ATS(HadCM3TS):
 
 class SAL12ATS(HadCM3TS):
     
-    def __init__(self, exp_name, start_year, end_year, month_list=None, verbose=False, logger="print"):
+    def __init__(self, exp_name, start_year=None, end_year=None, chunks=None, verbose=False, logger="print"):
         super(SAL12ATS, self).__init__(exp_name, start_year, end_year, file_name="oceansalipg12.annual",
-                                       month_list=month_list, verbose=verbose, logger=logger)
+                                       month_list=None, chunks=chunks, verbose=verbose, logger=logger)
     
     @staticmethod
     def process(array_r, proc_lon, proc_lat, proc_z):
@@ -742,9 +767,9 @@ class SAL12ATS(HadCM3TS):
 
 class SAL16ATS(HadCM3TS):
     
-    def __init__(self, exp_name, start_year, end_year, month_list=None, verbose=False, logger="print"):
+    def __init__(self, exp_name, start_year=None, end_year=None, chunks=None, verbose=False, logger="print"):
         super(SAL16ATS, self).__init__(exp_name, start_year, end_year, file_name="oceansalipg16.annual",
-                                       month_list=month_list, verbose=verbose, logger=logger)
+                                       month_list=None, chunks=chunks, verbose=verbose, logger=logger)
     
     @staticmethod
     def process(array_r, proc_lon, proc_lat, proc_z):
@@ -777,9 +802,9 @@ class SAL16ATS(HadCM3TS):
 
 class SALATS(HadCM3TS):
     
-    def __init__(self, exp_name, start_year, end_year, month_list=None, verbose=False, logger="print"):
+    def __init__(self, exp_name, start_year=None, end_year=None, chunks=None, verbose=False, logger="print"):
         super(SALATS, self).__init__(exp_name, start_year, end_year, file_name="oceansalipg.annual",
-                                     month_list=month_list, verbose=verbose, logger=logger)
+                                     month_list=None, chunks=chunks, verbose=verbose, logger=logger)
     
     @staticmethod
     def process(array_r, proc_lon, proc_lat, proc_z):
@@ -820,10 +845,11 @@ class SALATS(HadCM3TS):
 
 class SSTMTS(HadCM3TS):
     
-    def __init__(self, exp_name, start_year=None, end_year=None, month_list=None, verbose=False, logger="print"):
+    def __init__(self, exp_name, start_year=None, end_year=None, month_list=None, chunks=None, verbose=False,
+                 logger="print"):
         month_list = HadCM3DS.MONTHS if month_list is None else month_list  # To overcome mutable argument error
         super(SSTMTS, self).__init__(exp_name, start_year, end_year, file_name="oceansurftemppf.monthly",
-                                     month_list=month_list, verbose=verbose, logger=logger)
+                                     month_list=month_list, chunks=chunks, verbose=verbose, logger=logger)
     
     @staticmethod
     def process(array_r, proc_lon, proc_lat, proc_z):
@@ -856,10 +882,11 @@ class SSTMTS(HadCM3TS):
 
 class OCNT01MTS(HadCM3TS):
     
-    def __init__(self, exp_name, start_year=None, end_year=None, month_list=None, verbose=False, logger="print"):
+    def __init__(self, exp_name, start_year=None, end_year=None, month_list=None, chunks=None, verbose=False,
+                 logger="print"):
         month_list = HadCM3DS.MONTHS if month_list is None else month_list  # To overcome mutable argument error
         super(OCNT01MTS, self).__init__(exp_name, start_year, end_year, file_name="oceantemppf01.monthly",
-                                        month_list=month_list, verbose=verbose, logger=logger)
+                                        month_list=month_list, chunks=chunks, verbose=verbose, logger=logger)
     
     @staticmethod
     def process(array_r, proc_lon, proc_lat, proc_z):
@@ -892,9 +919,9 @@ class OCNT01MTS(HadCM3TS):
 
 class OCNT01ATS(HadCM3TS):
     
-    def __init__(self, exp_name, start_year=None, end_year=None, month_list=None, verbose=False, logger="print"):
+    def __init__(self, exp_name, start_year=None, end_year=None, chunks=None, verbose=False, logger="print"):
         super(OCNT01ATS, self).__init__(exp_name, start_year, end_year, file_name="oceantemppg01.annual",
-                                        month_list=month_list, verbose=verbose, logger=logger)
+                                        month_list=None, chunks=chunks, verbose=verbose, logger=logger)
     
     @staticmethod
     def process(array_r, proc_lon, proc_lat, proc_z):
@@ -927,9 +954,10 @@ class OCNT01ATS(HadCM3TS):
 
 class OCNT12ATS(HadCM3TS):
     
-    def __init__(self, exp_name, start_year=None, end_year=None, month_list=None, verbose=False, logger="print"):
+    def __init__(self, exp_name, start_year=None, end_year=None, chunks=None, verbose=False,
+                 logger="print"):
         super(OCNT12ATS, self).__init__(exp_name, start_year, end_year, file_name="oceantemppg12.annual",
-                                        month_list=month_list, verbose=verbose, logger=logger)
+                                        month_list=None, chunks=chunks, verbose=verbose, logger=logger)
     
     @staticmethod
     def process(array_r, proc_lon, proc_lat, proc_z):
@@ -962,9 +990,10 @@ class OCNT12ATS(HadCM3TS):
 
 class OCNT16ATS(HadCM3TS):
     
-    def __init__(self, exp_name, start_year=None, end_year=None, month_list=None, verbose=False, logger="print"):
+    def __init__(self, exp_name, start_year=None, end_year=None, chunks=None, verbose=False,
+                 logger="print"):
         super(OCNT16ATS, self).__init__(exp_name, start_year, end_year, file_name="oceantemppg16.annual",
-                                        month_list=month_list, verbose=verbose, logger=logger)
+                                        month_list=None, chunks=chunks, verbose=verbose, logger=logger)
     
     @staticmethod
     def process(array_r, proc_lon, proc_lat, proc_z):
@@ -997,9 +1026,10 @@ class OCNT16ATS(HadCM3TS):
 
 class OCNTATS(HadCM3TS):
     
-    def __init__(self, exp_name, start_year=None, end_year=None, month_list=None, verbose=False, logger="print"):
+    def __init__(self, exp_name, start_year=None, end_year=None, chunks=None, verbose=False,
+                 logger="print"):
         super(OCNTATS, self).__init__(exp_name, start_year, end_year, file_name="oceantemppg.annual",
-                                      month_list=month_list, verbose=verbose, logger=logger)
+                                      month_list=None, chunks=chunks, verbose=verbose, logger=logger)
     
     @staticmethod
     def process(array_r, proc_lon, proc_lat, proc_z):
@@ -1031,21 +1061,21 @@ class OCNTATS(HadCM3TS):
         super(OCNTATS, self).import_coordinates()
     
     def temperature(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
-                    mode_z=None,
-                    value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None,
-                    new_month_list=None):
+                    mode_z=None, value_z=None, mode_t=None, value_t=None,
+                    new_start_year=None, new_end_year=None, new_month_list=None):
         print("__ Importing sea water temperature (annual).")
-        return self.get(self.data.temp_ym_dpth.rename({"depth_1": "zb"}), zone, mode_lon, value_lon, mode_lat, value_lat,
-                        mode_z, value_z, mode_t, value_t, new_start_year=new_start_year, new_end_year=new_end_year,
-                        new_month_list=new_month_list)
+        return self.get(self.data.temp_ym_dpth.rename({"depth_1": "zb"}), zone, mode_lon, value_lon, mode_lat,
+                        value_lat, mode_z, value_z, mode_t, value_t,
+                        new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
 
 
 class OCNUVEL01MTS(HadCM3TS):
     
-    def __init__(self, exp_name, start_year=None, end_year=None, month_list=None, verbose=False, logger="print"):
+    def __init__(self, exp_name, start_year=None, end_year=None, month_list=None, chunks=None, verbose=False,
+                 logger="print"):
         month_list = HadCM3DS.MONTHS if month_list is None else month_list  # To overcome mutable argument error
         super(OCNUVEL01MTS, self).__init__(exp_name, start_year, end_year, file_name="oceanuvelpf01.monthly",
-                                           month_list=month_list, verbose=verbose, logger=logger)
+                                           month_list=month_list, chunks=chunks, verbose=verbose, logger=logger)
     
     @staticmethod
     def process(array_r, proc_lon, proc_lat, proc_z):
@@ -1078,9 +1108,10 @@ class OCNUVEL01MTS(HadCM3TS):
 
 class OCNUVELATS(HadCM3TS):
     
-    def __init__(self, exp_name, start_year=None, end_year=None, verbose=False, logger="print"):
+    def __init__(self, exp_name, start_year=None, end_year=None, chunks=None, verbose=False,
+                 logger="print"):
         super(OCNUVELATS, self).__init__(exp_name, start_year, end_year, file_name="oceanuvelpg.annual",
-                                         month_list=None, verbose=verbose, logger=logger)
+                                         month_list=None, chunks=chunks, verbose=verbose, logger=logger)
     
     @staticmethod
     def process(array_r, proc_lon, proc_lat, proc_z):
@@ -1123,10 +1154,11 @@ class OCNUVELATS(HadCM3TS):
 
 class OCNVVEL01MTS(HadCM3TS):
     
-    def __init__(self, exp_name, start_year=None, end_year=None, month_list=None, verbose=False, logger="print"):
+    def __init__(self, exp_name, start_year=None, end_year=None, month_list=None, chunks=None, verbose=False,
+                 logger="print"):
         month_list = HadCM3DS.MONTHS if month_list is None else month_list  # To overcome mutable argument error
         super(OCNVVEL01MTS, self).__init__(exp_name, start_year, end_year, file_name="oceanuvelpf01.monthly",
-                                           month_list=month_list, verbose=verbose, logger=logger)
+                                           month_list=month_list, chunks=chunks, verbose=verbose, logger=logger)
     
     @staticmethod
     def process(array_r, proc_lon, proc_lat, proc_z):
@@ -1159,9 +1191,10 @@ class OCNVVEL01MTS(HadCM3TS):
 
 class OCNVVELATS(HadCM3TS):
     
-    def __init__(self, exp_name, start_year=None, end_year=None, month_list=None, verbose=False, logger="print"):
+    def __init__(self, exp_name, start_year=None, end_year=None, chunks=None, verbose=False,
+                 logger="print"):
         super(OCNVVELATS, self).__init__(exp_name, start_year, end_year, file_name="oceanuvelpg.annual",
-                                         month_list=month_list, verbose=verbose, logger=logger)
+                                         month_list=None, chunks=chunks, verbose=verbose, logger=logger)
     
     @staticmethod
     def process(array_r, proc_lon, proc_lat, proc_z):
@@ -1204,10 +1237,11 @@ class OCNVVELATS(HadCM3TS):
 
 class MLDMTS(HadCM3TS):
     
-    def __init__(self, exp_name, start_year, end_year, month_list=None, verbose=False, logger="print"):
+    def __init__(self, exp_name, start_year=None, end_year=None, month_list=None, chunks=None, verbose=False,
+                 logger="print"):
         month_list = HadCM3DS.MONTHS if month_list is None else month_list  # To overcome mutable argument error
         super(MLDMTS, self).__init__(exp_name, start_year, end_year, file_name="oceanmixedpf.monthly",
-                                     month_list=month_list, verbose=verbose, logger=logger)
+                                     month_list=month_list, chunks=chunks, verbose=verbose, logger=logger)
     
     @staticmethod
     def process(array_r, proc_lon, proc_lat, proc_z):
@@ -1240,9 +1274,9 @@ class MLDMTS(HadCM3TS):
 
 class MERIDATS(HadCM3TS):
     
-    def __init__(self, exp_name, start_year, end_year, month_list=None, verbose=False, logger="print"):
+    def __init__(self, exp_name, start_year=None, end_year=None, chunks=None, verbose=False, logger="print"):
         super(MERIDATS, self).__init__(exp_name, start_year, end_year, file_name="merid.annual",
-                                       month_list=month_list, verbose=verbose, logger=logger)
+                                       month_list=None, chunks=chunks, verbose=verbose, logger=logger)
     
     @staticmethod
     def process(array_r, proc_lon, proc_lat, proc_z):
@@ -1297,10 +1331,11 @@ class MERIDATS(HadCM3TS):
 
 class OCNSTREAMMTS(HadCM3TS):
     
-    def __init__(self, exp_name, start_year=None, end_year=None, month_list=None, verbose=False, logger="print"):
+    def __init__(self, exp_name, start_year=None, end_year=None, month_list=None, chunks=None, verbose=False,
+                 logger="print"):
         month_list = HadCM3DS.MONTHS if month_list is None else month_list  # To overcome mutable argument error
         super(OCNSTREAMMTS, self).__init__(exp_name, start_year, end_year, file_name="streamFnpf01.monthly",
-                                           month_list=month_list, verbose=verbose, logger=logger)
+                                           month_list=month_list, chunks=chunks, verbose=verbose, logger=logger)
     
     @staticmethod
     def process(array_r, proc_lon, proc_lat, proc_z):
@@ -1333,10 +1368,11 @@ class OCNSTREAMMTS(HadCM3TS):
 
 class PRECIPMTS(HadCM3TS):
     
-    def __init__(self, exp_name, start_year=None, end_year=None, month_list=None, verbose=False, logger="print"):
+    def __init__(self, exp_name, start_year=None, end_year=None, month_list=None, chunks=None, verbose=False,
+                 logger="print"):
         month_list = HadCM3DS.MONTHS if month_list is None else month_list  # To overcome mutable argument error
         super(PRECIPMTS, self).__init__(exp_name, start_year, end_year, file_name="precip.monthly",
-                                        month_list=month_list, verbose=verbose, logger=logger)
+                                        month_list=month_list, chunks=chunks, verbose=verbose, logger=logger)
     
     @staticmethod
     def process(array_r, proc_lon, proc_lat, proc_z):
@@ -1369,10 +1405,11 @@ class PRECIPMTS(HadCM3TS):
 
 class EVAPMTS(HadCM3TS):
     
-    def __init__(self, exp_name, start_year, end_year, month_list=None, verbose=False, logger="print"):
+    def __init__(self, exp_name, start_year=None, end_year=None, month_list=None, chunks=None, verbose=False,
+                 logger="print"):
         month_list = HadCM3DS.MONTHS if month_list is None else month_list  # To overcome mutable argument error
         super(EVAPMTS, self).__init__(exp_name, start_year, end_year, file_name="evap2.monthly",
-                                      month_list=month_list, verbose=verbose, logger=logger)
+                                      month_list=month_list, chunks=chunks, verbose=verbose, logger=logger)
     
     @staticmethod
     def process(array_r, proc_lon, proc_lat, proc_z):
@@ -1403,10 +1440,11 @@ class EVAPMTS(HadCM3TS):
 
 class Q2MMTS(HadCM3TS):
     
-    def __init__(self, exp_name, start_year=None, end_year=None, month_list=None, verbose=False, logger="print"):
+    def __init__(self, exp_name, start_year=None, end_year=None, month_list=None, chunks=None, verbose=False,
+                 logger="print"):
         month_list = HadCM3DS.MONTHS if month_list is None else month_list  # To overcome mutable argument error
         super(Q2MMTS, self).__init__(exp_name, start_year, end_year, file_name="q2m.monthly",
-                                     month_list=month_list, verbose=verbose, logger=logger)
+                                     month_list=month_list, chunks=chunks, verbose=verbose, logger=logger)
     
     @staticmethod
     def process(array_r, proc_lon, proc_lat, proc_z):
@@ -1439,10 +1477,11 @@ class Q2MMTS(HadCM3TS):
 
 class RH2MMTS(HadCM3TS):
     
-    def __init__(self, exp_name, start_year=None, end_year=None, month_list=None, verbose=False, logger="print"):
+    def __init__(self, exp_name, start_year=None, end_year=None, month_list=None, chunks=None, verbose=False,
+                 logger="print"):
         month_list = HadCM3DS.MONTHS if month_list is None else month_list  # To overcome mutable argument error
         super(RH2MMTS, self).__init__(exp_name, start_year, end_year, file_name="rh2m.monthly",
-                                      month_list=month_list, verbose=verbose, logger=logger)
+                                      month_list=month_list, chunks=chunks, verbose=verbose, logger=logger)
     
     @staticmethod
     def process(array_r, proc_lon, proc_lat, proc_z):
@@ -1475,10 +1514,11 @@ class RH2MMTS(HadCM3TS):
 
 class SHMTS(HadCM3TS):
     
-    def __init__(self, exp_name, start_year=None, end_year=None, month_list=None, verbose=False, logger="print"):
+    def __init__(self, exp_name, start_year=None, end_year=None, month_list=None, chunks=None, verbose=False,
+                 logger="print"):
         month_list = HadCM3DS.MONTHS if month_list is None else month_list  # To overcome mutable argument error
         super(SHMTS, self).__init__(exp_name, start_year, end_year, file_name="sh.monthly",
-                                    month_list=month_list, verbose=verbose, logger=logger)
+                                    month_list=month_list, chunks=chunks, verbose=verbose, logger=logger)
     
     @staticmethod
     def process(array_r, proc_lon, proc_lat, proc_z):
@@ -1511,10 +1551,11 @@ class SHMTS(HadCM3TS):
 
 class LHMTS(HadCM3TS):
     
-    def __init__(self, exp_name, start_year, end_year, month_list=None, verbose=False, logger="print"):
+    def __init__(self, exp_name, start_year=None, end_year=None, month_list=None, chunks=None, verbose=False,
+                 logger="print"):
         month_list = HadCM3DS.MONTHS if month_list is None else month_list  # To overcome mutable argument error
         super(LHMTS, self).__init__(exp_name, start_year, end_year, file_name="lh.monthly",
-                                    month_list=month_list, verbose=verbose, logger=logger)
+                                    month_list=month_list, chunks=chunks, verbose=verbose, logger=logger)
     
     @staticmethod
     def process(array_r, proc_lon, proc_lat, proc_z):
@@ -1547,10 +1588,11 @@ class LHMTS(HadCM3TS):
 
 class ICECONCMTS(HadCM3TS):
     
-    def __init__(self, exp_name, start_year, end_year, month_list=None, verbose=False, logger="print"):
+    def __init__(self, exp_name, start_year=None, end_year=None, month_list=None, chunks=None, verbose=False,
+                 logger="print"):
         month_list = HadCM3DS.MONTHS if month_list is None else month_list  # To overcome mutable argument error
         super(ICECONCMTS, self).__init__(exp_name, start_year, end_year, file_name="iceconc.monthly",
-                                         month_list=month_list, verbose=verbose, logger=logger)
+                                         month_list=month_list, chunks=chunks, verbose=verbose, logger=logger)
     
     @staticmethod
     def process(array_r, proc_lon, proc_lat, proc_z):
@@ -1583,10 +1625,11 @@ class ICECONCMTS(HadCM3TS):
 
 class ICEDEPTHMTS(HadCM3TS):
     
-    def __init__(self, exp_name, start_year, end_year, month_list=None, verbose=False, logger="print"):
+    def __init__(self, exp_name, start_year=None, end_year=None, month_list=None, chunks=None, verbose=False,
+                 logger="print"):
         month_list = HadCM3DS.MONTHS if month_list is None else month_list  # To overcome mutable argument error
         super(ICEDEPTHMTS, self).__init__(exp_name, start_year, end_year, file_name="icedepth.monthly",
-                                          month_list=month_list, verbose=verbose, logger=logger)
+                                          month_list=month_list, chunks=chunks, verbose=verbose, logger=logger)
     
     @staticmethod
     def process(array_r, proc_lon, proc_lat, proc_z):
@@ -1619,10 +1662,11 @@ class ICEDEPTHMTS(HadCM3TS):
 
 class SNOWMTS(HadCM3TS):
     
-    def __init__(self, exp_name, start_year=None, end_year=None, month_list=None, verbose=False, logger="print"):
+    def __init__(self, exp_name, start_year=None, end_year=None, month_list=None, chunks=None, verbose=False,
+                 logger="print"):
         month_list = HadCM3DS.MONTHS if month_list is None else month_list  # To overcome mutable argument error
         super(SNOWMTS, self).__init__(exp_name, start_year, end_year, file_name="snowdepth.monthly",
-                                      month_list=month_list, verbose=verbose, logger=logger)
+                                      month_list=month_list, chunks=chunks, verbose=verbose, logger=logger)
     
     @staticmethod
     def process(array_r, proc_lon, proc_lat, proc_z):
@@ -1655,10 +1699,11 @@ class SNOWMTS(HadCM3TS):
 
 class SATMTS(HadCM3TS):
     
-    def __init__(self, exp_name, start_year, end_year, month_list=None, verbose=False, logger="print"):
+    def __init__(self, exp_name, start_year=None, end_year=None, month_list=None, chunks=None, verbose=False,
+                 logger="print"):
         month_list = HadCM3DS.MONTHS if month_list is None else month_list  # To overcome mutable argument error
         super(SATMTS, self).__init__(exp_name, start_year, end_year, file_name="tempsurf.monthly",
-                                     month_list=month_list, verbose=verbose, logger=logger)
+                                     month_list=month_list, chunks=chunks, verbose=verbose, logger=logger)
     
     @staticmethod
     def process(array_r, proc_lon, proc_lat, proc_z):
@@ -1699,10 +1744,11 @@ class SATMTS(HadCM3TS):
 
 class ATMT2MMTS(HadCM3TS):
     
-    def __init__(self, exp_name, start_year, end_year, month_list=None, verbose=False, logger="print"):
+    def __init__(self, exp_name, start_year=None, end_year=None, month_list=None, chunks=None, verbose=False,
+                 logger="print"):
         month_list = HadCM3DS.MONTHS if month_list is None else month_list  # To overcome mutable argument error
         super(ATMT2MMTS, self).__init__(exp_name, start_year, end_year, file_name="temp2m.monthly",
-                                        month_list=month_list, verbose=verbose, logger=logger)
+                                        month_list=month_list, chunks=chunks, verbose=verbose, logger=logger)
     
     @staticmethod
     def process(array_r, proc_lon, proc_lat, proc_z):
@@ -1735,10 +1781,11 @@ class ATMT2MMTS(HadCM3TS):
 
 class SOLNETSURFMTS(HadCM3TS):
     
-    def __init__(self, exp_name, start_year, end_year, month_list=None, verbose=False, logger="print"):
+    def __init__(self, exp_name, start_year=None, end_year=None, month_list=None, chunks=None, verbose=False,
+                 logger="print"):
         month_list = HadCM3DS.MONTHS if month_list is None else month_list  # To overcome mutable argument error
         super(SOLNETSURFMTS, self).__init__(exp_name, start_year, end_year, file_name="net_downsolar_surf.monthly",
-                                            month_list=month_list, verbose=verbose, logger=logger)
+                                            month_list=month_list, chunks=chunks, verbose=verbose, logger=logger)
     
     @staticmethod
     def process(array_r, proc_lon, proc_lat, proc_z):
@@ -1771,10 +1818,11 @@ class SOLNETSURFMTS(HadCM3TS):
 
 class SOLTOTSMTS(HadCM3TS):
     
-    def __init__(self, exp_name, start_year, end_year, month_list=None, verbose=False, logger="print"):
+    def __init__(self, exp_name, start_year=None, end_year=None, month_list=None, chunks=None, verbose=False,
+                 logger="print"):
         month_list = HadCM3DS.MONTHS if month_list is None else month_list  # To overcome mutable argument error
         super(SOLTOTSMTS, self).__init__(exp_name, start_year, end_year, file_name="total_downsolar_surf.monthly",
-                                         month_list=month_list, verbose=verbose, logger=logger)
+                                         month_list=month_list, chunks=chunks, verbose=verbose, logger=logger)
     
     @staticmethod
     def process(array_r, proc_lon, proc_lat, proc_z):
@@ -1807,10 +1855,11 @@ class SOLTOTSMTS(HadCM3TS):
 
 class SOLTOAMTS(HadCM3TS):
     
-    def __init__(self, exp_name, start_year, end_year, month_list=None, verbose=False, logger="print"):
+    def __init__(self, exp_name, start_year=None, end_year=None, month_list=None, chunks=None, verbose=False,
+                 logger="print"):
         month_list = HadCM3DS.MONTHS if month_list is None else month_list  # To overcome mutable argument error
         super(SOLTOAMTS, self).__init__(exp_name, start_year, end_year, file_name="downsolar_toa.monthly",
-                                        month_list=month_list, verbose=verbose, logger=logger)
+                                        month_list=month_list, chunks=chunks, verbose=verbose, logger=logger)
     
     @staticmethod
     def process(array_r, proc_lon, proc_lat, proc_z):
@@ -1843,10 +1892,11 @@ class SOLTOAMTS(HadCM3TS):
 
 class SOLUPMTS(HadCM3TS):
     
-    def __init__(self, exp_name, start_year, end_year, month_list=None, verbose=False, logger="print"):
+    def __init__(self, exp_name, start_year=None, end_year=None, month_list=None, chunks=None, verbose=False,
+                 logger="print"):
         month_list = HadCM3DS.MONTHS if month_list is None else month_list  # To overcome mutable argument error
         super(SOLUPMTS, self).__init__(exp_name, start_year, end_year, file_name="upsolar_toa.monthly",
-                                       month_list=month_list, verbose=verbose, logger=logger)
+                                       month_list=month_list, chunks=chunks, verbose=verbose, logger=logger)
     
     @staticmethod
     def process(array_r, proc_lon, proc_lat, proc_z):
@@ -1879,10 +1929,11 @@ class SOLUPMTS(HadCM3TS):
 
 class OLRMTS(HadCM3TS):
     
-    def __init__(self, exp_name, start_year=None, end_year=None, month_list=None, verbose=False, logger="print"):
+    def __init__(self, exp_name, start_year=None, end_year=None, month_list=None, chunks=None, verbose=False,
+                 logger="print"):
         month_list = HadCM3DS.MONTHS if month_list is None else month_list  # To overcome mutable argument error
         super(OLRMTS, self).__init__(exp_name, start_year, end_year, file_name="olr.monthly",
-                                     month_list=month_list, verbose=verbose, logger=logger)
+                                     month_list=month_list, chunks=chunks, verbose=verbose, logger=logger)
     
     @staticmethod
     def process(array_r, proc_lon, proc_lat, proc_z):
@@ -1915,10 +1966,11 @@ class OLRMTS(HadCM3TS):
 
 class U10MTS(HadCM3TS):
     
-    def __init__(self, exp_name, start_year, end_year, month_list=None, verbose=False, logger="print"):
+    def __init__(self, exp_name, start_year=None, end_year=None, month_list=None, chunks=None, verbose=False,
+                 logger="print"):
         month_list = HadCM3DS.MONTHS if month_list is None else month_list  # To overcome mutable argument error
         super(U10MTS, self).__init__(exp_name, start_year, end_year, file_name="u10m.monthly",
-                                     month_list=month_list, verbose=verbose, logger=logger)
+                                     month_list=month_list, chunks=chunks, verbose=verbose, logger=logger)
     
     @staticmethod
     def process(array_r, proc_lon, proc_lat, proc_z):
@@ -1952,10 +2004,11 @@ class U10MTS(HadCM3TS):
 
 class U200MTS(HadCM3TS):
     
-    def __init__(self, exp_name, start_year, end_year, month_list=None, verbose=False, logger="print"):
+    def __init__(self, exp_name, start_year=None, end_year=None, month_list=None, chunks=None, verbose=False,
+                 logger="print"):
         month_list = HadCM3DS.MONTHS if month_list is None else month_list  # To overcome mutable argument error
         super(U200MTS, self).__init__(exp_name, start_year, end_year, file_name="u200.monthly",
-                                      month_list=month_list, verbose=verbose, logger=logger)
+                                      month_list=month_list, chunks=chunks, verbose=verbose, logger=logger)
     
     @staticmethod
     def process(array_r, proc_lon, proc_lat, proc_z):
@@ -1988,10 +2041,11 @@ class U200MTS(HadCM3TS):
 
 class U850MTS(HadCM3TS):
     
-    def __init__(self, exp_name, start_year, end_year, month_list=None, verbose=False, logger="print"):
+    def __init__(self, exp_name, start_year=None, end_year=None, month_list=None, chunks=None, verbose=False,
+                 logger="print"):
         month_list = HadCM3DS.MONTHS if month_list is None else month_list  # To overcome mutable argument error
         super(U850MTS, self).__init__(exp_name, start_year, end_year, file_name="u850.monthly",
-                                      month_list=month_list, verbose=verbose, logger=logger)
+                                      month_list=month_list, chunks=chunks, verbose=verbose, logger=logger)
     
     @staticmethod
     def process(array_r, proc_lon, proc_lat, proc_z):
@@ -2024,10 +2078,11 @@ class U850MTS(HadCM3TS):
 
 class V10MTS(HadCM3TS):
     
-    def __init__(self, exp_name, start_year, end_year, month_list=None, verbose=False, logger="print"):
+    def __init__(self, exp_name, start_year=None, end_year=None, month_list=None, chunks=None, verbose=False,
+                 logger="print"):
         month_list = HadCM3DS.MONTHS if month_list is None else month_list  # To overcome mutable argument error
         super(V10MTS, self).__init__(exp_name, start_year, end_year, file_name="v10m.monthly",
-                                     month_list=month_list, verbose=verbose, logger=logger)
+                                     month_list=month_list, chunks=chunks, verbose=verbose, logger=logger)
     
     @staticmethod
     def process(array_r, proc_lon, proc_lat, proc_z):
@@ -2061,10 +2116,11 @@ class V10MTS(HadCM3TS):
 
 class V200MTS(HadCM3TS):
     
-    def __init__(self, exp_name, start_year, end_year, month_list=None, verbose=False, logger="print"):
+    def __init__(self, exp_name, start_year=None, end_year=None, month_list=None, chunks=None, verbose=False,
+                 logger="print"):
         month_list = HadCM3DS.MONTHS if month_list is None else month_list  # To overcome mutable argument error
         super(V200MTS, self).__init__(exp_name, start_year, end_year, file_name="v200.monthly",
-                                      month_list=month_list, verbose=verbose, logger=logger)
+                                      month_list=month_list, chunks=chunks, verbose=verbose, logger=logger)
     
     @staticmethod
     def process(array_r, proc_lon, proc_lat, proc_z):
@@ -2097,10 +2153,11 @@ class V200MTS(HadCM3TS):
 
 class V850MTS(HadCM3TS):
     
-    def __init__(self, exp_name, start_year, end_year, month_list=None, verbose=False, logger="print"):
+    def __init__(self, exp_name, start_year=None, end_year=None, month_list=None, chunks=None, verbose=False,
+                 logger="print"):
         month_list = HadCM3DS.MONTHS if month_list is None else month_list  # To overcome mutable argument error
         super(V850MTS, self).__init__(exp_name, start_year, end_year, file_name="v850.monthly",
-                                      month_list=month_list, verbose=verbose, logger=logger)
+                                      month_list=month_list, chunks=chunks, verbose=verbose, logger=logger)
     
     @staticmethod
     def process(array_r, proc_lon, proc_lat, proc_z):
@@ -2133,10 +2190,11 @@ class V850MTS(HadCM3TS):
 
 class MSLPMTS(HadCM3TS):
     
-    def __init__(self, exp_name, start_year, end_year, month_list=None, verbose=False, logger="print"):
+    def __init__(self, exp_name, start_year=None, end_year=None, month_list=None, chunks=None, verbose=False,
+                 logger="print"):
         month_list = HadCM3DS.MONTHS if month_list is None else month_list  # To overcome mutable argument error
         super(MSLPMTS, self).__init__(exp_name, start_year, end_year, file_name="mslp.monthly",
-                                      month_list=month_list, verbose=verbose, logger=logger)
+                                      month_list=month_list, chunks=chunks, verbose=verbose, logger=logger)
     
     @staticmethod
     def process(array_r, proc_lon, proc_lat, proc_z):
@@ -2169,10 +2227,11 @@ class MSLPMTS(HadCM3TS):
 
 class Z500MTS(HadCM3TS):
     
-    def __init__(self, exp_name, start_year, end_year, month_list=None, verbose=False, logger="print"):
+    def __init__(self, exp_name, start_year=None, end_year=None, month_list=None, chunks=None, verbose=False,
+                 logger="print"):
         month_list = HadCM3DS.MONTHS if month_list is None else month_list  # To overcome mutable argument error
         super(Z500MTS, self).__init__(exp_name, start_year, end_year, file_name="z500.monthly",
-                                      month_list=month_list, verbose=verbose, logger=logger)
+                                      month_list=month_list, chunks=chunks, verbose=verbose, logger=logger)
     
     @staticmethod
     def process(array_r, proc_lon, proc_lat, proc_z):
@@ -2209,10 +2268,11 @@ class SMMTS(HadCM3TS):
     NOT IMPLEMENTED YET!!
     """
     
-    def __init__(self, exp_name, start_year=None, end_year=None, month_list=None, verbose=False, logger="print"):
+    def __init__(self, exp_name, start_year=None, end_year=None, month_list=None, chunks=None, verbose=False,
+                 logger="print"):
         month_list = HadCM3DS.MONTHS if month_list is None else month_list  # To overcome mutable argument error
         super(SMMTS, self).__init__(exp_name, start_year, end_year, file_name="sm.monthly",
-                                    month_list=month_list, verbose=verbose, logger=logger)
+                                    month_list=month_list, chunks=chunks, verbose=verbose, logger=logger)
     
     def import_coordinates(self):
         self.lon = self.data.longitude.values
@@ -2234,10 +2294,11 @@ class SOILTMTS(HadCM3TS):
     NOT IMPLEMENTED YET!!
     """
     
-    def __init__(self, exp_name, start_year=None, end_year=None, month_list=None, verbose=False, logger="print"):
+    def __init__(self, exp_name, start_year=None, end_year=None, month_list=None, chunks=None, verbose=False,
+                 logger="print"):
         month_list = HadCM3DS.MONTHS if month_list is None else month_list  # To overcome mutable argument error
         super(SOILTMTS, self).__init__(exp_name, start_year, end_year, file_name="soiltemp.monthly",
-                                       month_list=month_list, verbose=verbose, logger=logger)
+                                       month_list=month_list, chunks=chunks, verbose=verbose, logger=logger)
     
     def import_coordinates(self):
         self.lon = self.data.longitude.values
@@ -2253,7 +2314,6 @@ class SOILTMTS(HadCM3TS):
         return self.get(self.data.soiltemp_mm_soil.rename({"level6": "z"}), zone, mode_lon, value_lon, mode_lat,
                         value_lat, mode_z, value_z, mode_t, value_t, new_start_year=new_start_year,
                         new_end_year=new_end_year, new_month_list=new_month_list)
-
 
 # *************
 # LAND-SEA MASK
