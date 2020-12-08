@@ -836,11 +836,50 @@ class SALATS(HadCM3TS):
         super(SALATS, self).import_coordinates()
     
     def salinity(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None, mode_z=None,
-                 value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
+                 value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None,
+                 convert=True):
         print("__ Importing sea water salinity (annual).")
+        self.data = self.convert() if convert else self.data
         return self.get(self.data.salinity_ym_dpth.rename({"depth_1": "zb"}), zone, mode_lon, value_lon, mode_lat,
                         value_lat, mode_z, value_z, mode_t, value_t, new_start_year=new_start_year,
                         new_end_year=new_end_year, new_month_list=new_month_list)
+    
+    def budget(self, zone=zones.NoZone(), dimensions="all", convert=True):
+        """
+        To factorise
+        Returns
+        -------
+
+        """
+        print("__ Budget sea water salinity (annual).")
+        self.data = self.convert() if convert else self.data
+        geo_da = proc.GeoDataArray(self.data.salinity_ym_dpth.rename({"depth_1": "zb"}), ds=self, process=self.process)
+        geo_da = zone.compact(geo_da)
+        
+        mass_matrix = util.volume_matrix(geo_da.lon, geo_da.lat, geo_da.zb)*1000
+        geo_da.data = geo_da.data * np.resize(mass_matrix, geo_da.data.shape)
+        
+        if dimensions == "all":
+            geo_da.data = geo_da.data.sum(skipna=True)
+        elif any([dimension not in geo_da.data.dims for dimension in dimensions]):
+            raise KeyError(f"This coordinate was not recognized. Available coordinates: {geo_da.data.dims}")
+        else:
+            for dimension in dimensions:
+                print(f"____ Summing over dimension: {dimension}")
+                geo_da.data = geo_da.data.sum(dim=dimension, skipna=True)
+        
+        # Update coordinates:
+        if "longitude" in dimensions or "longitudeb" in dimensions:
+            geo_da.update_lon(mode_lon="sum", value_lon=None)
+        if "latitude" in dimensions or "latitudeb" in dimensions:
+            geo_da.update_lat(mode_lat="sum", value_lat=None)
+        if "z" in dimensions or "zb" in dimensions:
+            geo_da.update_z(mode_z="sum", value_z=None)
+            
+        return geo_da
+    
+    def convert(self):
+        return self.data * 1000 + 35
 
 
 class SSTMTS(HadCM3TS):
