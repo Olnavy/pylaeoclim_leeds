@@ -4,8 +4,6 @@ import xarray as xr
 import pylaeoclim_leeds.util_hadcm3 as util
 import cftime
 
-print("**** WARNING : Pylaeoclim_leeds on HadCM3 Branch ****")
-
 
 class GeoDS:
     """
