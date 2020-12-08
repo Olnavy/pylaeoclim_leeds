@@ -1,7 +1,6 @@
 import numpy as np
-import pathlib
+# import pathlib
 import cftime
-from typing import List
 import xarray as xr
 
 
@@ -11,9 +10,9 @@ class Grid:
         self.lon = lon
         self.lat = lat
         self.z = z
-        self.lon_b = guess_bounds(self.lon, mode="lon")
-        self.lat_b = guess_bounds(self.lat, mode="lat")
-        self.z_b = guess_bounds(self.z, mode="z")
+        self.lon_b = guess_bounds(self.lon)
+        self.lat_b = guess_bounds(self.lat)
+        self.z_b = guess_bounds(self.z)
     
     def get_surface_matrix(self, n_t=0):
         matrix = surface_matrix(self.lon, self.lat)
@@ -50,7 +49,7 @@ def surface_matrix(lon, lat):
     :return:
     """
     n_j, n_i = len(lat), len(lon)
-    lat_b = guess_bounds(lat, "lat")
+    lat_b = guess_bounds(lat)
     surface = np.zeros((n_j, n_i))
     for i in range(n_i - 1):
         for j in range(n_j - 1):
@@ -60,13 +59,15 @@ def surface_matrix(lon, lat):
 
 def volume_matrix(lon, lat, z):
     n_lat, n_lon, n_z = len(lat), len(lon), len(z)
-    lat_b = guess_bounds(lat, "lat")
-    z_b = guess_bounds(z, "z")
-    volume = np.zeros((n_lat, n_lon))
+    if any([n_lat == 1, n_lon == 1, n_z == 1]):
+        raise ValueError(f"Dimensions length must be >= 1.")
+    lat_b = guess_bounds(lat)
+    z_b = guess_bounds(z)
+    volume = np.zeros((n_lat, n_lon, n_z))
     for i in range(n_lat):
         for j in range(n_lon):
             for k in range(n_z):
-                volume[i, j, z] = cell_area(n_lon, lat_b[i], lat_b[i + 1]) * (z_b[i + 1] - z_b[i])
+                volume[i, j, k] = cell_area(n_lon, lat_b[i], lat_b[i + 1]) * np.abs(z_b[k + 1] - z_b[k])
     return volume
 
 
@@ -79,6 +80,8 @@ def running_mean(data, n, axis=0):
         data to process the running mean
     n : int
         number of years to perform the running mean
+    axis : int
+        axis
     Returns
     -------
     numpy 1D or 2D array
@@ -153,33 +156,35 @@ def guess_bounds(coordinate):
         if len(coordinate) <= 1:
             coordinateb = coordinate
         else:
-            coordinateb = [(coordinate[i] + coordinate[i + 1]) / 2 for i in range(len(coordinate)-1)]
+            coordinateb = [(coordinate[i] + coordinate[i + 1]) / 2 for i in range(len(coordinate) - 1)]
             coordinateb = np.append((3 * coordinate[0] - coordinate[1]) / 2, coordinateb)
             coordinateb = np.append(coordinateb, (3 * coordinate[-1] - coordinate[-2]) / 2)
         return np.array(coordinateb)
     else:
         raise ValueError("Empty coordinate.")
-    
-    
+
+
 def guess_from_bounds(coordinateb):
     if coordinateb is not None:
         if len(coordinateb) <= 1:
             coordinate = coordinateb
         else:
-            coordinate = [(coordinateb[i] + coordinateb[i + 1]) / 2 for i in range(len(coordinateb)-1)]
+            coordinate = [(coordinateb[i] + coordinateb[i + 1]) / 2 for i in range(len(coordinateb) - 1)]
         return np.array(coordinate)
     else:
         raise ValueError("Empty coordinate.")
-    
+
+
 def compute_steps(coordinate):
     if coordinate is not None:
         if len(coordinate) <= 1:
             coordinates = 0
         else:
-            coordinates = [(coordinate[i] - coordinate[i + 1]) for i in range(len(coordinate)-1)]
+            coordinates = [(coordinate[i] - coordinate[i + 1]) for i in range(len(coordinate) - 1)]
         return np.array(coordinates)
     else:
         raise ValueError("Empty coordinate.")
+
 
 # def guess_bounds_old(coordinate, mode):
 #     """
@@ -309,9 +314,9 @@ def cycle_lon(array):
     return np.append(array, array[:, 0][:, np.newaxis], axis=1)
 
 
-def cycle_box(lon_min,lon_max,lat_min,lat_max):
+def cycle_box(lon_min, lon_max, lat_min, lat_max):
     return [[lon_min, lon_min, lon_max, lon_max, lon_min],
-            [lat_min,lat_max, lat_max, lat_min, lat_min]]
+            [lat_min, lat_max, lat_max, lat_min, lat_min]]
 
 
 def print_coordinates(name, coordinate):
@@ -331,9 +336,9 @@ def print_coordinates(name, coordinate):
         if isinstance(coordinate, np.float32) or isinstance(coordinate, float):
             return f"{name}: [{coordinate}; 1]"
         elif len(coordinate[0]) >= 2:
-            return f"{name}: [{coordinate[0,0]}; {coordinate[0,1]}; ...; {coordinate[-1,-2]}; {coordinate[-1,-1]}; {coordinate.shape}]"
+            return f"{name}: [{coordinate[0, 0]}; {coordinate[0, 1]}; ...; {coordinate[-1, -2]}; {coordinate[-1, -1]}; {coordinate.shape}]"
         elif len(coordinate) == 1:
-            return f"{name}: [{coordinate[0,0]}; {coordinate.shape}]"
+            return f"{name}: [{coordinate[0, 0]}; {coordinate.shape}]"
         else:
             return f"{name}: Null"
 # Generate
