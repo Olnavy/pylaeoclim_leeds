@@ -4,6 +4,8 @@ import xarray as xr
 import pylaeoclim_leeds.util_hadcm3 as util
 import cftime
 
+print("**** WARNING : Pylaeoclim_leeds on HadCM3 Branch ****")
+
 
 class GeoDS:
     """
@@ -129,7 +131,7 @@ class GeoDataArray:
         self.start_year = ds.start_year if ds is not None else None
         self.end_year = ds.end_year if ds is not None else None
         self.months = ds.months if ds is not None else None
-
+        
         print("____ Coordinate imported in the GeoDataArray instance.")
     
     def __repr__(self):
@@ -150,9 +152,9 @@ class GeoDataArray:
                             self.proc_z).values if processing else self.data.where(self.data.values != 0).values
     
     def processed_time(self, new_start_year=None):
-        return np.linspace(0, self.end_year-self.start_year, len(self.t)) + \
+        return np.linspace(0, self.end_year - self.start_year, len(self.t)) + \
                (new_start_year if new_start_year is not None else self.start_year)
-
+    
     @staticmethod
     def filter_months(data_array, month_list):
         # To define in GeoDataArray !!!!and GeoDS!!!!
@@ -162,7 +164,7 @@ class GeoDataArray:
                 condition[i] = data_array.t[i].values[()].month in util.months_to_number(month_list)
             data_array = data_array.where(condition, drop=True)
         return data_array
-
+    
     def sort_data(self):
         """
         Sort all dimensions of the data.
@@ -598,6 +600,7 @@ class GeoDataArray:
             self.end_year = new_end_year
         print("____ Data cropped to the new start and end years.")
         return self
+
 
 class LSM:
     
