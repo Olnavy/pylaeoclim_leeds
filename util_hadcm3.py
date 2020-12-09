@@ -303,7 +303,10 @@ def months_to_number(month_list):
 
 
 def cycle_lon(array):
-    return np.append(array, array[:, 0][:, np.newaxis], axis=1)
+    if array.ndim > 1:
+        return np.append(array, array[:, 0][:, np.newaxis], axis=1)
+    else:
+        return np.append(array, array[0])
 
 
 def cycle_box(lon_min, lon_max, lat_min, lat_max):
