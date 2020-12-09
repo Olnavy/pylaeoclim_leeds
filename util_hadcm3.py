@@ -1,7 +1,9 @@
 import numpy as np
 # import pathlib
 import cftime
-import xarray as xr
+
+
+# import xarray as xr
 
 
 class Grid:
@@ -317,7 +319,8 @@ def print_coordinates(name, coordinate):
         if isinstance(coordinate, np.float32) or isinstance(coordinate, float):
             return f"{name}: [{coordinate}; 1]"
         elif len(coordinate) >= 2:
-            return f"{name}: [{coordinate[0]}; {coordinate[1]}; ...; {coordinate[-2]}; {coordinate[-1]}; {len(coordinate)}]"
+            return f"{name}: [{coordinate[0]}; {coordinate[1]}; ...; {coordinate[-2]}; {coordinate[-1]}; " \
+                   f"{len(coordinate)}]"
         elif len(coordinate) == 1:
             return f"{name}: [{coordinate[0]}; {len(coordinate)}]"
         else:
@@ -326,7 +329,8 @@ def print_coordinates(name, coordinate):
         if isinstance(coordinate, np.float32) or isinstance(coordinate, float):
             return f"{name}: [{coordinate}; 1]"
         elif len(coordinate[0]) >= 2:
-            return f"{name}: [{coordinate[0, 0]}; {coordinate[0, 1]}; ...; {coordinate[-1, -2]}; {coordinate[-1, -1]}; {coordinate.shape}]"
+            return f"{name}: [{coordinate[0, 0]}; {coordinate[0, 1]}; ...; {coordinate[-1, -2]}; " \
+                   f"{coordinate[-1, -1]}; {coordinate.shape}]"
         elif len(coordinate) == 1:
             return f"{name}: [{coordinate[0, 0]}; {coordinate.shape}]"
         else:
