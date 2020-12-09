@@ -856,7 +856,7 @@ class SALATS(HadCM3TS):
         geo_da = proc.GeoDataArray(self.data.salinity_ym_dpth.rename({"depth_1": "zb"}), ds=self, process=self.process)
         geo_da = zone.compact(geo_da)
         
-        mass_matrix = util.volume_matrix(geo_da.lon, geo_da.lat, geo_da.zb)*1000
+        mass_matrix = util.volume_matrix(geo_da.lon, geo_da.lat, geo_da.zb) * 1000
         geo_da.data = geo_da.data * np.resize(mass_matrix, geo_da.data.shape)
         
         if dimensions == "all":
@@ -875,7 +875,7 @@ class SALATS(HadCM3TS):
             geo_da.update_lat(mode_lat="sum", value_lat=None)
         if "z" in dimensions or "zb" in dimensions:
             geo_da.update_z(mode_z="sum", value_z=None)
-            
+        
         return geo_da
     
     def convert(self):
@@ -1766,19 +1766,17 @@ class SATMTS(HadCM3TS):
         super(SATMTS, self).import_coordinates()
     
     def sat(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None, mode_t=None,
-            value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
+            value_t=None, new_start_year=None, new_end_year=None, new_month_list=None, convert=True):
         print("__ Importing SAT.")
-        return self.get(self.kelvin_to_celsius(self.data.temp_mm_srf.isel(surface=0).drop("surface")), zone,
+        self.data = self.convert() if convert else self.data
+        return self.get(self.data.temp_mm_srf.isel(surface=0).drop("surface"), zone,
                         mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t, value_t,
                         new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
     
-    @staticmethod
-    def kelvin_to_celsius(data_array):
-        # Dirty!
-        data_array.attrs['valid_min'] = data_array.attrs['valid_min'] - 273.15
-        data_array.attrs['valid_max'] = data_array.attrs['valid_max'] - 273.15
-        data_array.values = util.kelvin_to_celsius(data_array.values)
-        return data_array
+    def convert(self):
+        # self.data.attrs['valid_min'] = self.data.attrs['valid_min'] - 273.15
+        # self.data.attrs['valid_max'] = self.data.attrs['valid_max'] - 273.15
+        return self.data - 273.15
 
 
 class ATMT2MMTS(HadCM3TS):
