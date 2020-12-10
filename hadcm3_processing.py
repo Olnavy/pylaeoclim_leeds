@@ -276,7 +276,6 @@ class ATMUPMDS(HadCM3RDS):
                         mode_lon, value_lon, mode_lat, value_lat, mode_z, value_z, mode_t, value_t,
                         new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
 
-
 class ATMSURFMDS(HadCM3RDS):
     """
     PD
@@ -330,13 +329,35 @@ class ATMSURFMDS(HadCM3RDS):
     
     def u_wind(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
                mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
-        print("__ Importing eastward component of wind at 100m.")
+        print("__ Importing eastward component of wind at 10m.")
         return self.get(xr.open_mfdataset(self.paths, combine='by_coords').u_mm_10m.isel(ht=0).drop('ht').
                         rename({'longitude_1': 'longitudeb'}).rename({'latitude_1': 'latitudeb'}), zone,
                         mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t, value_t,
                         new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
 
+    def v_wind(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
+               mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
+        print("__ Importing northward component of wind at 10m.")
+        return self.get(xr.open_mfdataset(self.paths, combine='by_coords').v_mm_10m.isel(ht=0).drop('ht').
+                        rename({'longitude_1': 'longitudeb'}).rename({'latitude_1': 'latitudeb'}), zone,
+                        mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t, value_t,
+                        new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
 
+    def mslp(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
+                    mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
+        print("__ Importing mean sea level pressure.")
+        return self.get(xr.open_mfdataset(self.paths, combine='by_coords').p_mm_msl.isel(msl=0).drop('msl'), zone,
+                        mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t, value_t,
+                        new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
+    
+    def surfp(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
+                    mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
+        print("__ Importing sea level pressure.")
+        return self.get(xr.open_mfdataset(self.paths, combine='by_coords').p_mm_srf.isel(surface=0).drop('surface'),
+                        zone, mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t, value_t,
+                        new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
+    
+    
 class OCNMDS(HadCM3RDS):
     """
     PF
@@ -889,8 +910,8 @@ class SALATS(HadCM3TS):
                  value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None,
                  convert=True):
         print("__ Importing sea water salinity (annual).")
-        self.data = self.convert() if convert else self.data
-        return self.get(self.data.salinity_ym_dpth.rename({"depth_1": "zb"}), zone, mode_lon, value_lon, mode_lat,
+        data = self.convert() if convert else self.data
+        return self.get(data.salinity_ym_dpth.rename({"depth_1": "zb"}), zone, mode_lon, value_lon, mode_lat,
                         value_lat, mode_z, value_z, mode_t, value_t, new_start_year=new_start_year,
                         new_end_year=new_end_year, new_month_list=new_month_list)
     
@@ -902,7 +923,8 @@ class SALATS(HadCM3TS):
 
         """
         print("__ Budget sea water salinity (annual).")
-        self.data = self.convert() if convert else self.data
+        data = self.convert() if convert else self.data
+        
         geo_da = proc.GeoDataArray(self.data.salinity_ym_dpth.rename({"depth_1": "zb"}), ds=self, process=self.process)
         geo_da = zone.compact(geo_da)
         
@@ -1850,8 +1872,8 @@ class SATMTS(HadCM3TS):
     def sat(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None, mode_t=None,
             value_t=None, new_start_year=None, new_end_year=None, new_month_list=None, convert=True):
         print("__ Importing SAT.")
-        self.data = self.convert() if convert else self.data
-        return self.get(self.data.temp_mm_srf.isel(surface=0).drop("surface"), zone,
+        data = self.convert() if convert else self.data
+        return self.get(data.temp_mm_srf.isel(surface=0).drop("surface"), zone,
                         mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t, value_t,
                         new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
     
