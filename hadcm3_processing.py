@@ -276,6 +276,7 @@ class ATMUPMDS(HadCM3RDS):
                         mode_lon, value_lon, mode_lat, value_lat, mode_z, value_z, mode_t, value_t,
                         new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
 
+
 class ATMSURFMDS(HadCM3RDS):
     """
     PD
@@ -323,9 +324,10 @@ class ATMSURFMDS(HadCM3RDS):
     def sat(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
             mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
         print("__ Importing SAT.")
-        return self.get(xr.open_mfdataset(self.paths, combine='by_coords').temp_mm_srf.isel(surface=0), zone,
-                        mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t, value_t,
-                        new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
+        return self.get(
+            xr.open_mfdataset(self.paths, combine='by_coords').temp_mm_srf.isel(surface=0), zone,
+            mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t, value_t,
+            new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
     
     def u_wind(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
                mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
@@ -334,7 +336,7 @@ class ATMSURFMDS(HadCM3RDS):
                         rename({'longitude_1': 'longitudeb'}).rename({'latitude_1': 'latitudeb'}), zone,
                         mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t, value_t,
                         new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
-
+    
     def v_wind(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
                mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
         print("__ Importing northward component of wind at 10m.")
@@ -342,22 +344,30 @@ class ATMSURFMDS(HadCM3RDS):
                         rename({'longitude_1': 'longitudeb'}).rename({'latitude_1': 'latitudeb'}), zone,
                         mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t, value_t,
                         new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
-
+    
     def mslp(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
-                    mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
+             mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
         print("__ Importing mean sea level pressure.")
         return self.get(xr.open_mfdataset(self.paths, combine='by_coords').p_mm_msl.isel(msl=0).drop('msl'), zone,
                         mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t, value_t,
                         new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
     
     def surfp(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
-                    mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
+              mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
         print("__ Importing sea level pressure.")
         return self.get(xr.open_mfdataset(self.paths, combine='by_coords').p_mm_srf.isel(surface=0).drop('surface'),
                         zone, mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t, value_t,
                         new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
     
-    
+    def downsol_toa(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
+                    mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
+        print("__ Importing incoming shortwave solar radiation.")
+        return self.get(xr.open_mfdataset(
+            self.paths, combine='by_coords').downSol_mm_TOA.isel(toa=0).drop('toa'), zone,
+                        mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t, value_t,
+                        new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
+
+
 class OCNMDS(HadCM3RDS):
     """
     PF
@@ -650,22 +660,22 @@ class HadCM3TS(HadCM3DS):
                f"DATA: {self.data}"
     
     def get_start_year(self, exp_name=None, file_name=None):
-        
+        # To sort
         exp_name = exp_name if exp_name is not None else self.exp_name
         file_name = file_name if file_name is not None else self.file_name
         
         path = input_file[exp_name][2]
         times = netCDF4.Dataset(f"{path}{exp_name}.{file_name}.nc").variables['t']
-        return netCDF4.num2date(times[:], units=times.units, calendar=times.calendar)[0].year
+        return netCDF4.num2date(np.sort(times[:]), units=times.units, calendar=times.calendar)[0].year
     
     def get_end_year(self, exp_name=None, file_name=None):
-        
+        # To sort
         exp_name = exp_name if exp_name is not None else self.exp_name
         file_name = file_name if file_name is not None else self.file_name
         
         path = input_file[exp_name][2]
         times = netCDF4.Dataset(f"{path}{exp_name}.{file_name}.nc").variables['t']
-        return netCDF4.num2date(times[:], units=times.units, calendar=times.calendar)[-1].year
+        return netCDF4.num2date(np.sort(times[:]), units=times.units, calendar=times.calendar)[-1].year
     
     def import_data(self):
         
@@ -717,7 +727,7 @@ class HadCM3TS(HadCM3DS):
     
     def import_coordinates(self):
         super(HadCM3TS, self).import_coordinates()
-        self.t = self.data.t.values
+        self.t = np.sort(self.data.t.values)
     
     def processing_array(self):
         return util.cycle_lon(self.data.values)
@@ -726,8 +736,7 @@ class HadCM3TS(HadCM3DS):
 class SAL01MTS(HadCM3TS):
     
     def __init__(self, exp_name, start_year=None, end_year=None, month_list=None, chunks=None, verbose=True,
-                 debug=False,
-                 logger="print"):
+                 debug=False, logger="print"):
         month_list = HadCM3DS.MONTHS if month_list is None else month_list  # To overcome mutable argument error
         super(SAL01MTS, self).__init__(exp_name, start_year, end_year, file_name="oceansalipf01.monthly",
                                        month_list=month_list, chunks=chunks, verbose=verbose, debug=debug,
@@ -915,7 +924,7 @@ class SALATS(HadCM3TS):
                         value_lat, mode_z, value_z, mode_t, value_t, new_start_year=new_start_year,
                         new_end_year=new_end_year, new_month_list=new_month_list)
     
-    def budget(self, zone=zones.NoZone(), dimensions="all", convert=True):
+    def budget(self, zone=zones.NoZone(), dimensions="all"):
         """
         To factorise
         Returns
@@ -923,7 +932,6 @@ class SALATS(HadCM3TS):
 
         """
         print("__ Budget sea water salinity (annual).")
-        data = self.convert() if convert else self.data
         
         geo_da = proc.GeoDataArray(self.data.salinity_ym_dpth.rename({"depth_1": "zb"}), ds=self, process=self.process)
         geo_da = zone.compact(geo_da)
