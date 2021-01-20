@@ -5,7 +5,7 @@ import pylaeoclim_leeds.util_hadcm3 as util
 import cftime
 import time
 
-
+import matplotlib.colors
 class GeoDS:
     """
     Mother class to treat all files (proxies, model outputs...).
@@ -180,6 +180,7 @@ class GeoDataArray:
         :return:
         """
         for dim in self.data.dims:
+            # if self.debug:print(f"____ Sorting data along dimension : {dim}")
             self.data = self.data.sortby(dim, ascending=True)
     
     def get_lon(self, mode_lon, value_lon, offset_lon=1):
