@@ -2629,7 +2629,7 @@ class SICEATS(HadCM3PTS):
                  debug=False,
                  logger="print"):
         month_list = HadCM3DS.MONTHS if month_list is None else month_list  # To overcome mutable argument error
-        super(SICEATS, self).__init__(exp_name, start_year, end_year, file_name="iceconc.mr",
+        super(SICEATS, self).__init__(exp_name, start_year, end_year, file_name="iceconc.sp",
                                       month_list=month_list, chunks=chunks, verbose=verbose, debug=debug,
                                       logger=logger)
 
