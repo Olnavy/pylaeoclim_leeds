@@ -954,6 +954,7 @@ class SALATS(HadCM3TS):
 
         mass_matrix = util.volume_matrix(geo_da.lon, geo_da.lat, geo_da.zb) * 1000
         geo_da.data = geo_da.data * np.resize(mass_matrix, geo_da.data.shape)
+        geo_da.data = geo_da.data * 1000 + 35
 
         if dimensions == "all":
             geo_da.data = geo_da.data.sum(skipna=True)
@@ -971,6 +972,8 @@ class SALATS(HadCM3TS):
             geo_da.update_lat(mode_lat="sum", value_lat=None)
         if "z" in dimensions or "zb" in dimensions:
             geo_da.update_z(mode_z="sum", value_z=None)
+
+        geo_da.data = (geo_da.data - 35) / 1000
 
         return geo_da
 
