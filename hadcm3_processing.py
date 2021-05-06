@@ -630,6 +630,14 @@ class OCNYDS(HadCM3RDS):
                         zone, mode_lon, value_lon, mode_lat, value_lat, mode_z, value_z, mode_t, value_t,
                         new_start_year=new_start_year, new_end_year=new_end_year)
 
+    def mld(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
+               mode_z=None, value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None):
+        print("__ Importing mixed layer depth.")
+        return self.get(xr.open_mfdataset(self.paths, combine='by_coords').mixLyrDpth_ym_uo.
+                        isel(unspecified=0).drop("unspecified"),
+                        zone, mode_lon, value_lon, mode_lat, value_lat, mode_z, value_z, mode_t, value_t,
+                        new_start_year=new_start_year, new_end_year=new_end_year)
+    
 
 class LNDMDS(HadCM3RDS):
     """
