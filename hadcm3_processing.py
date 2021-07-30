@@ -3039,7 +3039,7 @@ class HTNATS(HadCM3PTS):
 
         super(HTNATS, self).import_coordinates()
 
-    def stream(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
+    def htn(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
                mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
         print("__ Importing net surface heat flux.")
         return self.get(self.data.HTN_mm_uo.isel(unspecified=0).drop("unspecified"), zone, mode_lon, value_lon,
