@@ -1,9 +1,65 @@
 import numpy as np
 # import pathlib
 import cftime
+import scipy.signal as signal
+import matplotlib.mlab as mlab
 
 
 # import xarray as xr
+
+
+# Filtering functions
+
+class ButterLowPass:
+    
+    def __init__(self, order, fc, fs, mult=1):
+        self.order = order
+        self.fc = fc*mult
+        self.fs = fs
+        self.filter = signal.butter(order, fc*mult, 'lp', fs=1, output='sos')
+
+    def process(self, data):
+        return signal.sosfiltfilt(self.filter, data - np.mean(data)) +  np.mean(data)
+    
+    def plot(self, min_power=None, max_power=None, n_fq=100):
+        """
+        
+        :param min_power:
+        :param max_power:
+        :param n_fq:
+        :return: w : ndarray, The angular frequencies at which `h` was computed.
+        :return: h : ndarray, The frequency response.
+        """
+        nyq = 0.5 * self.fs
+        normal_cutoff = self.fc / nyq
+        # b: Numerator of a linear filter; a: Denominator of a linear filter
+        b, a = signal.butter(self.order, normal_cutoff, btype='low', analog=True)
+        if min_power is not None and max_power is not None:
+            return signal.freqs(b, a, worN=np.logspace(min_power, max_power, n_fq))
+        return signal.freqs(b, a)
+
+
+def psd(data, fs, scale_by_freq=False):
+    """
+    :param data: np.ndarray
+    :param fs: The sampling frequency (samples per time unit). It is used to calculate the Fourier frequencies, freqs,
+    in cycles per time unit.
+    :param scale_by_freq: Whether the resulting density values should be scaled by the scaling frequency, which gives
+     density in units of Hz^-1. This allows for integration over the returned frequency values.
+    :return:
+    """
+    return mlab.psd(data - np.mean(data), NFFT=len(data), Fs=fs, scale_by_freq=scale_by_freq)
+
+
+def fundamental_fq(density, fq):
+    return fq[np.argmax(density)]
+
+
+def butter_lowpass(cut_off, fs, order=5):
+    nyq = 0.5 * fs
+    normal_cutoff = cut_off / nyq
+    b, a = signal.butter(order, normal_cutoff, btype='low', analog=True)
+    return b, a
 
 
 class Grid:
