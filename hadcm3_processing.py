@@ -768,7 +768,8 @@ class HadCM3TS(HadCM3DS):
         self.data = xr.concat((self.data, ts.data), dim="t")
         self.t = np.sort(self.data.t.values)
         self.start_year = np.min((self.start_year, ts.start_year))
-        self.end_year = np.min((self.end_year, ts.end_year))
+        self.end_year = np.max((self.end_year, ts.end_year))
+        return self
 
 
 class SAL01MTS(HadCM3TS):
