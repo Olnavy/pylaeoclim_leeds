@@ -764,6 +764,12 @@ class HadCM3TS(HadCM3DS):
     def processing_array(self):
         return util.cycle_lon(self.data.values)
 
+    def concat(self, ts):
+        self.data = xr.concat((self.data, ts.data), dim="t")
+        self.t = np.sort(self.data.t.values)
+        self.start_year = np.min(self.start_year, ts.start_year)
+        self.end_year = np.min(self.end_year, ts.end_year)
+
 
 class SAL01MTS(HadCM3TS):
 
@@ -2616,6 +2622,13 @@ class HadCM3PTS(HadCM3DS):
     def processing_array(self):
         return util.cycle_lon(self.data.values)
 
+    def concat(self, ts):
+        self.data = xr.concat((self.data, ts.data), dim="t")
+        self.t = np.sort(self.data.t.values)
+        self.start_year = np.min((self.start_year, ts.start_year))
+        self.end_year = np.max((self.end_year, ts.end_year))
+        return self
+    
 
 class WICEATS(HadCM3PTS):
 
