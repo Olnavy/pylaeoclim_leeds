@@ -3,6 +3,9 @@ import numpy as np
 import cftime
 import scipy.signal as signal
 import matplotlib.mlab as mlab
+import matplotlib.colors
+import scipy.ndimage as ndimage
+
 
 
 # import xarray as xr
@@ -14,12 +17,12 @@ class ButterLowPass:
     
     def __init__(self, order, fc, fs, mult=1):
         self.order = order
-        self.fc = fc*mult
+        self.fc = fc * mult
         self.fs = fs
-        self.filter = signal.butter(order, fc*mult, 'lp', fs=1, output='sos')
-
+        self.filter = signal.butter(order, fc * mult, 'lp', fs=1, output='sos')
+    
     def process(self, data):
-        return signal.sosfiltfilt(self.filter, data - np.mean(data)) +  np.mean(data)
+        return signal.sosfiltfilt(self.filter, data - np.mean(data)) + np.mean(data)
     
     def plot(self, min_power=None, max_power=None, n_fq=100):
         """
@@ -394,5 +397,48 @@ def print_coordinates(name, coordinate):
             return f"{name}: [{coordinate[0, 0]}; {coordinate.shape}]"
         else:
             return f"{name}: Null"
+
+
+def trunc_cmap(cmap, minval=0.0, maxval=1.0, n=100):
+    new_cmap = matplotlib.colors.LinearSegmentedColormap.from_list(
+        'trunc({n},{a:.2f},{b:.2f})'.format(n=cmap.name, a=minval, b=maxval),
+        cmap(np.linspace(minval, maxval, n)))
+    return new_cmap
+
+
+def get_com(cube, lon, lat):
+    if cube.ndim == 2:
+        com = ndimage.measurements.center_of_mass(np.where(np.isnan(cube), 0, cube))
+        return lon[int(com[1])], lat[int(com[0])]
+    elif cube.ndim == 3:
+        com = []
+        maxmean = np.nanmax(np.nanmean(cube, axis=(1, 2)))
+        for t in range(cube.shape[0]):
+            weight = np.nanmean(cube[t]) / maxmean
+            coordinates = get_com(cube[t], lon, lat)
+            com.append((coordinates[0], coordinates[1], weight))
+        return com
+
+
+def get_hs(cube, lon, lat):
+    if cube.ndim == 2:
+        hs = np.unravel_index(np.argmax(np.where(np.isnan(cube), 0, cube), axis=None), cube.shape)
+        hmax = np.nanmax(cube)
+        return lon[int(hs[1])], lat[int(hs[0])], hmax
+    if cube.ndim == 3:
+        hs = []
+        for t in range(cube.shape[0]):
+            coordinates = get_hs(cube[t], lon, lat)
+            hs.append((hs[0], hs[1], hs[2]))
+    return hs
+
+
+def sub_average(array, chunks):
+    array_split = np.array_split(array, len(array) / 100, axis=0)
+    array_mean = np.zeros((len(array_split), array_split[0].shape[1], array_split[0].shape[2]))
+    for t in range(len(array_mean)):
+        array_mean[t] = np.mean(array_split[t], axis=0)
+    return array_mean
+
 # Generate
 # path2lsm = generate_filepath(str(pathlib.Path(__file__).parent.absolute()) + "/resources/path2lsm")
