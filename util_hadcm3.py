@@ -425,12 +425,12 @@ def get_hs(cube, lon, lat):
         hs = np.unravel_index(np.argmax(np.where(np.isnan(cube), 0, cube), axis=None), cube.shape)
         hmax = np.nanmax(cube)
         return lon[int(hs[1])], lat[int(hs[0])], hmax
-    if cube.ndim == 3:
+    elif cube.ndim == 3:
         hs = []
         for t in range(cube.shape[0]):
             coordinates = get_hs(cube[t], lon, lat)
-            hs.append((hs[0], hs[1], hs[2]))
-    return hs
+            hs.append((coordinates[0], coordinates[1], coordinates[2]))
+        return hs
 
 
 def sub_average(array, chunks):
