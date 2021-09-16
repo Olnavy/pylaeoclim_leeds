@@ -329,7 +329,7 @@ class ATMSURFMDS(HadCM3RDS):
             mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t, value_t,
             new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
     
-    def u10_wind(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
+    def wind_u10(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
                  mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
         print("__ Importing eastward component of wind at 10m.")
         return self.get(xr.open_mfdataset(self.paths, combine='by_coords').u_mm_10m.isel(ht=0).drop('ht').
@@ -337,7 +337,7 @@ class ATMSURFMDS(HadCM3RDS):
                         mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t, value_t,
                         new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
     
-    def v10_wind(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
+    def wind_v10(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
                  mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
         print("__ Importing northward component of wind at 10m.")
         return self.get(xr.open_mfdataset(self.paths, combine='by_coords').v_mm_10m.isel(ht=0).drop('ht').
@@ -345,7 +345,7 @@ class ATMSURFMDS(HadCM3RDS):
                         mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t, value_t,
                         new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
     
-    def wind10(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
+    def wind_10(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
                       mode_z=None, value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None,
                       new_month_list=None):
         print("__ Importing zonal and meridional 10m wind and computing total velocity.")
@@ -480,7 +480,7 @@ class OCNMDS(HadCM3RDS):
             mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t, value_t,
             new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
     
-    def u_velocity(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
+    def ocean_uvel(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
                    mode_z=None, value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None,
                    new_month_list=None):
         print("__ Importing meridional (eastward) velocity.")
@@ -490,7 +490,7 @@ class OCNMDS(HadCM3RDS):
                         zone, mode_lon, value_lon, mode_lat, value_lat, mode_z, value_z, mode_t, value_t,
                         new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
     
-    def v_velocity(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
+    def ocean_vvel(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
                    mode_z=None, value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None,
                    new_month_list=None):
         print("__ Importing zonal (northward) velocity.")
@@ -500,7 +500,7 @@ class OCNMDS(HadCM3RDS):
                         zone, mode_lon, value_lon, mode_lat, value_lat, mode_z, value_z, mode_t, value_t,
                         new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
     
-    def velocity(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
+    def ocean_vel(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
                  mode_z=None, value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None,
                  new_month_list=None):
         print("__ Importing zonal and meridional velocities and computing total velocity.")
