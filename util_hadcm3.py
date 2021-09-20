@@ -7,7 +7,6 @@ import matplotlib.colors
 import scipy.ndimage as ndimage
 
 
-
 # import xarray as xr
 
 
@@ -439,6 +438,34 @@ def sub_average(array, chunks):
     for t in range(len(array_mean)):
         array_mean[t] = np.mean(array_split[t], axis=0)
     return array_mean
+
+
+def vector_stress(uarray, varray):
+    return np.sqrt(uarray ** 2 + varray ** 2)
+
+def density(t, s, order=2):
+    '''
+    Fofonoff 1985
+    :param t:
+    :param s:
+    :param order:
+    :return:
+    '''
+    A = [999.842594, 3.79e-2, -9.09e-3, 1.00e-4]
+    B = [8.24e-1, -4.09e-3, 7.64e-5]
+    C = [-5.72e-3, 1.02e-4]
+    D = [4.8314e-4]
+    
+    if order == 3:
+        return A[0] + A[1] * t + A[2] * t ** 2 + A[3] * t ** 3 + \
+               B[0] * s + B[1] * s * t + B[2] * s * t ** 2+ \
+               C[0] * s ** (3 / 2) + C[1] * s ** (3 / 2) * t + C[1] * s ** (3 / 2) * t ** 2 + \
+               D[0] * s ** 2
+    else:
+        return A[0] + A[1] * t + A[2] * t ** 2 + \
+               B[0] * s + B[1] * s * t + \
+               C[0] * s ** (3 / 2) + C[1] * s ** (3 / 2) * t +\
+               D[0] * s ** 2
 
 # Generate
 # path2lsm = generate_filepath(str(pathlib.Path(__file__).parent.absolute()) + "/resources/path2lsm")
