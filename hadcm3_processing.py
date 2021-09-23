@@ -596,12 +596,21 @@ class OCNYDS(HadCM3RDS):
                         new_start_year=new_start_year, new_end_year=new_end_year)
     
     def salinity(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
-                 mode_z=None, value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None):
+                 mode_z=None, value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None,
+                 new_month_list=None, convert=True):
         print("__ Importing salinity.")
-        return self.get(xr.open_mfdataset(self.paths, combine='by_coords').salinity_ym_dpth.
+        if convert:
+            data = self.convert_salinity(xr.open_mfdataset(self.paths, combine='by_coords', chunks={"t": self.chunks}))
+        else:
+            data = xr.open_mfdataset(self.paths, combine='by_coords', chunks={"t": self.chunks})
+        return self.get(data.salinity_ym_dpth.
                         assign_coords(depth_1=-self.sample_data.depth_1).rename({'depth_1': 'zb'}),
                         zone, mode_lon, value_lon, mode_lat, value_lat, mode_z, value_z, mode_t, value_t,
-                        new_start_year=new_start_year, new_end_year=new_end_year)
+                        new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
+
+    @staticmethod
+    def convert_salinity(data_array):
+        return data_array * 1000 + 35
     
     def u_velocity(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
                    mode_z=None, value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None):
