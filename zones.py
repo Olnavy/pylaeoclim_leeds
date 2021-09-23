@@ -2,6 +2,7 @@ import numpy as np
 # import numpy.ma as ma
 import abc
 # import pylaeoclim_leeds.util_hadcm3 as util
+import shapely.geometry
 
 
 class Zone:
@@ -235,3 +236,37 @@ class Box(Zone):
     #         self.z_min = np.min(self.z)
     #     if self.z is not None and self.z_max is None:
     #         self.z_max = np.max(self.z)
+
+
+class Polygon:
+    
+    def __init__(self, bounds):
+        self.bounds = self.lon_range(bounds)
+        self.poly = shapely.geometry.Polygon(self.bounds)
+    
+    def lon_range(self, bounds_in):
+        bounds_out = []
+        for i in range(len(bounds_in)):
+            bounds_out.append((self.set_positive_lon(bounds_in[i][0]), bounds_in[i][1]))
+        return bounds_out
+    
+    @staticmethod
+    def set_positive_lon(lon):
+        return lon + 360 if lon < 0 else lon
+    
+    def contain(self, lon, lat):
+        lon, lat = self.set_positive_lon(lon), lat
+        return shapely.geometry.Point(lon, lat).within(self.poly)
+    
+    def xy(self):
+        return self.poly.exterior.coords.xy
+    
+    def create_mask(self, lon, lat):
+        mask = np.empty((len(lat), len(lon)))
+        mask[:] = np.nan
+        for i in range(len(lon)):
+            for j in range(len(lat)):
+                if self.contain(lon[i], lat[j]):
+                    mask[j, i] = 1
+        return mask
+    
