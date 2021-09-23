@@ -241,22 +241,20 @@ class Box(Zone):
 class Polygon:
     
     def __init__(self, bounds):
-        self.bounds = self.lon_range(bounds)
+        self.bounds = self.test_lon_range(bounds)
         self.poly = shapely.geometry.Polygon(self.bounds)
     
-    def lon_range(self, bounds_in):
-        bounds_out = []
-        for i in range(len(bounds_in)):
-            bounds_out.append((self.set_positive_lon(bounds_in[i][0]), bounds_in[i][1]))
-        return bounds_out
-    
     @staticmethod
-    def set_positive_lon(lon):
-        return lon + 360 if lon < 0 else lon
+    def test_lon_range(bounds_in):
+        if any([np.abs(bounds_in[i][0]) > 360 for i in range(len(bounds_in))]):
+            print("* At least one of the longitudes was outside of the [-360, 360] range. Modulo applied.")
+            return [(bounds_in[i][0] % 360, bounds_in[i][1]) for i in range(len(bounds_in))]
+        else:
+            return bounds_in
     
     def contain(self, lon, lat):
-        lon, lat = self.set_positive_lon(lon), lat
-        return shapely.geometry.Point(lon, lat).within(self.poly)
+        return np.logical_or(self.poly.contains(shapely.geometry.Point(lon % 360, lat)),
+                             self.poly.contains(shapely.geometry.Point(lon % 360 - 360, lat)))
     
     def xy(self):
         return self.poly.exterior.coords.xy
