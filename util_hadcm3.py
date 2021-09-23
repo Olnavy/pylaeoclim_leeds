@@ -459,12 +459,12 @@ def density(t, s, order=2):
     if order == 3:
         return A[0] + A[1] * t + A[2] * t ** 2 + A[3] * t ** 3 + \
                B[0] * s + B[1] * s * t + B[2] * s * t ** 2+ \
-               C[0] * s ** (3 / 2) + C[1] * s ** (3 / 2) * t + C[1] * s ** (3 / 2) * t ** 2 + \
+               C[0] * np.abs(s) ** (3 / 2) + C[1] * np.abs(s) ** (3 / 2) * t + C[1] * np.abs(s) ** (3 / 2) * t ** 2 + \
                D[0] * s ** 2
     else:
         return A[0] + A[1] * t + A[2] * t ** 2 + \
                B[0] * s + B[1] * s * t + \
-               C[0] * s ** (3 / 2) + C[1] * s ** (3 / 2) * t +\
+               C[0] * np.abs(s) ** (3 / 2) + C[1] * np.abs(s) ** (3 / 2) * t +\
                D[0] * s ** 2
 
 # Generate
