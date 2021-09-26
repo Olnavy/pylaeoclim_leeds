@@ -467,5 +467,15 @@ def density(t, s, order=2):
                C[0] * np.abs(s) ** (3 / 2) + C[1] * np.abs(s) ** (3 / 2) * t +\
                D[0] * s ** 2
 
+
+def density_cube(temp, sal):
+    n_z, n_lat, n_lon = temp.shape
+    density_out = np.zeros(temp.shape)
+    for i_z in range(n_z):
+        for i_lat in range(n_lat):
+            for i_lon in range(n_lon):
+                density_out[i_z, i_lat, i_lon] = density(temp[i_z, i_lat, i_lon], sal[i_z, i_lat, i_lon])
+    return density_out
+
 # Generate
 # path2lsm = generate_filepath(str(pathlib.Path(__file__).parent.absolute()) + "/resources/path2lsm")
