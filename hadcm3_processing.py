@@ -607,6 +607,14 @@ class OCNYDS(HadCM3RDS):
                         assign_coords(depth_1=-self.sample_data.depth_1).rename({'depth_1': 'zb'}),
                         zone, mode_lon, value_lon, mode_lat, value_lat, mode_z, value_z, mode_t, value_t,
                         new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
+    
+    def wage(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
+                 mode_z=None, value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None):
+        print("__ Importing water age.")
+        return self.get(xr.open_mfdataset(self.paths, combine='by_coords').otracer14_ym_dpth.
+                        assign_coords(depth_1=-self.sample_data.depth_1).rename({'depth_1': 'zb'}),
+                        zone, mode_lon, value_lon, mode_lat, value_lat, mode_z, value_z, mode_t, value_t,
+                        new_start_year=new_start_year, new_end_year=new_end_year)
 
     @staticmethod
     def convert_salinity(data_array):
