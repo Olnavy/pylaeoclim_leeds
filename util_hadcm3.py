@@ -5,6 +5,7 @@ import scipy.signal as signal
 import matplotlib.mlab as mlab
 import matplotlib.colors
 import scipy.ndimage as ndimage
+import pandas as pd
 
 
 # import xarray as xr
@@ -149,13 +150,15 @@ def running_mean(data, n, axis=0):
     """
     try:
         if data.ndim == 1:
-            mean = np.convolve(data, np.ones(n), mode="full")
+            mean = pd.Series(data).rolling(window=n, min_periods=1, center=True).mean().values
+            # mean = np.convolve(data, np.ones(n), mode="full")
         elif data.ndim == 2:
             n_i = data.shape[axis]
             n_j = data.shape[1] if axis == 0 else data.shape[0]
             mean = np.zeros((n_i, n_j))
             for j in range(n_j):
-                mean[:, j] = np.convolve(data[:, j], np.ones(n), mode="full")[:len(data)]
+                mean[:, j] = pd.Series(data[:, j]).rolling(window=n, min_periods=1, center=True).mean().values
+                # mean[:, j] = np.convolve(data[:, j], np.ones(n), mode="full")[:len(data)]
         
         else:
             raise ValueError("Dimensions >2 not implemented yet.")

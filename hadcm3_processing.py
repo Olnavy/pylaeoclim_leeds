@@ -10,6 +10,42 @@ import time
 import pathlib
 import netCDF4
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 input_file = util.generate_input(str(pathlib.Path(__file__).parent.absolute()) + "/resources/hadcm3_input")
 
 

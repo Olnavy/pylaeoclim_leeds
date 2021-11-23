@@ -5,6 +5,40 @@ import pylaeoclim_leeds.util_hadcm3 as util
 import cftime
 import time
 
+
+# @xr.register_dataset_accessor("geo")
+class GeoDA:
+
+    def __init__(self):
+        pass
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 import matplotlib.colors
 class GeoDS:
     """
