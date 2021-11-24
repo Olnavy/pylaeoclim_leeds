@@ -132,6 +132,16 @@ def volume_matrix(lon, lat, z):
     return volume
 
 
+def rmean(data, n):
+    
+    try:
+        return pd.Series(data).rolling(window=n, min_periods=1, center=True).mean().values
+    except TypeError as error:
+        print(error)
+        print("Returning initial tab.")
+        return data
+    
+
 def running_mean(data, n, axis=0):
     """
     Running mean on n years for a 1D or 2D array. Only use the past values.
@@ -148,32 +158,33 @@ def running_mean(data, n, axis=0):
     numpy 1D or 2D array
         new averaged data
     """
+
     try:
         if data.ndim == 1:
-            mean = pd.Series(data).rolling(window=n, min_periods=1, center=True).mean().values
-            # mean = np.convolve(data, np.ones(n), mode="full")
+            # mean = pd.Series(data).rolling(window=n, min_periods=1, center=True).mean().values
+            mean = np.convolve(data, np.ones(n), mode="full")
         elif data.ndim == 2:
             n_i = data.shape[axis]
             n_j = data.shape[1] if axis == 0 else data.shape[0]
             mean = np.zeros((n_i, n_j))
             for j in range(n_j):
-                mean[:, j] = pd.Series(data[:, j]).rolling(window=n, min_periods=1, center=True).mean().values
-                # mean[:, j] = np.convolve(data[:, j], np.ones(n), mode="full")[:len(data)]
-        
+                # mean[:, j] = pd.Series(data[:, j]).rolling(window=n, min_periods=1, center=True).mean().values
+                mean[:, j] = np.convolve(data[:, j], np.ones(n), mode="full")[:len(data)]
+
         else:
             raise ValueError("Dimensions >2 not implemented yet.")
     except TypeError as error:
         print(error)
         print("Returning initial tab.")
         return data
-    
+
     out_mean = np.zeros(data.shape)
     for i in range(len(data)):
         if i + 1 < n:
             out_mean[i] = mean[i] / (i + 1)
         else:
             out_mean[i] = mean[i] / n
-    return out_mean
+    return mean
 
 
 def coordinate_to_index(longitude, latitude, target_lon, target_lat):
