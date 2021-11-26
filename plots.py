@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.colors
 import matplotlib.cm as cm
 
+
 class PlotTemplate:
     
     def __init__(self, sav_path):
@@ -28,7 +29,7 @@ class PlotTemplate:
 
 class Normalize(matplotlib.colors.Normalize):
     
-    def __init__(self, clip=False, **kwargs):
+    def __init__(self, clip=False, verbose=False, **kwargs):
         
         if 'vmin' in kwargs and 'vmax' in kwargs:
             print("__ Initialising the norm from vmin and vmax values")
@@ -41,6 +42,7 @@ class Normalize(matplotlib.colors.Normalize):
         else:
             raise KeyError("Please indicate either in_values or vmin and vmax")
         
+        if verbose: print(f"vmin:{vmin}; vmax{vmax}")
         super(Normalize, self).__init__(vmin, vmax, clip)
     
     def generate_mappable(self, cmap):
@@ -49,7 +51,7 @@ class Normalize(matplotlib.colors.Normalize):
 
 class TwoSlopeNorm(matplotlib.colors.TwoSlopeNorm):
     
-    def __init__(self, vcenter, symetrical=False, **kwargs):
+    def __init__(self, vcenter, symetrical=False, verbose=False, **kwargs):
         
         if 'vmin' in kwargs and 'vmax' in kwargs:
             print("__ Initialising the norm from vmin and vmax values")
@@ -61,6 +63,7 @@ class TwoSlopeNorm(matplotlib.colors.TwoSlopeNorm):
             vmax = np.nanmax([np.nanmax(a) for a in kwargs['in_values']])
         else:
             raise KeyError("Please indicate either in_values or vmin and vmax")
+        if verbose: print(f"vmin:{vmin}; vmax{vmax}")
         super(TwoSlopeNorm, self).__init__(vcenter, vmin, vmax)
         if symetrical:
             self.make_symetrical()
