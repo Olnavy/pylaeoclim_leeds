@@ -82,11 +82,18 @@ class ModelDS(GeoDS):
     def filter_months(data_array, month_list):
         # To define in GeoDataArray !!!!and GeoDS!!!!
         if month_list is not None:
-            condition = xr.zeros_like(data_array.t)
-            for i in range(len(data_array.t)):
-                condition[i] = data_array.t[i].values[()].month in util.months_to_number(month_list)
-            data_array = data_array.where(condition, drop=True)
-        return data_array
+            month_list_conv = util.months_to_number(month_list)
+            condition = [data_array.t[i].values[()].month in month_list_conv for i in range(len(data_array.t))]
+            return data_array.sel(t=data_array.t[condition])
+        else:
+            print("Month list is non, DataArray has not been changed")
+            return data_array
+        
+            # condition = xr.zeros_like(data_array.t)
+            # for i in range(len(data_array.t)):
+            #     condition[i] = data_array.t[i].values[()].month in util.months_to_number(month_list)
+            # data_array = data_array.where(condition, drop=True)
+        # return data_array
     
     def guess_bounds(self):
         self.lonb = util.guess_bounds(self.lon)
