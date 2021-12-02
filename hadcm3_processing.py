@@ -346,14 +346,14 @@ class ATMSURFMDS(HadCM3RDS):
                         new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
     
     def wind_10(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
-                      mode_z=None, value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None,
-                      new_month_list=None):
+                mode_z=None, value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None,
+                new_month_list=None):
         print("__ Importing zonal and meridional 10m wind and computing total velocity.")
         return self.get(np.sqrt(
             (xr.open_mfdataset(self.paths, combine='by_coords').u_mm_10m.isel(ht=0).drop('ht').
-                        rename({'longitude_1': 'longitudeb'}).rename({'latitude_1': 'latitudeb'})) ** 2 +
+             rename({'longitude_1': 'longitudeb'}).rename({'latitude_1': 'latitudeb'})) ** 2 +
             (xr.open_mfdataset(self.paths, combine='by_coords').v_mm_10m.isel(ht=0).drop('ht').
-                        rename({'longitude_1': 'longitudeb'}).rename({'latitude_1': 'latitudeb'})) ** 2 ),
+             rename({'longitude_1': 'longitudeb'}).rename({'latitude_1': 'latitudeb'})) ** 2),
             zone, mode_lon, value_lon, mode_lat, value_lat, mode_z, value_z, mode_t, value_t,
             new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
     
@@ -390,6 +390,12 @@ class OCNMDS(HadCM3RDS):
         month_list = HadCM3DS.MONTHS if month_list is None else month_list  # To overcome mutable argument error
         expt_id = input_file[exp_name][0]
         file_name = f"pf/{expt_id}o#pf"
+        self.vars = ['W_mm_dpth', 'HTN_mm_uo', 'srfSalFlux_mm_uo', 'ucurrTot_mm_dpth', 'vcurrTot_mm_dpth',
+                     'srfSalFlux_mm_uo_1', 'uVelSeaice_mm_uo', 'vVelSeaice_mm_uo', 'temp_mm_uo', 'temp_mm_dpth',
+                     'salinity_mm_dpth', 'streamFn_mm_uo', 'mixLyrDpth_mm_uo', 'carryheatice_mm_uo',
+                     'OcIceHflux_mm_uo', 'iceconc_mm_uo', 'icedepth_mm_uo', 'WME_mm_uo', 'SOL_mm_uo',
+                     'HTNpenhtflxocn_mm_uo', 'PLE_mm_uo', 'outflow_mm_uo', 'snowfall_mm_uo', 'sublim_mm_uo',
+                     'anomSaltFlux_mm_uo']
         super(OCNMDS, self).__init__(exp_name, start_year, end_year, file_name=file_name, month_list=month_list,
                                      chunks=chunks, verbose=verbose, debug=debug, logger=logger)
     
@@ -441,28 +447,34 @@ class OCNMDS(HadCM3RDS):
     def sst(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None, mode_t=None,
             value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
         print("__ Importing SST.")
+        var_drop = [var for var in self.vars if var not in ['temp_mm_uo']]
         return self.get(
-            xr.open_mfdataset(self.paths, combine='by_coords').temp_mm_uo.isel(unspecified=0).drop("unspecified"), zone,
-            mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t, value_t,
-            new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
+            xr.open_mfdataset(self.paths, combine='by_coords', drop_variables=var_drop).temp_mm_uo.isel(
+                unspecified=0).drop("unspecified"), zone, mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t,
+            value_t, new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
     
     def temperature(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
                     mode_z=None, value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None,
                     new_month_list=None):
         print("__ Importing temperature.")
-        return self.get(xr.open_mfdataset(self.paths, combine='by_coords').temp_mm_dpth.
-                        assign_coords(depth_1=-self.sample_data.depth_1).rename({'depth_1': 'zb'}), zone,
-                        mode_lon, value_lon, mode_lat, value_lat, mode_z, value_z, mode_t, value_t,
-                        new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
+        var_drop = [var for var in self.vars if var not in ['temp_mm_dpth']]
+        return self.get(
+            xr.open_mfdataset(self.paths, combine='by_coords', drop_variables=var_drop).temp_mm_dpth.assign_coords(
+                depth_1=-self.sample_data.depth_1).rename({'depth_1': 'zb'}), zone, mode_lon, value_lon, mode_lat,
+            value_lat, mode_z, value_z, mode_t, value_t, new_start_year=new_start_year, new_end_year=new_end_year,
+            new_month_list=new_month_list)
     
     def salinity(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
                  mode_z=None, value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None,
                  new_month_list=None, convert=True):
         print("__ Importing salinity.")
+        var_drop = [var for var in self.vars if var not in ['salinity_mm_dpth']]
         if convert:
-            data = self.convert_salinity(xr.open_mfdataset(self.paths, combine='by_coords', chunks={"t": self.chunks}))
+            data = self.convert_salinity(xr.open_mfdataset(self.paths, combine='by_coords', chunks={"t": self.chunks},
+                                                           drop_variables=var_drop))
         else:
-            data = xr.open_mfdataset(self.paths, combine='by_coords', chunks={"t": self.chunks})
+            data = xr.open_mfdataset(self.paths, combine='by_coords', chunks={"t": self.chunks},
+                                     drop_variables=var_drop)
         return self.get(data.salinity_mm_dpth.
                         assign_coords(depth_1=-self.sample_data.depth_1).rename({'depth_1': 'zb'}),
                         zone, mode_lon, value_lon, mode_lat, value_lat, mode_z, value_z, mode_t, value_t,
@@ -475,40 +487,47 @@ class OCNMDS(HadCM3RDS):
     def htn(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None, mode_t=None,
             value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
         print("__ Importing net surface heat flux.")
+        var_drop = [var for var in self.vars if var not in ['HTN_mm_uo']]
         return self.get(
-            xr.open_mfdataset(self.paths, combine='by_coords').HTN_mm_uo.isel(unspecified=0).drop("unspecified"), zone,
-            mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t, value_t,
-            new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
+            xr.open_mfdataset(self.paths, combine='by_coords', drop_variables=var_drop).HTN_mm_uo.isel(
+                unspecified=0).drop("unspecified"), zone, mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t,
+            value_t, new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
     
     def ocean_uvel(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
                    mode_z=None, value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None,
                    new_month_list=None):
         print("__ Importing meridional (eastward) velocity.")
-        return self.get(xr.open_mfdataset(self.paths, combine='by_coords').ucurrTot_mm_dpth.
-                        assign_coords(depth_1=-self.sample_data.depth_1).rename({'depth_1': 'zb'})
-                        .rename({'longitude_1': 'longitudeb'}).rename({'latitude_1': 'latitudeb'}),
-                        zone, mode_lon, value_lon, mode_lat, value_lat, mode_z, value_z, mode_t, value_t,
-                        new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
+        var_drop = [var for var in self.vars if var not in ['ucurrTot_mm_dpth']]
+        return self.get(
+            xr.open_mfdataset(self.paths, combine='by_coords', drop_variables=var_drop).ucurrTot_mm_dpth.assign_coords(
+                depth_1=-self.sample_data.depth_1).rename({'depth_1': 'zb'}).rename(
+                {'longitude_1': 'longitudeb'}).rename({'latitude_1': 'latitudeb'}), zone, mode_lon, value_lon, mode_lat,
+            value_lat, mode_z, value_z, mode_t, value_t, new_start_year=new_start_year, new_end_year=new_end_year,
+            new_month_list=new_month_list)
     
     def ocean_vvel(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
                    mode_z=None, value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None,
                    new_month_list=None):
         print("__ Importing zonal (northward) velocity.")
-        return self.get(xr.open_mfdataset(self.paths, combine='by_coords').vcurrTot_mm_dpth.
-                        assign_coords(depth_1=-self.sample_data.depth_1).rename({'depth_1': 'zb'})
-                        .rename({'longitude_1': 'longitudeb'}).rename({'latitude_1': 'latitudeb'}),
-                        zone, mode_lon, value_lon, mode_lat, value_lat, mode_z, value_z, mode_t, value_t,
-                        new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
+        var_drop = [var for var in self.vars if var not in ['vcurrTot_mm_dpth']]
+        return self.get(
+            xr.open_mfdataset(self.paths, combine='by_coords', drop_variables=var_drop).vcurrTot_mm_dpth.assign_coords(
+                depth_1=-self.sample_data.depth_1).rename({'depth_1': 'zb'}).rename(
+                {'longitude_1': 'longitudeb'}).rename({'latitude_1': 'latitudeb'}), zone, mode_lon, value_lon, mode_lat,
+            value_lat, mode_z, value_z, mode_t, value_t, new_start_year=new_start_year, new_end_year=new_end_year,
+            new_month_list=new_month_list)
     
     def ocean_vel(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
-                 mode_z=None, value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None,
-                 new_month_list=None):
+                  mode_z=None, value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None,
+                  new_month_list=None):
         print("__ Importing zonal and meridional velocities and computing total velocity.")
+        var_drop_u = [var for var in self.vars if var not in ['ucurrTot_mm_dpth']]
+        var_drop_v = [var for var in self.vars if var not in ['vcurrTot_mm_dpth']]
         return self.get(np.sqrt(
-            (xr.open_mfdataset(self.paths, combine='by_coords').ucurrTot_mm_dpth.
+            (xr.open_mfdataset(self.paths, combine='by_coords', drop_variables=var_drop_u).ucurrTot_mm_dpth.
              assign_coords(depth_1=-self.sample_data.depth_1).rename({'depth_1': 'zb'})
              .rename({'longitude_1': 'longitudeb'}).rename({'latitude_1': 'latitudeb'})) ** 2 +
-            (xr.open_mfdataset(self.paths, combine='by_coords').vcurrTot_mm_dpth.
+            (xr.open_mfdataset(self.paths, combine='by_coords', drop_variables=var_drop_v).vcurrTot_mm_dpth.
              assign_coords(depth_1=-self.sample_data.depth_1).rename({'depth_1': 'zb'})
              .rename({'longitude_1': 'longitudeb'}).rename({'latitude_1': 'latitudeb'})) ** 2),
             zone, mode_lon, value_lon, mode_lat, value_lat, mode_z, value_z, mode_t, value_t,
@@ -517,18 +536,20 @@ class OCNMDS(HadCM3RDS):
     def ice_conc(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
                  mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
         print("__ Importing sea ice fraction.")
+        var_drop = [var for var in self.vars if var not in ['iceconc_mm_uo']]
         return self.get(
-            xr.open_mfdataset(self.paths, combine='by_coords').iceconc_mm_uo.isel(unspecified=0).drop("unspecified"),
-            zone, mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t, value_t,
-            new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
+            xr.open_mfdataset(self.paths, combine='by_coords', drop_variables=var_drop).iceconc_mm_uo.isel(
+                unspecified=0).drop("unspecified"), zone, mode_lon, value_lon, mode_lat, value_lat, None, None,
+            mode_t, value_t, new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
     
     def mld(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
             mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
         print("__ Importing mixed layer depth.")
+        var_drop = [var for var in self.vars if var not in ['mixLyrDpth_mm_uo']]
         return self.get(
-            xr.open_mfdataset(self.paths, combine='by_coords').mixLyrDpth_mm_uo.isel(unspecified=0).drop("unspecified"),
-            zone, mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t, value_t,
-            new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
+            xr.open_mfdataset(self.paths, combine='by_coords', drop_variables=var_drop).mixLyrDpth_mm_uo.isel(
+                unspecified=0).drop("unspecified"), zone, mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t,
+            value_t, new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
 
 
 class OCNYDS(HadCM3RDS):
@@ -609,13 +630,13 @@ class OCNYDS(HadCM3RDS):
                         new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
     
     def wage(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
-                 mode_z=None, value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None):
+             mode_z=None, value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None):
         print("__ Importing water age.")
         return self.get(xr.open_mfdataset(self.paths, combine='by_coords').otracer14_ym_dpth.
                         assign_coords(depth_1=-self.sample_data.depth_1).rename({'depth_1': 'zb'}),
                         zone, mode_lon, value_lon, mode_lat, value_lat, mode_z, value_z, mode_t, value_t,
                         new_start_year=new_start_year, new_end_year=new_end_year)
-
+    
     @staticmethod
     def convert_salinity(data_array):
         return data_array * 1000 + 35
