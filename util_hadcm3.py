@@ -160,7 +160,7 @@ def running_mean(data, n, axis=0):
     try:
         if data.ndim == 1:
             # mean = pd.Series(data).rolling(window=n, min_periods=1, center=True).mean().values
-            mean = np.convolve(data, np.ones(n), mode="full")
+            mean = np.convolve(data, np.ones(n), mode="full")[:len(data)]
         elif data.ndim == 2:
             n_i = data.shape[axis]
             n_j = data.shape[1] if axis == 0 else data.shape[0]
