@@ -65,7 +65,6 @@ def butter_lowpass(cut_off, fs, order=5):
 
 
 class Grid:
-    
     def __init__(self, lon, lat, z):
         self.lon = lon
         self.lat = lat
