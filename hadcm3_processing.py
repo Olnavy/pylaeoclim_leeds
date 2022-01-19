@@ -827,6 +827,9 @@ class HadCM3TS(HadCM3DS):
         self.start_year = np.min((self.start_year, ts.start_year))
         self.end_year = np.max((self.end_year, ts.end_year))
         return self
+    
+    def convert_salinity(self):
+        return self.data * 1000 + 35
 
 
 class SAL01MTS(HadCM3TS):
@@ -860,9 +863,11 @@ class SAL01MTS(HadCM3TS):
         super(SAL01MTS, self).import_coordinates()
     
     def salinity(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
-                 mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
+                 mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None,
+                 convert=True):
         print("__ Importing sea water salinity at 5m (monthly).")
-        return self.get(self.data.salinity_mm_dpth.isel(depth_1=0), zone, mode_lon, value_lon, mode_lat, value_lat,
+        data = super(SAL01MTS, self).convert_salinity() if convert else self.data
+        return self.get(data.salinity_mm_dpth.isel(depth_1=0), zone, mode_lon, value_lon, mode_lat, value_lat,
                         None, None, mode_t, value_t, new_start_year=new_start_year, new_end_year=new_end_year,
                         new_month_list=new_month_list)
 
@@ -896,9 +901,11 @@ class SAL01ATS(HadCM3TS):
         super(SAL01ATS, self).import_coordinates()
     
     def salinity(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
-                 mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
+                 mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None,
+                 convert=True):
         print("__ Importing sea water salinity at 5m (annual).")
-        return self.get(self.data.salinity_ym_dpth.isel(depth_1=0), zone, mode_lon, value_lon, mode_lat, value_lat,
+        data = super(SAL01ATS, self).convert_salinity() if convert else self.data
+        return self.get(data.salinity_ym_dpth.isel(depth_1=0), zone, mode_lon, value_lon, mode_lat, value_lat,
                         None, None, mode_t, value_t, new_start_year=new_start_year, new_end_year=new_end_year,
                         new_month_list=new_month_list)
 
@@ -932,9 +939,11 @@ class SAL12ATS(HadCM3TS):
         super(SAL12ATS, self).import_coordinates()
     
     def salinity(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
-                 mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
+                 mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None,
+                 convert=True):
         print("__ Importing sea water salinity at 666m (annual).")
-        return self.get(self.data.salinity_ym_dpth.isel(depth_1=0), zone, mode_lon, value_lon, mode_lat, value_lat,
+        data = super(SAL12ATS, self).convert_salinity() if convert else self.data
+        return self.get(data.salinity_ym_dpth.isel(depth_1=0), zone, mode_lon, value_lon, mode_lat, value_lat,
                         None, None, mode_t, value_t, new_start_year=new_start_year, new_end_year=new_end_year,
                         new_month_list=new_month_list)
 
@@ -968,13 +977,15 @@ class SAL16ATS(HadCM3TS):
         super(SAL16ATS, self).import_coordinates()
     
     def salinity(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
-                 mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
+                 mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None,
+                 convert=True):
         print("__ Importing sea water salinity at 2730m (annual).")
-        return self.get(self.data.salinity_ym_dpth.isel(depth_1=0), zone, mode_lon, value_lon, mode_lat, value_lat,
+        data = super(SAL16ATS, self).convert_salinity() if convert else self.data
+        return self.get(data.salinity_ym_dpth.isel(depth_1=0), zone, mode_lon, value_lon, mode_lat, value_lat,
                         None, None, mode_t, value_t, new_start_year=new_start_year, new_end_year=new_end_year,
                         new_month_list=new_month_list)
-
-
+     
+    
 class SALATS(HadCM3TS):
     
     def __init__(self, exp_name, start_year=None, end_year=None, chunks=None, verbose=True, debug=False,
@@ -1015,7 +1026,7 @@ class SALATS(HadCM3TS):
                  value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None,
                  convert=True):
         print("__ Importing sea water salinity (annual).")
-        data = self.convert() if convert else self.data
+        data = super(SALATS, self).convert_salinity() if convert else self.data
         return self.get(data.salinity_ym_dpth.rename({"depth_1": "zb"}), zone, mode_lon, value_lon, mode_lat,
                         value_lat, mode_z, value_z, mode_t, value_t, new_start_year=new_start_year,
                         new_end_year=new_end_year, new_month_list=new_month_list)
@@ -1055,9 +1066,6 @@ class SALATS(HadCM3TS):
         
         return geo_da
     
-    def convert(self):
-        return self.data * 1000 + 35
-
 
 class SSTMTS(HadCM3TS):
     
