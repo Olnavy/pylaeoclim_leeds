@@ -783,6 +783,9 @@ class HadCM3TS(HadCM3DS):
                                  f"Valid range : start_year = {min(self.data.t.values).year}, "
                                  f"end_year = {max(self.data.t.values).year}")
             
+            # Drop time duplicates
+            self.data = self.data.sel(t=~self.data.get_index("t").duplicated())
+            
             if self.debug: start = time.time()
             if self.start_year != self.get_start_year():
                 self.data = self.data.sel(t=self.data.t.where(
@@ -2645,6 +2648,9 @@ class HadCM3PTS(HadCM3DS):
                 raise ValueError(f"Inavlid start_year or end_year. Please check that they fit the valid range\n"
                                  f"Valid range : start_year = {min(self.data.t.values).year}, "
                                  f"end_year = {max(self.data.t.values).year}")
+            
+            # Drop time duplicates
+            self.data = self.data.sel(t=~self.data.get_index("t").duplicated())
             
             if self.debug: start = time.time()
             if self.start_year != self.get_start_year():
