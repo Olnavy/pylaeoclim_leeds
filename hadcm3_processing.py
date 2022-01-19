@@ -829,8 +829,12 @@ class HadCM3TS(HadCM3DS):
         return self
     
     def convert_salinity(self):
+        """To PSU"""
         return self.data * 1000 + 35
 
+    def convert_precip(self):
+        """Kg/m2/s to mm/day"""
+        return self.data * 3600 * 24
 
 class SAL01MTS(HadCM3TS):
     
@@ -1641,9 +1645,10 @@ class PRECIPMTS(HadCM3TS):
         super(PRECIPMTS, self).import_coordinates()
     
     def precip(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
-               mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
+               mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None, convert=True):
         print("__ Importing precipitation flux.")
-        return self.get(self.data.precip_mm_srf.isel(surface=0).drop("surface"), zone, mode_lon, value_lon, mode_lat,
+        data = super(PRECIPMTS, self).convert_precip() if convert else self.data
+        return self.get(data.precip_mm_srf.isel(surface=0).drop("surface"), zone, mode_lon, value_lon, mode_lat,
                         value_lat, None, None, mode_t, value_t, new_start_year=new_start_year,
                         new_end_year=new_end_year, new_month_list=new_month_list)
 
@@ -1677,9 +1682,10 @@ class EVAPMTS(HadCM3TS):
         super(EVAPMTS, self).import_coordinates()
     
     def total_evap(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None, mode_t=None,
-                   value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
+                   value_t=None, new_start_year=None, new_end_year=None, new_month_list=None, convert=True):
         print("__ Importing evaporation flux.")
-        return self.get(self.data.total_evap.isel(surface=0).drop("surface"), zone, mode_lon, value_lon, mode_lat,
+        data = super(EVAPMTS, self).convert_precip() if convert else self.data
+        return self.get(data.total_evap.isel(surface=0).drop("surface"), zone, mode_lon, value_lon, mode_lat,
                         value_lat, None, None, mode_t, value_t, new_start_year=new_start_year,
                         new_end_year=new_end_year, new_month_list=new_month_list)
 
@@ -2698,6 +2704,10 @@ class HadCM3PTS(HadCM3DS):
         self.end_year = np.max((self.end_year, ts.end_year))
         return self
 
+    def convert_precip(self):
+        """Kg/m2/s to mm/day"""
+        return self.data * 3600 * 24
+
 
 class WICEATS(HadCM3PTS):
     
@@ -2808,9 +2818,10 @@ class EVAPATS(HadCM3PTS):
         super(EVAPATS, self).import_coordinates()
     
     def total_evap(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None, mode_t=None,
-                   value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
+                   value_t=None, new_start_year=None, new_end_year=None, new_month_list=None, convert=True):
         print("__ Importing evaporation flux.")
-        return self.get(self.data.total_evap.isel(surface=0).drop("surface"), zone, mode_lon, value_lon, mode_lat,
+        data = super(EVAPATS, self).convert_precip() if convert else self.data
+        return self.get(data.total_evap.isel(surface=0).drop("surface"), zone, mode_lon, value_lon, mode_lat,
                         value_lat, None, None, mode_t, value_t, new_start_year=new_start_year,
                         new_end_year=new_end_year, new_month_list=new_month_list)
 
@@ -2847,9 +2858,10 @@ class PRECIPATS(HadCM3PTS):
         super(PRECIPATS, self).import_coordinates()
     
     def precip(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
-               mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
+               mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None, convert=True):
         print("__ Importing precipitation flux.")
-        return self.get(self.data.precip_mm_srf.isel(surface=0).drop("surface"), zone, mode_lon, value_lon, mode_lat,
+        data = super(PRECIPATS, self).convert_precip() if convert else self.data
+        return self.get(data.precip_mm_srf.isel(surface=0).drop("surface"), zone, mode_lon, value_lon, mode_lat,
                         value_lat, None, None, mode_t, value_t, new_start_year=new_start_year,
                         new_end_year=new_end_year, new_month_list=new_month_list)
 
