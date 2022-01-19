@@ -1605,10 +1605,14 @@ class OCNSTREAMMTS(HadCM3TS):
         
         super(OCNSTREAMMTS, self).import_coordinates()
     
+    def convert(self):
+        return self.data * 10**(-12)
+    
     def stream(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
-               mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
+               mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None, convert=True):
         print("__ Importing ocean barotropic streamfunction.")
-        return self.get(self.data.streamFn_mm_uo.isel(unspecified=0).drop("unspecified"), zone, mode_lon, value_lon,
+        data = self.convert() if convert else self.data
+        return self.get(data.streamFn_mm_uo.isel(unspecified=0).drop("unspecified"), zone, mode_lon, value_lon,
                         mode_lat, value_lat, None, None, mode_t, value_t, new_start_year=new_start_year,
                         new_end_year=new_end_year, new_month_list=new_month_list)
 
@@ -3095,10 +3099,14 @@ class OCNSTREAMATS(HadCM3PTS):
         
         super(OCNSTREAMATS, self).import_coordinates()
     
+    def convert(self):
+        return self.data * 10**(-12)
+    
     def stream(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
-               mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
+               mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None, convert=True):
         print("__ Importing ocean barotropic streamfunction.")
-        return self.get(self.data.streamFn_mm_uo.isel(unspecified=0).drop("unspecified"), zone, mode_lon, value_lon,
+        data = self.convert_precip() if convert else self.data
+        return self.get(data.streamFn_mm_uo.isel(unspecified=0).drop("unspecified"), zone, mode_lon, value_lon,
                         mode_lat, value_lat, None, None, mode_t, value_t, new_start_year=new_start_year,
                         new_end_year=new_end_year, new_month_list=new_month_list)
 
