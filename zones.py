@@ -1,7 +1,7 @@
 import numpy as np
 # import numpy.ma as ma
 import abc
-# import pylaeoclim_leeds.util_hadcm3 as util
+import pylaeoclim_leeds.util_hadcm3 as util
 import shapely.geometry
 
 
@@ -236,6 +236,12 @@ class Box(Zone):
     #         self.z_min = np.min(self.z)
     #     if self.z is not None and self.z_max is None:
     #         self.z_max = np.max(self.z)
+
+    def cycle_box(self):
+        return util.cycle_box(self.lon_min, self.lon_max, self.lat_min, self.lat_max)
+
+    def to_plane(self):
+        return Box(self.lon_min, self.lon_max, self.lat_min, self.lat_max)
 
 
 class Polygon:
