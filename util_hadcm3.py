@@ -488,5 +488,27 @@ def density_cube(temp, sal):
                 density_out[i_z, i_lat, i_lon] = density(temp[i_z, i_lat, i_lon], sal[i_z, i_lat, i_lon])
     return density_out
 
+
+def calculate_itcz_lon_index(precip):
+    values = precip.values()
+
+    def get_max_precip_lat(precip):
+        """Return the latitude where zonal precipitation is at its maximum
+        return : np.array([t]) with maximal latitude at each time steps"""
+        return precip.lat[np.nanargmax(np.nanmean(precip.values(), axis=2), axis=1)]
+
+    # Get the indexes to loop throgh for each time step np.array([t,lat[:]])
+    max_precip_lat = get_max_precip_lat(precip)
+    indexes_lat = [np.where(np.logical_and(precip.lat <= 35, precip.lat >= max_lat)) for max_lat in max_precip_lat]
+
+    # Then calculate each terms of the quotient one time step at a time.
+    quotient = np.zeros(precip.values()[:, 0, :].shape)
+
+    for t in range(len(indexes_lat)):
+        sum_up = np.sum([values[t, index_lat] * precip.lat[index_lat] for index_lat in indexes_lat[t][0]], axis=0)
+        sum_down = np.sum([values[t, index_lat] for index_lat in indexes_lat[t][0]], axis=0)
+        quotient[t] = sum_up / sum_down
+    return quotient
+
 # Generate
 # path2lsm = generate_filepath(str(pathlib.Path(__file__).parent.absolute()) + "/resources/path2lsm")
