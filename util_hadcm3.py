@@ -510,5 +510,19 @@ def calculate_itcz_lon_index(precip):
         quotient[t] = sum_up / sum_down
     return quotient
 
+
+def extract_bathymetry(ds):
+    field = ds.temp_ym_dpth.isel(t=0).values
+    depth = ds.depth.values
+    bathymetry = np.zeros((field.shape[1], field.shape[2]))
+    for i in range(field.shape[1]):
+        for j in range(field.shape[2]):
+            if np.where(np.isnan(field[:,i,j])) != np.array([]):
+                bathymetry[i,j] = depth[np.min(np.where(np.isnan(field[:,i,j])))]
+            else:
+                bathymetry[i,j] = np.max(depth)
+    return bathymetry
+
+
 # Generate
 # path2lsm = generate_filepath(str(pathlib.Path(__file__).parent.absolute()) + "/resources/path2lsm")
