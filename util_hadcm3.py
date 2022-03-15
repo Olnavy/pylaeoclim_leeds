@@ -6,6 +6,7 @@ import matplotlib.mlab as mlab
 import matplotlib.colors
 import scipy.ndimage as ndimage
 import pandas as pd
+from scipy import stats
 
 # import xarray as xr
 
@@ -523,6 +524,15 @@ def extract_bathymetry(ds):
                 bathymetry[i,j] = np.max(depth)
     return bathymetry
 
+
+def ttest(array_prt, array_ctrl, p_value):
+    ttest_array = np.zeros((array_ctrl.shape[1], array_ctrl.shape[2]))
+    ttest_array.fill(np.nan)
+    for i in range(ttest_array.shape[0]):
+        for j in range(ttest_array.shape[1]):
+            if ~np.isnan(array_ctrl[0,i,j]):
+                ttest_array[i,j] = stats.ttest_rel(array_ctrl[:,i,j], array_prt[:,i,j]).pvalue<p_value
+    return ttest_array
 
 # Generate
 # path2lsm = generate_filepath(str(pathlib.Path(__file__).parent.absolute()) + "/resources/path2lsm")
