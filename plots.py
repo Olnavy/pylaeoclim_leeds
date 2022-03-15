@@ -75,3 +75,19 @@ class TwoSlopeNorm(matplotlib.colors.TwoSlopeNorm):
         half_range = np.max([np.abs(self.vmin - self.vcenter), np.abs(self.vmax - self.vcenter)])
         self.vmax = self.vcenter + half_range
         self.vmin = self.vcenter - half_range
+
+
+# **********
+# Processing
+# **********
+
+def scale_lightness(color, scale_l=0.5):
+    """
+    """
+    import colorsys
+    try:
+        c = matplotlib.colors.cnames[color]
+    except:
+        c = color
+    h, l, s = np.array(colorsys.rgb_to_hls(*matplotlib.colors.to_rgb(c)))
+    return colorsys.hls_to_rgb(h=h, l=min(1, 1 - scale_l*(1-l)), s=s)
