@@ -3149,6 +3149,133 @@ class HTNATS(HadCM3PTS):
                         mode_lat, value_lat, None, None, mode_t, value_t, new_start_year=new_start_year,
                         new_end_year=new_end_year, new_month_list=new_month_list)
 
+
+class HTNMTS(HadCM3PTS):
+    
+    def __init__(self, exp_name, start_year=None, end_year=None, month_list=None, chunks=None, verbose=True,
+                 debug=False, logger="print"):
+        month_list = HadCM3DS.MONTHS if month_list is None else month_list  # To overcome mutable argument error
+        super(HTNMTS, self).__init__(exp_name, start_year, end_year, file_name="htn.monthly",
+                                     month_list=month_list, chunks=chunks, verbose=verbose, debug=debug,
+                                     logger=logger)
+    
+    @staticmethod
+    def process(array_r, proc_lon, proc_lat, proc_z):
+        return OCNMDS.process(array_r, proc_lon, proc_lat, proc_z)
+    
+    def import_coordinates(self):
+        self.lon = np.sort(self.data.longitude.values)
+        self.lonb = util.guess_bounds(self.lon)
+        self.lons = self.lonb[1:] - self.lonb[0:-1]
+        self.lon_p = np.append(self.lon, self.lon[-1] + self.lons[-1])
+        self.lonb_p = util.guess_bounds(self.lon_p)
+        self.lons_p = self.lonb_p[1:] - self.lonb_p[0:-1]
+        
+        self.lat = np.sort(self.data.latitude.values)
+        self.latb = util.guess_bounds(self.lat)
+        self.lats = self.latb[1:] - self.latb[0:-1]
+        self.lat_p = np.append(self.lat, self.lat[-1] + self.lats[-1])
+        self.latb_p = util.guess_bounds(self.lat_p)
+        self.lats_p = self.latb_p[1:] - self.latb_p[0:-1]
+        
+        super(HTNMTS, self).import_coordinates()
+    
+    def htn(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None,
+            mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
+        print("__ Importing net surface heat flux.")
+        return self.get(self.data.HTN_mm_uo.isel(unspecified=0).drop("unspecified"), zone, mode_lon, value_lon,
+                        mode_lat, value_lat, None, None, mode_t, value_t, new_start_year=new_start_year,
+                        new_end_year=new_end_year, new_month_list=new_month_list)
+
+
+class OCNT200MDS(HadCM3PTS):
+    
+    def __init__(self, exp_name, start_year=None, end_year=None, month_list=None, chunks=None, verbose=True,
+                 debug=False,
+                 logger="print"):
+        month_list = HadCM3DS.MONTHS if month_list is None else month_list  # To overcome mutable argument error
+        super(OCNT200MDS, self).__init__(exp_name, start_year, end_year, file_name="ocnt200.monthly",
+                                     month_list=month_list, chunks=chunks, verbose=verbose, debug=debug, logger=logger)
+    
+    @staticmethod
+    def process(array_r, proc_lon, proc_lat, proc_z):
+        return ATMSURFMDS.process(array_r, proc_lon, proc_lat, proc_z)
+    
+    def import_coordinates(self):
+        self.lon = np.sort(self.data.longitude.values)
+        self.lonb = util.guess_bounds(self.lon)
+        self.lons = self.lonb[1:] - self.lonb[0:-1]
+        self.lon_p = np.append(self.lon, self.lon[-1] + self.lons[-1])
+        self.lonb_p = util.guess_bounds(self.lon_p)
+        self.lons_p = self.lonb_p[1:] - self.lonb_p[0:-1]
+        
+        self.lat = np.sort(self.data.latitude.values)
+        self.latb = util.guess_bounds(self.lat)
+        self.lats = self.latb[1:] - self.latb[0:-1]
+        self.lat_p = self.lat
+        self.latb_p = util.guess_bounds(self.lat_p)
+        self.lats_p = self.latb_p[1:] - self.latb_p[0:-1]
+        
+        super(OCNT200MDS, self).import_coordinates()
+    
+    def temp(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None, mode_t=None,
+            value_t=None, new_start_year=None, new_end_year=None, new_month_list=None, convert=True):
+        print("__ Importing Temperature at 200m")
+        data = self.convert() if convert else self.data
+        return self.get(data.temp_mm_dpth, zone,
+                        mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t, value_t,
+                        new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
+    
+    def convert(self):
+        # self.data.attrs['valid_min'] = self.data.attrs['valid_min'] - 273.15
+        # self.data.attrs['valid_max'] = self.data.attrs['valid_max'] - 273.15
+        return self.data - 273.15
+
+
+class OCNT300MDS(HadCM3PTS):
+    
+    def __init__(self, exp_name, start_year=None, end_year=None, month_list=None, chunks=None, verbose=True,
+                 debug=False,
+                 logger="print"):
+        month_list = HadCM3DS.MONTHS if month_list is None else month_list  # To overcome mutable argument error
+        super(OCNT300MDS, self).__init__(exp_name, start_year, end_year, file_name="ocnt300.monthly",
+                                         month_list=month_list, chunks=chunks, verbose=verbose, debug=debug,
+                                         logger=logger)
+    
+    @staticmethod
+    def process(array_r, proc_lon, proc_lat, proc_z):
+        return ATMSURFMDS.process(array_r, proc_lon, proc_lat, proc_z)
+    
+    def import_coordinates(self):
+        self.lon = np.sort(self.data.longitude.values)
+        self.lonb = util.guess_bounds(self.lon)
+        self.lons = self.lonb[1:] - self.lonb[0:-1]
+        self.lon_p = np.append(self.lon, self.lon[-1] + self.lons[-1])
+        self.lonb_p = util.guess_bounds(self.lon_p)
+        self.lons_p = self.lonb_p[1:] - self.lonb_p[0:-1]
+        
+        self.lat = np.sort(self.data.latitude.values)
+        self.latb = util.guess_bounds(self.lat)
+        self.lats = self.latb[1:] - self.latb[0:-1]
+        self.lat_p = self.lat
+        self.latb_p = util.guess_bounds(self.lat_p)
+        self.lats_p = self.latb_p[1:] - self.latb_p[0:-1]
+        
+        super(OCNT300MDS, self).import_coordinates()
+    
+    def temp(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None, mode_t=None,
+             value_t=None, new_start_year=None, new_end_year=None, new_month_list=None, convert=True):
+        print("__ Importing Temperature at 300m")
+        data = self.convert() if convert else self.data
+        return self.get(data.temp_mm_dpth, zone,
+                        mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t, value_t,
+                        new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
+    
+    def convert(self):
+        # self.data.attrs['valid_min'] = self.data.attrs['valid_min'] - 273.15
+        # self.data.attrs['valid_max'] = self.data.attrs['valid_max'] - 273.15
+        return self.data - 273.15
+
 # *************
 # LAND-SEA MASK
 # *************
