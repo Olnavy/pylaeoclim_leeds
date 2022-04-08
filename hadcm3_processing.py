@@ -3222,7 +3222,7 @@ class OCNT200MDS(HadCM3PTS):
             value_t=None, new_start_year=None, new_end_year=None, new_month_list=None, convert=True):
         print("__ Importing Temperature at 200m")
         data = self.convert() if convert else self.data
-        return self.get(data.temp_mm_dpth, zone,
+        return self.get(data.temp_mm_dpth.isel(depth_1=0).drop("depth_1"), zone,
                         mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t, value_t,
                         new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
     
@@ -3267,7 +3267,7 @@ class OCNT300MDS(HadCM3PTS):
              value_t=None, new_start_year=None, new_end_year=None, new_month_list=None, convert=True):
         print("__ Importing Temperature at 300m")
         data = self.convert() if convert else self.data
-        return self.get(data.temp_mm_dpth, zone,
+        return self.get(data.temp_mm_dpth.isel(depth_1=0).drop("depth_1"), zone,
                         mode_lon, value_lon, mode_lat, value_lat, None, None, mode_t, value_t,
                         new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
     
