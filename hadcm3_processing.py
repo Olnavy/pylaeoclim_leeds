@@ -3188,13 +3188,13 @@ class HTNMTS(HadCM3PTS):
                         new_end_year=new_end_year, new_month_list=new_month_list)
 
 
-class OCNT200MDS(HadCM3PTS):
+class OCNT200MTS(HadCM3PTS):
     
     def __init__(self, exp_name, start_year=None, end_year=None, month_list=None, chunks=None, verbose=True,
                  debug=False,
                  logger="print"):
         month_list = HadCM3DS.MONTHS if month_list is None else month_list  # To overcome mutable argument error
-        super(OCNT200MDS, self).__init__(exp_name, start_year, end_year, file_name="ocnt200.monthly",
+        super(OCNT200MTS, self).__init__(exp_name, start_year, end_year, file_name="ocnt200.monthly",
                                      month_list=month_list, chunks=chunks, verbose=verbose, debug=debug, logger=logger)
     
     @staticmethod
@@ -3216,9 +3216,9 @@ class OCNT200MDS(HadCM3PTS):
         self.latb_p = util.guess_bounds(self.lat_p)
         self.lats_p = self.latb_p[1:] - self.latb_p[0:-1]
         
-        super(OCNT200MDS, self).import_coordinates()
+        super(OCNT200MTS, self).import_coordinates()
     
-    def temp(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None, mode_t=None,
+    def temperature(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None, mode_t=None,
             value_t=None, new_start_year=None, new_end_year=None, new_month_list=None, convert=True):
         print("__ Importing Temperature at 200m")
         data = self.convert() if convert else self.data
@@ -3232,13 +3232,13 @@ class OCNT200MDS(HadCM3PTS):
         return self.data - 273.15
 
 
-class OCNT300MDS(HadCM3PTS):
+class OCNT300MTS(HadCM3PTS):
     
     def __init__(self, exp_name, start_year=None, end_year=None, month_list=None, chunks=None, verbose=True,
                  debug=False,
                  logger="print"):
         month_list = HadCM3DS.MONTHS if month_list is None else month_list  # To overcome mutable argument error
-        super(OCNT300MDS, self).__init__(exp_name, start_year, end_year, file_name="ocnt300.monthly",
+        super(OCNT300MTS, self).__init__(exp_name, start_year, end_year, file_name="ocnt300.monthly",
                                          month_list=month_list, chunks=chunks, verbose=verbose, debug=debug,
                                          logger=logger)
     
@@ -3261,9 +3261,9 @@ class OCNT300MDS(HadCM3PTS):
         self.latb_p = util.guess_bounds(self.lat_p)
         self.lats_p = self.latb_p[1:] - self.latb_p[0:-1]
         
-        super(OCNT300MDS, self).import_coordinates()
+        super(OCNT300MTS, self).import_coordinates()
     
-    def temp(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None, mode_t=None,
+    def temperature(self, zone=zones.NoZone(), mode_lon=None, value_lon=None, mode_lat=None, value_lat=None, mode_t=None,
              value_t=None, new_start_year=None, new_end_year=None, new_month_list=None, convert=True):
         print("__ Importing Temperature at 300m")
         data = self.convert() if convert else self.data
