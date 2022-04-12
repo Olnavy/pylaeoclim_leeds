@@ -80,31 +80,57 @@ class Box(Zone):
     
     def compact(self, geo_da):
         # Test lon etc.
-        
-        if self.lon_min is not None and 'longitude' in geo_da.data.dims:
-            geo_da.data = geo_da.data.where(geo_da.data.longitude >= self.lon_min, drop=True)
-        if self.lon_min is not None and 'longitudeb' in geo_da.data.dims:
-            geo_da.data = geo_da.data.where(geo_da.data.longitudeb >= self.lon_min, drop=True)
-        if self.lon_max is not None and 'longitude' in geo_da.data.dims:
-            geo_da.data = geo_da.data.where(geo_da.data.longitude <= self.lon_max, drop=True)
-        if self.lon_max is not None and 'longitudeb' in geo_da.data.dims:
-            geo_da.data = geo_da.data.where(geo_da.data.longitudeb <= self.lon_max, drop=True)
-        if self.lat_min is not None and 'latitude' in geo_da.data.dims:
-            geo_da.data = geo_da.data.where(geo_da.data.latitude >= self.lat_min, drop=True)
-        if self.lat_min is not None and 'latitudeb' in geo_da.data.dims:
-            geo_da.data = geo_da.data.where(geo_da.data.latitudeb >= self.lat_min, drop=True)
-        if self.lat_max is not None and 'latitude' in geo_da.data.dims:
-            geo_da.data = geo_da.data.where(geo_da.data.latitude <= self.lat_max, drop=True)
-        if self.lat_max is not None and 'latitudeb' in geo_da.data.dims:
-            geo_da.data = geo_da.data.where(geo_da.data.latitudeb <= self.lat_max, drop=True)
-        if self.z_min is not None and 'z' in geo_da.data.dims:
-            geo_da.data = geo_da.data.where(geo_da.data.z >= self.z_min, drop=True)
-        if self.z_min is not None and 'zb' in geo_da.data.dims:
-            geo_da.data = geo_da.data.where(geo_da.data.zb >= self.z_min, drop=True)
-        if self.z_max is not None and 'z' in geo_da.data.dims:
-            geo_da.data = geo_da.data.where(geo_da.data.z <= self.z_max, drop=True)
-        if self.z_max is not None and 'zb' in geo_da.data.dims:
-            geo_da.data = geo_da.data.where(geo_da.data.zb <= self.z_max, drop=True)
+
+        if 'longitude' in geo_da.data.dims:
+            geo_da.data = geo_da.data.isel(longitude=slice(
+                util.coordinate_to_index(geo_da.data.longitude, self.lon_min),
+                util.coordinate_to_index(geo_da.data.longitude, self.lon_max)))
+        if 'longitudeb' in geo_da.data.dims:
+            geo_da.data = geo_da.data.isel(longitudeb=slice(
+                util.coordinate_to_index(geo_da.data.longitudeb, self.lon_min),
+                util.coordinate_to_index(geo_da.data.longitudeb, self.lon_max)))
+        if 'latitude' in geo_da.data.dims:
+            geo_da.data = geo_da.data.isel(latitude=slice(
+                util.coordinate_to_index(geo_da.data.latitude, self.lat_min),
+                util.coordinate_to_index(geo_da.data.latitude, self.lat_max)))
+        if 'latitudeb' in geo_da.data.dims:
+            geo_da.data = geo_da.data.isel(latitudeb=slice(
+                util.coordinate_to_index(geo_da.data.latitudeb, self.lat_min),
+                util.coordinate_to_index(geo_da.data.latitudeb, self.lat_max)))
+        if 'z' in geo_da.data.dims:
+            geo_da.data = geo_da.data.isel(z=slice(
+                util.coordinate_to_index(geo_da.data.z, self.z_min),
+                util.coordinate_to_index(geo_da.data.z, self.z_max)))
+        if 'zb' in geo_da.data.dims:
+            geo_da.data = geo_da.data.isel(zb=slice(
+                util.coordinate_to_index(geo_da.data.zb, self.z_min),
+                util.coordinate_to_index(geo_da.data.zb, self.z_max)))
+
+            
+        # if self.lon_min is not None and 'longitude' in geo_da.data.dims:
+        #     geo_da.data = geo_da.data.where(geo_da.data.longitude >= self.lon_min, drop=True)
+        # if self.lon_min is not None and 'longitudeb' in geo_da.data.dims:
+        #     geo_da.data = geo_da.data.where(geo_da.data.longitudeb >= self.lon_min, drop=True)
+        # if self.lon_max is not None and 'longitude' in geo_da.data.dims:
+        #     geo_da.data = geo_da.data.where(geo_da.data.longitude <= self.lon_max, drop=True)
+        # if self.lon_max is not None and 'longitudeb' in geo_da.data.dims:
+        #     geo_da.data = geo_da.data.where(geo_da.data.longitudeb <= self.lon_max, drop=True)
+        # if self.lat_min is not None and 'latitude' in geo_da.data.dims:
+        #     geo_da.data = geo_da.data.where(geo_da.data.latitude >= self.lat_min, drop=True)
+        # if self.lat_min is not None and 'latitudeb' in geo_da.data.dims:
+        #     geo_da.data = geo_da.data.where(geo_da.data.latitudeb >= self.lat_min, drop=True)
+        # if self.lat_max is not None and 'latitude' in geo_da.data.dims:
+        #     geo_da.data = geo_da.data.where(geo_da.data.latitude <= self.lat_max, drop=True)
+        # if self.lat_max is not None and 'latitudeb' in geo_da.data.dims:
+        #     geo_da.data = geo_da.data.where(geo_da.data.latitudeb <= self.lat_max, drop=True)
+        # if self.z_min is not None and 'z' in geo_da.data.dims:
+        #     geo_da.data = geo_da.data.where(geo_da.data.z >= self.z_min, drop=True)
+        # if self.z_min is not None and 'zb' in geo_da.data.dims:
+        #     geo_da.data = geo_da.data.where(geo_da.data.zb >= self.z_min, drop=True)
+        # if self.z_max is not None and 'z' in geo_da.data.dims:
+        #     geo_da.data = geo_da.data.where(geo_da.data.z <= self.z_max, drop=True)
+        # if self.z_max is not None and 'zb' in geo_da.data.dims:
+        #     geo_da.data = geo_da.data.where(geo_da.data.zb <= self.z_max, drop=True)
         
         print("____ Data compacted to the zone.")
         # geo_da.fit_coordinates_to_data()

@@ -211,6 +211,10 @@ def coordinate_to_index(longitude, latitude, target_lon, target_lat):
     return j_out, i_out
 
 
+def coordinate_to_index(coordinate, target):
+    return int(np.abs(coordinate - target).argmin())
+
+
 def lon_to_index(longitude, target_lon):
     return (np.abs(longitude - target_lon)).argmin()
 
