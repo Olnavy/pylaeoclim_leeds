@@ -185,7 +185,7 @@ def running_mean(data, n, axis=0):
     return out_mean
 
 
-def coordinate_to_index(longitude, latitude, target_lon, target_lat):
+def coordinates_to_gridpoint(longitude, latitude, target_lon, target_lat):
     """
         Find the closet -or at least pretty clos- indexes from a coordiantes grid to a point.
         inc should have the magnitude of the grd size
@@ -207,7 +207,7 @@ def coordinate_to_index(longitude, latitude, target_lon, target_lat):
         """
     i_out = (np.abs(latitude - target_lat)).argmin()
     j_out = (np.abs(longitude - target_lon)).argmin()
-    
+
     return j_out, i_out
 
 
