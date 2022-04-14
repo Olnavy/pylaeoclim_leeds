@@ -2681,12 +2681,13 @@ class HadCM3PTS(HadCM3DS):
 
             if self.debug: start = time.time()
 
-            start_crop = self.start_year if self.start_year != self.get_start_year() else None
-            end_crop = self.end_year if self.end_year != self.get_end_year() else None
+            start_crop = cftime.Datetime360Day(self.start_year, 1, 1, 0, 0, 0, 0) if self.start_year != \
+                                                                                     self.get_start_year() else None
+            end_crop = cftime.Datetime360Day(self.end_year, 12, 30, 0, 0, 0, 0) if self.end_year != \
+                                                                                   self.get_end_year() else None
 
-            self.data = self.data.sel(t=slice(cftime.Datetime360Day(start_crop, 12, 30, 0, 0, 0, 0),
-                                              cftime.Datetime360Day(end_crop, 12, 30, 0, 0, 0, 0)))
-
+            self.data = self.data.sel(t=slice(start_crop, end_crop))
+            
             # if self.start_year != self.get_start_year():
             #     self.data = self.data.sel(t=self.data.t.where(
             #         self.data.t.t >= cftime.Datetime360Day(self.start_year, 1, 1), drop=True).values)
