@@ -212,7 +212,10 @@ def coordinate_to_index(longitude, latitude, target_lon, target_lat):
 
 
 def coordinate_to_index(coordinate, target):
-    return int(np.abs(coordinate - target).argmin())
+    if target is None:
+        return None
+    else:
+        return int(np.abs(coordinate - target).argmin())
 
 
 def lon_to_index(longitude, target_lon):
