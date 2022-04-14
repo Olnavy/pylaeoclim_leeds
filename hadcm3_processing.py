@@ -2676,7 +2676,7 @@ class HadCM3PTS(HadCM3DS):
             raise error
     
         if min(self.data.t.values).year > self.start_year or max(self.data.t.values).year < self.end_year:
-            raise ValueError(f"Inavlid start_year or end_year. Please check that they fit the valid range\n"
+            raise ValueError(f"Invalid start_year or end_year. Please check that they fit the valid range\n"
                              f"Valid range : start_year = {min(self.data.t.values).year}, "
                              f"end_year = {max(self.data.t.values).year}")
             
@@ -2692,33 +2692,12 @@ class HadCM3PTS(HadCM3DS):
                                                                                  self.get_start_year() else None
         end_crop = cftime.Datetime360Day(self.end_year, 12, 30, 0, 0, 0, 0) if self.end_year != \
                                                                                self.get_end_year() else None
-
-        print(self.data)
-        print(start_crop)
-        print(end_crop)
         
-        self.data = self.data.sel(t=slice(start_crop, end_crop))
+        self.data = self.data.isel(t=slice(
+            util.coordinate_to_index(self.t, start_crop),
+            util.coordinate_to_index(self.t, end_crop)))
         
-        # if self.start_year != self.get_start_year():
-        #     self.data = self.data.sel(t=self.data.t.where(
-        #         self.data.t.t >= cftime.Datetime360Day(self.start_year, 1, 1), drop=True).values)
-        # if self.end_year != self.get_end_year():
-        #     self.data = self.data.sel(t=self.data.t.where(
-        #         self.data.t.t <= cftime.Datetime360Day(self.end_year, 12, 30), drop=True))
-
-        # self.data = self.data.where(self.data.t >= cftime.Datetime360Day(self.start_year, 1, 1), drop=True)
-        # self.data = self.data.where(self.data.t <= cftime.Datetime360Day(self.end_year, 12, 30), drop=True)
         if self.debug: print(f"* Time elapsed for cropping years : {time.time() - start}")
-
-        # if self.debug: start = time.time()
-        # if self.start_year != self.get_start_year():
-        #     self.data = self.data.where(self.data.t >= cftime.Datetime360Day(self.start_year, 1, 1), drop=True)
-        # if self.debug: print(f"* Time elapsed for crop start year : {time.time() - start}")
-        #
-        # if self.debug: start = time.time()
-        # if self.end_year != self.get_end_year():
-        #     self.data = self.data.where(self.data.t <= cftime.Datetime360Day(self.end_year, 12, 30), drop=True)
-        # if self.debug: print(f"* Time elapsed for crop end years : {time.time() - start}")
         
         if self.debug: start = time.time()
         if self.months is not self.MONTHS and self.months is not None:
