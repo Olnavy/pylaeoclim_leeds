@@ -2694,8 +2694,8 @@ class HadCM3PTS(HadCM3DS):
                                                                                self.get_end_year() else None
         
         self.data = self.data.isel(t=slice(
-            util.coordinate_to_index(self.t, start_crop),
-            util.coordinate_to_index(self.t, end_crop)))
+            util.coordinate_to_index(self.data.t.values, start_crop),
+            util.coordinate_to_index(self.data.t.values, end_crop)))
         
         if self.debug: print(f"* Time elapsed for cropping years : {time.time() - start}")
         
