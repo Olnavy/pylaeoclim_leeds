@@ -793,17 +793,10 @@ class HadCM3TS(HadCM3DS):
             end_crop = cftime.Datetime360Day(self.end_year, 12, 30, 0, 0, 0, 0) if self.end_year != \
                                                                                    self.get_end_year() else None
 
-            self.data = self.data.sel(t=slice(start_crop, end_crop))
+            self.data = self.data.isel(t=slice(
+                util.coordinate_to_index(self.data.t.values, start_crop),
+                util.coordinate_to_index(self.data.t.values, end_crop)))
             
-            # if self.start_year != self.get_start_year():
-            #     self.data = self.data.sel(t=self.data.t.where(
-            #         self.data.t.t >= cftime.Datetime360Day(self.start_year, 1, 1), drop=True).values)
-            # if self.end_year != self.get_end_year():
-            #     self.data = self.data.sel(t=self.data.t.where(
-            #         self.data.t.t <= cftime.Datetime360Day(self.end_year, 12, 30), drop=True))
-                
-                # self.data = self.data.where(self.data.t >= cftime.Datetime360Day(self.start_year, 1, 1), drop=True)
-                # self.data = self.data.where(self.data.t <= cftime.Datetime360Day(self.end_year, 12, 30), drop=True)
             if self.debug: print(f"* Time elapsed for cropping years : {time.time() - start}")
             
             if self.debug: start = time.time()
