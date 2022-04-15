@@ -541,5 +541,30 @@ def ttest(array_prt, array_ctrl, p_value):
                 ttest_array[i,j] = stats.ttest_rel(array_ctrl[:,i,j], array_prt[:,i,j]).pvalue<p_value
     return ttest_array
 
+
+def budget(data_array, box):
+    out_array = data_array
+    if 'longitude' in data_array.dims:
+        crop_min = coordinate_to_index(data_array.longitude, box.lon_min) if box.lon_min is not None else None
+        crop_max = coordinate_to_index(data_array.longitude, box.lon_max) if box.lon_max is not None else None
+        out_array = out_array.isel(longitude=slice(crop_min, crop_max))
+    if 'latitude' in data_array.dims:
+        crop_min = coordinate_to_index(data_array.latitude, box.lat_min) if box.lat_min is not None else None
+        crop_max = coordinate_to_index(data_array.latitude, box.lat_max) if box.lat_max is not None else None
+        out_array = out_array.isel(latitude=slice(crop_min, crop_max))
+    if 'depth_1' in data_array.dims:
+        crop_min = coordinate_to_index(data_array.depth_1, box.z_min) if box.z_min is not None else None
+        crop_max = coordinate_to_index(data_array.depth_1, box.z_max) if box.z_max is not None else None
+        out_array = out_array.isel(depth_1=slice(crop_min, crop_max))
+    if 'depth_2' in data_array.dims:
+        crop_min = coordinate_to_index(data_array.depth_2, box.z_min) if box.z_min is not None else None
+        crop_max = coordinate_to_index(data_array.depth_2, box.z_max) if box.z_max is not None else None
+        out_array = out_array.isel(depth_2=slice(crop_min, crop_max))
+
+    if 'depth_1' in data_array.dims:
+        return out_array.sum(dim='longitude', skipna=True).sum(dim='latitude', skipna=True).sum(dim='depth_1', skipna=True)
+    else:
+        return out_array.sum(dim='longitude', skipna=True).sum(dim='latitude', skipna=True).sum(dim='depth_2', skipna=True)
+
 # Generate
 # path2lsm = generate_filepath(str(pathlib.Path(__file__).parent.absolute()) + "/resources/path2lsm")
