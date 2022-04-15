@@ -7,6 +7,7 @@ import matplotlib.colors
 import scipy.ndimage as ndimage
 import pandas as pd
 from scipy import stats
+import xarray as xr
 
 # import xarray as xr
 
@@ -118,6 +119,7 @@ def surface_matrix(lon, lat):
 
 
 def volume_matrix(lon, lat, z):
+    # TO DO: CHANGE TO DATA ARRAY ( SEE BUDGET)
     n_lat, n_lon, n_z = len(lat), len(lon), len(z)
     if any([n_lat == 1, n_lon == 1, n_z == 1]):
         raise ValueError(f"Dimensions length must be >= 1.")
@@ -542,16 +544,17 @@ def ttest(array_prt, array_ctrl, p_value):
     return ttest_array
 
 
-def budget(data_array, box):
+def budget(data_array, box, volume=True):
+    # TO MODIFY TO BE MORE AGILE
     out_array = data_array
-    if 'longitude' in data_array.dims:
-        crop_min = coordinate_to_index(data_array.longitude, box.lon_min) if box.lon_min is not None else None
-        crop_max = coordinate_to_index(data_array.longitude, box.lon_max) if box.lon_max is not None else None
-        out_array = out_array.isel(longitude=slice(crop_min, crop_max))
-    if 'latitude' in data_array.dims:
-        crop_min = coordinate_to_index(data_array.latitude, box.lat_min) if box.lat_min is not None else None
-        crop_max = coordinate_to_index(data_array.latitude, box.lat_max) if box.lat_max is not None else None
-        out_array = out_array.isel(latitude=slice(crop_min, crop_max))
+    # if 'longitude' in data_array.dims: # REMOVED TEST: LONGITUDE HAS TO BE IN DATA_ARRAY
+    crop_min = coordinate_to_index(data_array.longitude, box.lon_min) if box.lon_min is not None else None
+    crop_max = coordinate_to_index(data_array.longitude, box.lon_max) if box.lon_max is not None else None
+    out_array = out_array.isel(longitude=slice(crop_min, crop_max))
+    # if 'latitude' in data_array.dims: # REMOVED TEST: LONGITUDE HAS TO BE IN DATA_ARRAY
+    crop_min = coordinate_to_index(data_array.latitude, box.lat_min) if box.lat_min is not None else None
+    crop_max = coordinate_to_index(data_array.latitude, box.lat_max) if box.lat_max is not None else None
+    out_array = out_array.isel(latitude=slice(crop_min, crop_max))
     if 'depth_1' in data_array.dims:
         crop_min = coordinate_to_index(data_array.depth_1, box.z_min) if box.z_min is not None else None
         crop_max = coordinate_to_index(data_array.depth_1, box.z_max) if box.z_max is not None else None
@@ -561,9 +564,44 @@ def budget(data_array, box):
         crop_max = coordinate_to_index(data_array.depth_2, box.z_max) if box.z_max is not None else None
         out_array = out_array.isel(depth_2=slice(crop_min, crop_max))
 
+    # Multiplication by volume matrix
+    if volume:
+        if 't' in data_array.dims:
+            volume_data = np.resize(volume_matrix(out_array.longitude, out_array.latitude, out_array.depth_1),
+                                    (len(out_array.t), len(out_array.latitude), len(out_array.longitude),
+                                     len(out_array.depth_1)))
+            
+            if 'depth_1' in data_array.dims:
+                volume_array = xr.DataArray(volume_data,
+                                            coords=[out_array.t, out_array.latitude, out_array.longitude,
+                                                    out_array.depth_1],
+                                            dims=['t', 'latitude', 'longitude', 'depth_1'])
+
+            elif 'depth_2' in data_array.dims:
+                volume_array = xr.DataArray(volume_data,
+                                            coords=[out_array.t, out_array.latitude, out_array.longitude,
+                                                    out_array.depth_2],
+                                            dims=['t', 'latitude', 'longitude', 'depth_2'])
+        
+        else:
+            volume_data = volume_matrix(out_array.longitude, out_array.latitude, out_array.depth_1)
+            
+            if 'depth_1' in data_array.dims:
+                volume_array = xr.DataArray(volume_data,
+                                            coords=[out_array.latitude, out_array.longitude, out_array.depth_1],
+                                            dims=['latitude', 'longitude', 'depth_1'])
+    
+            elif 'depth_2' in data_array.dims:
+                volume_array = xr.DataArray(volume_data,
+                                            coords=[out_array.latitude, out_array.longitude, out_array.depth_2],
+                                            dims=['latitude', 'longitude', 'depth_2'])
+
+        out_array = (out_array * 1000 + 35) * volume_array
+
+
     if 'depth_1' in data_array.dims:
         return out_array.sum(dim='longitude', skipna=True).sum(dim='latitude', skipna=True).sum(dim='depth_1', skipna=True)
-    else:
+    elif 'depth_2' in data_array.dims:
         return out_array.sum(dim='longitude', skipna=True).sum(dim='latitude', skipna=True).sum(dim='depth_2', skipna=True)
 
 # Generate
