@@ -544,7 +544,11 @@ def ttest(array_prt, array_ctrl, p_value):
     return ttest_array
 
 
-def budget(data_array, box, volume=True):
+def budget(data_array, box, volume=None):
+    
+    if volume not in ['absolute', 'volumetric', None]:
+        raise ValueError("Volume attribute should be either 'absolute', 'volumetric' or None")
+    
     # TO MODIFY TO BE MORE AGILE
     out_array = data_array
     # if 'longitude' in data_array.dims: # REMOVED TEST: LONGITUDE HAS TO BE IN DATA_ARRAY
@@ -565,7 +569,7 @@ def budget(data_array, box, volume=True):
         out_array = out_array.isel(depth_2=slice(crop_min, crop_max))
 
     # Multiplication by volume matrix
-    if volume:
+    if volume is not None:
         if 't' in data_array.dims:
             volume_data = np.resize(volume_matrix(out_array.longitude, out_array.latitude, out_array.depth_1),
                                     (len(out_array.t), len(out_array.latitude), len(out_array.longitude),
@@ -596,7 +600,12 @@ def budget(data_array, box, volume=True):
                                             coords=[out_array.latitude, out_array.longitude, out_array.depth_2],
                                             dims=['latitude', 'longitude', 'depth_2'])
 
-        out_array = (out_array * 1000 + 35) * volume_array
+        if volume=='absolute':
+            out_array = (out_array * 1000 + 35) * volume_array
+        elif volume=='volumetric':
+            total_volume = volume_matrix(out_array.longitude, out_array.latitude, out_array.depth_1).sum()
+            print(total_volume)
+            out_array = (out_array * 1000 + 35)/total_volume * volume_array
 
     if 'depth_1' in data_array.dims:
         return out_array.sum(dim='longitude', skipna=True).sum(dim='latitude', skipna=True).sum(dim='depth_1', skipna=True)
