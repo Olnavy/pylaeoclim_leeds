@@ -118,7 +118,7 @@ def surface_matrix(lon, lat):
     return surface
 
 
-def volume_matrix(lon, lat, z):
+def volume_matrix(lon, lat, z, transpose=None):
     # TO DO: CHANGE TO DATA ARRAY ( SEE BUDGET)
     n_lat, n_lon, n_z = len(lat), len(lon), len(z)
     if any([n_lat == 1, n_lon == 1, n_z == 1]):
@@ -130,7 +130,10 @@ def volume_matrix(lon, lat, z):
         for j in range(n_lon):
             for k in range(n_z):
                 volume[i, j, k] = cell_area(n_lon, lat_b[i], lat_b[i + 1]) * np.abs(z_b[k + 1] - z_b[k])
-    return volume
+    if transpose is None:
+        return volume
+    else:
+        return np.transpose(volume, transpose)
 
 
 def rmean(data, n):
@@ -600,11 +603,12 @@ def budget(data_array, box, volume=None):
                                             coords=[out_array.latitude, out_array.longitude, out_array.depth_2],
                                             dims=['latitude', 'longitude', 'depth_2'])
 
-        if volume=='absolute':
-            out_array = (out_array * 1000 + 35) * volume_array
-        elif volume=='volumetric':
-            total_volume = volume_matrix(out_array.longitude, out_array.latitude, out_array.depth_1).sum()
-            print(total_volume)
+        if volume == 'absolute':
+            out_array = (out_array * 1000 + 35) * 1000 * volume_array
+        elif volume == 'volumetric':
+            total_volume = np.sum(
+                np.isfinite(out_array[0].values) *
+                volume_matrix(out_array.longitude, out_array.latitude, out_array.depth_1), transpose=(2, 0, 1))
             out_array = (out_array * 1000 + 35)/total_volume * volume_array
 
     if 'depth_1' in data_array.dims:
