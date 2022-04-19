@@ -608,7 +608,7 @@ def budget(data_array, box, volume=None):
         elif volume == 'volumetric':
             total_volume = np.sum(
                 np.isfinite(out_array[0].values) *
-                volume_matrix(out_array.longitude, out_array.latitude, out_array.depth_1), transpose=(2, 0, 1))
+                volume_matrix(out_array.longitude, out_array.latitude, out_array.depth_1, transpose=(2, 0, 1)))
             out_array = (out_array * 1000 + 35)/total_volume * volume_array
 
     if 'depth_1' in data_array.dims:
