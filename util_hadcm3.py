@@ -596,8 +596,7 @@ def budget(data_array, box, volume=True):
                                             coords=[out_array.latitude, out_array.longitude, out_array.depth_2],
                                             dims=['latitude', 'longitude', 'depth_2'])
 
-        out_array = (out_array * 1000 + 35) * volume_array
-
+        # out_array = (out_array * 1000 + 35) * volume_array
 
     if 'depth_1' in data_array.dims:
         return out_array.sum(dim='longitude', skipna=True).sum(dim='latitude', skipna=True).sum(dim='depth_1', skipna=True)
