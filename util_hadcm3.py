@@ -480,6 +480,10 @@ def density(t, s, order=2):
     C = [-5.72e-3, 1.02e-4]
     D = [4.8314e-4]
     
+    if order == 1:
+        return A[0] + A[1] * t + \
+               B[0] * s
+    
     if order == 3:
         return A[0] + A[1] * t + A[2] * t ** 2 + A[3] * t ** 3 + \
                B[0] * s + B[1] * s * t + B[2] * s * t ** 2+ \
@@ -492,13 +496,41 @@ def density(t, s, order=2):
                D[0] * s ** 2
 
 
-def density_cube(temp, sal):
-    n_z, n_lat, n_lon = temp.shape
+def density_cube(temp, sal, dim_t=None):
+    """
+    To switch to data_array
+    :param temp: np.ndarray, t*spatial
+    :param sal: np.ndarray, t*spatial
+    :param dim: list, dimensions as strings
+    :return:
+    """
+    
     density_out = np.zeros(temp.shape)
-    for i_z in range(n_z):
-        for i_lat in range(n_lat):
-            for i_lon in range(n_lon):
-                density_out[i_z, i_lat, i_lon] = density(temp[i_z, i_lat, i_lon], sal[i_z, i_lat, i_lon])
+    
+    if dim_t is None:
+        print("____ density cube: Assuming dimensions from number of dimensions.")
+        if temp.ndim == 4:
+            dim_t = True
+        else:
+            dim_t = False
+    
+    if dim_t:
+        n_t = temp.shape[0]
+        for t in range(n_t):
+            print(t)
+            density_out[t] = density_cube(temp[t], sal[t], dim_t=False)
+    
+    if not dim_t:
+        density_out = np.vectorize(lambda a, b: density(a, b))(temp, sal)
+    
+    #     if 't' not in dim:
+    #         n_z, n_lat, n_lon = temp.shape
+    #         density_out
+    #         for i_z in range(n_z):
+    #             for i_lat in range(n_lat):
+    #                 for i_lon in range(n_lon):
+    #                     density_out[i_z, i_lat, i_lon] = density(temp[i_z, i_lat, i_lon], sal[i_z, i_lat, i_lon])
+    
     return density_out
 
 
