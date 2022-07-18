@@ -168,6 +168,7 @@ class GeoDataArray:
                                 self.proc_z).values if processing else self.data.where(self.data.values != 0).values
     
     def processed_time(self, new_start_year=None):
+        # self.t.dt.year.values WORKS BETTER, TO IMPLEMENT
         return np.linspace(0, self.end_year - self.start_year, len(self.t)) + \
                (new_start_year if new_start_year is not None else self.start_year)
     
