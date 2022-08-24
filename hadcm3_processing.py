@@ -1323,14 +1323,14 @@ class OCNUVEL01MTS(HadCM3TS):
         return OCNMDS.process(array_r, proc_lon, proc_lat, proc_z)
     
     def import_coordinates(self):
-        self.lonb = np.sort(self.data.longitude1.values)
+        self.lonb = np.sort(self.data.longitude_1.values)
         self.lon = util.guess_from_bounds(self.lonb)
         self.lons = self.lonb[1:] - self.lonb[0:-1]
         self.lon_p = np.append(self.lon, self.lon[-1] + self.lons[-1])
         self.lonb_p = util.guess_bounds(self.lon_p)
         self.lons_p = self.lonb_p[1:] - self.lonb_p[0:-1]
         
-        self.latb = np.sort(self.data.latitude1.values)
+        self.latb = np.sort(self.data.latitude_1.values)
         self.lat = util.guess_from_bounds(self.latb)
         self.lats = self.latb[1:] - self.latb[0:-1]
         self.lat_p = np.append(self.lat, self.lat[-1] + self.lats[-1])
@@ -1359,14 +1359,14 @@ class OCNUVELATS(HadCM3TS):
         return OCNYDS.process(array_r, proc_lon, proc_lat, proc_z)
     
     def import_coordinates(self):
-        self.lonb = np.sort(self.data.longitude1.values)
+        self.lonb = np.sort(self.data.longitude_1.values)
         self.lon = util.guess_from_bounds(self.lonb)
         self.lons = self.lonb[1:] - self.lonb[0:-1]
         self.lon_p = np.append(self.lon, self.lon[-1] + self.lons[-1])
         self.lonb_p = util.guess_bounds(self.lon_p)
         self.lons_p = self.lonb_p[1:] - self.lonb_p[0:-1]
         
-        self.latb = np.sort(self.data.latitude1.values)
+        self.latb = np.sort(self.data.latitude_1.values)
         self.lat = util.guess_from_bounds(self.latb)
         self.lats = self.latb[1:] - self.latb[0:-1]
         self.lat_p = np.append(self.lat, self.lat[-1] + self.lats[-1])
@@ -1408,14 +1408,14 @@ class OCNVVEL01MTS(HadCM3TS):
         return OCNMDS.process(array_r, proc_lon, proc_lat, proc_z)
     
     def import_coordinates(self):
-        self.lonb = np.sort(self.data.longitude1.values)
+        self.lonb = np.sort(self.data.longitude_1.values)
         self.lon = util.guess_from_bounds(self.lonb)
         self.lons = self.lonb[1:] - self.lonb[0:-1]
         self.lon_p = np.append(self.lon, self.lon[-1] + self.lons[-1])
         self.lonb_p = util.guess_bounds(self.lon_p)
         self.lons_p = self.lonb_p[1:] - self.lonb_p[0:-1]
         
-        self.latb = np.sort(self.data.latitude1.values)
+        self.latb = np.sort(self.data.latitude_1.values)
         self.lat = util.guess_from_bounds(self.latb)
         self.lats = self.latb[1:] - self.latb[0:-1]
         self.lat_p = np.append(self.lat, self.lat[-1] + self.lats[-1])
@@ -1444,14 +1444,14 @@ class OCNVVELATS(HadCM3TS):
         return OCNYDS.process(array_r, proc_lon, proc_lat, proc_z)
     
     def import_coordinates(self):
-        self.lonb = np.sort(self.data.longitude1.values)
+        self.lonb = np.sort(self.data.longitude_1.values)
         self.lon = util.guess_from_bounds(self.lonb)
         self.lons = self.lonb[1:] - self.lonb[0:-1]
         self.lon_p = np.append(self.lon, self.lon[-1] + self.lons[-1])
         self.lonb_p = util.guess_bounds(self.lon_p)
         self.lons_p = self.lonb_p[1:] - self.lonb_p[0:-1]
         
-        self.latb = np.sort(self.data.latitude1.values)
+        self.latb = np.sort(self.data.latitude_1.values)
         self.lat = util.guess_from_bounds(self.latb)
         self.lats = self.latb[1:] - self.latb[0:-1]
         self.lat_p = np.append(self.lat, self.lat[-1] + self.lats[-1])
