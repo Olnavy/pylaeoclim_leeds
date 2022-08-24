@@ -1472,7 +1472,7 @@ class OCNVVELATS(HadCM3TS):
               value_z=None, mode_t=None, value_t=None, new_start_year=None, new_end_year=None, new_month_list=None):
         print("__ Importing westward sea water velocity (annual).")
         return self.get(
-            self.data.vcurrTot_mm_dpth.rename({'longitude_1': 'longitudeb'}).rename(
+            self.data.vcurrTot_ym_dpth.rename({'longitude_1': 'longitudeb'}).rename(
                 {'latitude_1': 'latitudeb'}).rename({"depth_1": "zb"}), zone, mode_lon, value_lon, mode_lat, value_lat,
             mode_z, value_z, mode_t, value_t,
             new_start_year=new_start_year, new_end_year=new_end_year, new_month_list=new_month_list)
