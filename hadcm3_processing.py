@@ -1436,7 +1436,7 @@ class OCNVVELATS(HadCM3TS):
     
     def __init__(self, exp_name, start_year=None, end_year=None, chunks=None, verbose=True, debug=False,
                  logger="print"):
-        super(OCNVVELATS, self).__init__(exp_name, start_year, end_year, file_name="oceanuvelpg.annual",
+        super(OCNVVELATS, self).__init__(exp_name, start_year, end_year, file_name="oceanvvelpg.annual",
                                          month_list=None, chunks=chunks, verbose=verbose, debug=debug, logger=logger)
     
     @staticmethod
